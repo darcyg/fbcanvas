@@ -5,6 +5,7 @@ struct fbcanvas
 {
 	int width;
 	int height;
+	int bpp;
 	unsigned char *buffer;
 };
 

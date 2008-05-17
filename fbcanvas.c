@@ -13,7 +13,7 @@
 
 static struct
 {
-	char *mem;
+	unsigned char *mem;
 	int width;
 	int height;
 	int bpp;
@@ -36,11 +36,13 @@ struct fbcanvas *fbcanvas_create(int width, int height)
 			if (fd < 0)
 			{
 				/* TODO: käsittele virhe */
+				perror("open");
 			}
 
 			if (ioctl(fd, FBIOGET_VSCREENINFO, &fbinfo) < 0)
 			{
 				/* TODO: käsittele virhe */
+				perror("ioctl");
 			}
 
 			framebuffer.width = fbinfo.xres;
@@ -56,6 +58,7 @@ struct fbcanvas *fbcanvas_create(int width, int height)
 			if (mem == MAP_FAILED)
 		        {
 				/* TODO: käsittele virhe */
+				perror("mmap");
 			}
 
 			close(fd);
@@ -66,7 +69,8 @@ struct fbcanvas *fbcanvas_create(int width, int height)
 
 		fbc->width = width;
 		fbc->height = height;
-		fbc->buffer = malloc(width * height * (framebuffer.bpp / 8));
+		fbc->bpp = framebuffer.bpp;
+		fbc->buffer = malloc(width * height * (fbc->bpp / 8));
 		/* TODO: tarkista onnistuminen */
 	}
 
@@ -87,7 +91,28 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 	}
 }
 
-void fbcanvas_draw(struct fbcanvas *fbc)
+static void draw_16bpp(struct fbcanvas *fbc)
 {
 	/* TODO: piirtäminen tehdään täällä. Ota huomioon offsetit ym. */
+	int i, j;
+	unsigned short *src, *dst;
+
+	for (j = 0; j < fbc->height; j++)
+	{
+		for (i = 0; i < fbc->width; i++)
+		{
+			src = (unsigned short *)fbc->buffer + fbc->width * j + i;
+			dst = (unsigned short *)framebuffer.mem + framebuffer.width * j + i;
+			*dst = *src;
+//			framebuffer.mem[framebuffer.width*j+i] = fbc->buffer[fbc->width * j + i];
+		}
+	}
+}
+
+void fbcanvas_draw(struct fbcanvas *fbc)
+{
+	if (fbc->bpp == 16)
+		draw_16bpp(fbc);
+	else
+		printf("Unimplemented depth: %d\n", fbc->bpp);
 }
