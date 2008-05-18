@@ -3,9 +3,11 @@
 
 struct fbcanvas
 {
-	int width;
-	int height;
-	int bpp;
+	unsigned int width;
+	unsigned int height;
+	unsigned int xoffset;
+	unsigned int yoffset;
+	unsigned char bpp;
 	unsigned char *buffer;
 };
 

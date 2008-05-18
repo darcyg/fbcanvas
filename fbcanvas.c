@@ -69,6 +69,8 @@ struct fbcanvas *fbcanvas_create(int width, int height)
 
 		fbc->width = width;
 		fbc->height = height;
+		fbc->xoffset = 0;
+		fbc->yoffset = 0;
 		fbc->bpp = framebuffer.bpp;
 		fbc->buffer = malloc(width * height * (fbc->bpp / 8));
 		/* TODO: tarkista onnistuminen */
@@ -93,18 +95,20 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 
 static void draw_16bpp(struct fbcanvas *fbc)
 {
-	/* TODO: piirtäminen tehdään täällä. Ota huomioon offsetit ym. */
-	int i, j;
+	/* TODO: piirtäminen tehdään täällä. Ota huomioon offsetit ym.
+	 * TODO: tarkista ettei mennä framebufferin rajojen yli.
+	 */
+	unsigned int i, j;
 	unsigned short *src, *dst;
 
-	for (j = 0; j < fbc->height; j++)
+	for (j = 0; j < fbc->height - fbc->yoffset; j++)
 	{
-		for (i = 0; i < fbc->width; i++)
+		for (i = 0; i < fbc->width - fbc->xoffset; i++)
 		{
-			src = (unsigned short *)fbc->buffer + fbc->width * j + i;
+			src = (unsigned short *)fbc->buffer + fbc->width * (fbc->yoffset + j) +
+				fbc->xoffset + i;
 			dst = (unsigned short *)framebuffer.mem + framebuffer.width * j + i;
 			*dst = *src;
-//			framebuffer.mem[framebuffer.width*j+i] = fbc->buffer[fbc->width * j + i];
 		}
 	}
 }
