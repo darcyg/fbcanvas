@@ -93,6 +93,26 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 	}
 }
 
+static void draw_8bpp(struct fbcanvas *fbc)
+{
+	/* TODO: piirtäminen tehdään täällä. Ota huomioon offsetit ym.
+	 * TODO: tarkista ettei mennä framebufferin rajojen yli.
+	 */
+	unsigned int i, j;
+	unsigned char *src, *dst;
+
+	for (j = 0; j < fbc->height - fbc->yoffset; j++)
+	{
+		for (i = 0; i < fbc->width - fbc->xoffset; i++)
+		{
+			src = (unsigned char *)fbc->buffer + fbc->width * (fbc->yoffset + j) +
+				fbc->xoffset + i;
+			dst = (unsigned char *)framebuffer.mem + framebuffer.width * j + i;
+			*dst = *src;
+		}
+	}
+}
+
 static void draw_16bpp(struct fbcanvas *fbc)
 {
 	/* TODO: piirtäminen tehdään täällä. Ota huomioon offsetit ym.
@@ -113,10 +133,34 @@ static void draw_16bpp(struct fbcanvas *fbc)
 	}
 }
 
+static void draw_24bpp(struct fbcanvas *fbc)
+{
+	/* TODO: piirtäminen tehdään täällä. Ota huomioon offsetit ym.
+	 * TODO: tarkista ettei mennä framebufferin rajojen yli.
+	 */
+	unsigned int i, j;
+	unsigned int *src, *dst;
+
+	for (j = 0; j < fbc->height - fbc->yoffset; j++)
+	{
+		for (i = 0; i < fbc->width - fbc->xoffset; i++)
+		{
+			src = (unsigned int *)fbc->buffer + fbc->width * (fbc->yoffset + j) +
+				fbc->xoffset + i;
+			dst = (unsigned int *)framebuffer.mem + framebuffer.width * j + i;
+			*dst = (*src & 0xFFFFFF00);
+		}
+	}
+}
+
 void fbcanvas_draw(struct fbcanvas *fbc)
 {
-	if (fbc->bpp == 16)
+	if (fbc->bpp == 8)
+		draw_8bpp(fbc);
+	else if (fbc->bpp == 16)
 		draw_16bpp(fbc);
+	else if (fbc->bpp == 24)
+		draw_24bpp(fbc);
 	else
 		printf("Unimplemented depth: %d\n", fbc->bpp);
 }
