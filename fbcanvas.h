@@ -1,6 +1,8 @@
 #ifndef FBCANVAS_H
 #define FBCANVAS_H
 
+#include <poppler/glib/poppler.h>
+
 struct fbcanvas
 {
 	unsigned int width;
@@ -9,6 +11,9 @@ struct fbcanvas
 	unsigned int yoffset;
 	unsigned char bpp;
 	unsigned char *buffer;
+
+	void (*draw)(struct fbcanvas *fbc);
+	void (*data_from_pixbuf)(struct fbcanvas *fbc, GdkPixbuf *gdkpixbuf);
 };
 
 struct fbcanvas *fbcanvas_create(int width, int height);

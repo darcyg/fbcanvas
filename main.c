@@ -19,7 +19,6 @@ static struct fbcanvas *show_pdf(char *filename, double scale, int pagenum)
 	GdkPixbuf *gdkpixbuf;
 	GError *err = NULL;
 	static double width, height;
-	int i, j;
 
 	g_type_init();
 
@@ -59,27 +58,7 @@ static struct fbcanvas *show_pdf(char *filename, double scale, int pagenum)
 	fbc = fbcanvas_create(gdk_pixbuf_get_width(gdkpixbuf),
 		gdk_pixbuf_get_height(gdkpixbuf));
 
-	src = gdk_pixbuf_get_pixels(gdkpixbuf);
-	dst = fbc->buffer;
-
-	/* TODO: Tämä toimii vain 16-bittisellä framebufferilla. */
-	for (j = 0; j < gdk_pixbuf_get_height(gdkpixbuf); j++)
-	{
-		for (i = 0; i < gdk_pixbuf_get_width(gdkpixbuf); i++)
-		{
-			unsigned char red = *src++;
-			unsigned char green = *src++;
-			unsigned char blue = *src++;
-			unsigned char alpha = *src++;
-
-			/* TODO: RGB:n suhteiden pitäisi olla 5/6/5 bittiä. */
-			*(dst+0) = (((red * 32 / 256) << 3) & 0b11111000) |
-				   ((green * 64 / 256) & 0b00000111);
-			*(dst+1) = (((green * 64 / 256) << 5) & 0b11100000) |
-				   ((blue * 32 / 256) & 0b00011111);
-			dst += 2;
-		}
-	}
+	fbc->data_from_pixbuf(fbc, gdkpixbuf);
 
 	return fbc;
 }
@@ -102,7 +81,7 @@ int main(int argc, char *argv[])
 	keypad(win, 1); /* Handle KEY_xxx */
 
 	fbc = show_pdf(filename, scale, pagenum);
-	fbcanvas_draw(fbc);
+	fbc->draw(fbc);
 	fbcanvas_free(fbc);
 
 	for (;;)
@@ -170,7 +149,7 @@ int main(int argc, char *argv[])
 		fbc = show_pdf(filename, scale, pagenum);
 		fbc->xoffset = xoffset;
 		fbc->yoffset = yoffset;
-		fbcanvas_draw(fbc);
+		fbc->draw(fbc);
 		fbcanvas_free(fbc);
 	}
 out:

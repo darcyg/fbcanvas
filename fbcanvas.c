@@ -22,6 +22,11 @@ static struct
 	.mem = MAP_FAILED
 };
 
+static void draw_8bpp(struct fbcanvas *fbc);
+static void draw_16bpp(struct fbcanvas *fbc);
+static void draw_24bpp(struct fbcanvas *fbc);
+static void data16_from_pixbuf(struct fbcanvas *fbc, GdkPixbuf *gdkpixbuf);
+
 struct fbcanvas *fbcanvas_create(int width, int height)
 {
 	struct fbcanvas *fbc = malloc(sizeof(*fbc));
@@ -71,6 +76,23 @@ struct fbcanvas *fbcanvas_create(int width, int height)
 		fbc->height = height;
 		fbc->xoffset = 0;
 		fbc->yoffset = 0;
+
+		switch (framebuffer.bpp)
+		{
+			case 8:
+				fbc->draw = draw_8bpp;
+				break;
+			case 16:
+				fbc->data_from_pixbuf = data16_from_pixbuf;
+				fbc->draw = draw_16bpp;
+				break;
+			case 24:
+				fbc->draw = draw_24bpp;
+			default:
+				fprintf(stderr, "Unsupported depth: %d\n", framebuffer.bpp);
+				exit(1);
+		}
+
 		fbc->bpp = framebuffer.bpp;
 		fbc->buffer = malloc(width * height * (fbc->bpp / 8));
 		/* TODO: tarkista onnistuminen */
@@ -177,14 +199,29 @@ static void draw_24bpp(struct fbcanvas *fbc)
 	}
 }
 
-void fbcanvas_draw(struct fbcanvas *fbc)
+
+static void data16_from_pixbuf(struct fbcanvas *fbc, GdkPixbuf *gdkpixbuf)
 {
-	if (fbc->bpp == 8)
-		draw_8bpp(fbc);
-	else if (fbc->bpp == 16)
-		draw_16bpp(fbc);
-	else if (fbc->bpp == 24)
-		draw_24bpp(fbc);
-	else
-		printf("Unimplemented depth: %d\n", fbc->bpp);
+	unsigned char *src = gdk_pixbuf_get_pixels(gdkpixbuf);
+	unsigned char *dst = fbc->buffer;
+	int i, j;
+
+	/* TODO: Tämä toimii vain 16-bittisellä framebufferilla. */
+	for (j = 0; j < gdk_pixbuf_get_height(gdkpixbuf); j++)
+	{
+		for (i = 0; i < gdk_pixbuf_get_width(gdkpixbuf); i++)
+		{
+			unsigned char red = *src++;
+			unsigned char green = *src++;
+			unsigned char blue = *src++;
+			unsigned char alpha = *src++;
+
+			/* TODO: RGB:n suhteiden pitäisi olla 5/6/5 bittiä. */
+			*(dst+0) = (((red * 32 / 256) << 3) & 0b11111000) |
+				   ((green * 64 / 256) & 0b00000111);
+			*(dst+1) = (((green * 64 / 256) << 5) & 0b11100000) |
+				   ((blue * 32 / 256) & 0b00011111);
+			dst += 2;
+		}
+	}
 }
