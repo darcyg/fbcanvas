@@ -235,8 +235,8 @@ static void data16_from_pixbuf(struct fbcanvas *fbc, GdkPixbuf *gdkpixbuf, int w
 			color |= ((64 * green / 256) & 0b00111111) << 5;
 			color |= ((32 * blue / 256) & 0b00011111) << 0;
 
-			*(dst+0) = (color & 0xFF00) >> 8;
-			*(dst+1) = color & 0x00FF;
+			*(dst+0) = (color & 0x00FF) >> 0;
+			*(dst+1) = (color & 0xFF00) >> 8;
 			dst += 2;
 		}
 	}
