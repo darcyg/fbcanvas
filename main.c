@@ -8,6 +8,8 @@
 #include <string.h>
 #include "fbcanvas.h"
 
+static GdkPixbuf *gdkpixbuf;
+
 static void show_pdf(struct fbcanvas *fbc, char *filename, double scale, int pagenum)
 {
 	static int page_count = -1;
@@ -15,7 +17,6 @@ static void show_pdf(struct fbcanvas *fbc, char *filename, double scale, int pag
 	static PopplerDocument *document;
 	static PopplerPage *page = NULL;
 	unsigned char *src, *dst;
-	GdkPixbuf *gdkpixbuf;
 	GError *err = NULL;
 	static double width, height;
 
@@ -145,6 +146,17 @@ int main(int argc, char *argv[])
 					scale -= 0.5;
 				show_pdf(fbc, filename, scale, pagenum);
 				fbc->draw(fbc);
+				break;
+			}
+
+			case 's':
+			{
+				GError *err = NULL;
+				char savename[256];
+
+				sprintf(savename, "%s-pg-%d.png", basename(filename), pagenum);
+				if (!gdk_pixbuf_save(gdkpixbuf, savename, "png", &err))
+					fprintf (stderr, "%s", err->message);
 				break;
 			}
 
