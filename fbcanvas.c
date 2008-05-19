@@ -25,7 +25,7 @@ static struct
 static void draw_8bpp(struct fbcanvas *fbc);
 static void draw_16bpp(struct fbcanvas *fbc);
 static void draw_24bpp(struct fbcanvas *fbc);
-static void data16_from_pixbuf(struct fbcanvas *fbc, GdkPixbuf *gdkpixbuf);
+static void data16_from_pixbuf(struct fbcanvas *fbc, GdkPixbuf *gdkpixbuf, int w, int h);
 
 struct fbcanvas *fbcanvas_create(int width, int height)
 {
@@ -200,16 +200,29 @@ static void draw_24bpp(struct fbcanvas *fbc)
 }
 
 
-static void data16_from_pixbuf(struct fbcanvas *fbc, GdkPixbuf *gdkpixbuf)
+static void data16_from_pixbuf(struct fbcanvas *fbc, GdkPixbuf *gdkpixbuf, int w, int h)
 {
 	unsigned char *src = gdk_pixbuf_get_pixels(gdkpixbuf);
-	unsigned char *dst = fbc->buffer;
+	unsigned char *dst;
 	int i, j;
 
-	/* TODO: Tämä toimii vain 16-bittisellä framebufferilla. */
-	for (j = 0; j < gdk_pixbuf_get_height(gdkpixbuf); j++)
+	if (fbc->buffer)
 	{
-		for (i = 0; i < gdk_pixbuf_get_width(gdkpixbuf); i++)
+		if ((w != fbc->width) || (h != fbc->height))
+		{
+			free (fbc->buffer);
+			fbc->buffer = malloc(w * h * framebuffer.bpp / 8);
+			fbc->width = w;
+			fbc->height = h;
+		}
+	}
+
+	dst = fbc->buffer;
+
+	/* TODO: Tämä toimii vain 16-bittisellä framebufferilla. */
+	for (j = 0; j < h; j++)
+	{
+		for (i = 0; i < w; i++)
 		{
 			unsigned char red = *src++;
 			unsigned char green = *src++;

@@ -8,14 +8,13 @@
 #include <string.h>
 #include "fbcanvas.h"
 
-static struct fbcanvas *show_pdf(char *filename, double scale, int pagenum)
+static void show_pdf(struct fbcanvas *fbc, char *filename, double scale, int pagenum)
 {
 	static int page_count = -1;
 	static int current_pagenum = -1;
 	static PopplerDocument *document;
 	static PopplerPage *page = NULL;
 	unsigned char *src, *dst;
-	struct fbcanvas *fbc;
 	GdkPixbuf *gdkpixbuf;
 	GError *err = NULL;
 	static double width, height;
@@ -55,21 +54,17 @@ static struct fbcanvas *show_pdf(char *filename, double scale, int pagenum)
 	poppler_page_render_to_pixbuf(page, 0, 0,
 		ceil(width), ceil(height), scale, 0, gdkpixbuf);
 
-	fbc = fbcanvas_create(gdk_pixbuf_get_width(gdkpixbuf),
+	fbc->data_from_pixbuf(fbc, gdkpixbuf,
+		gdk_pixbuf_get_width(gdkpixbuf),
 		gdk_pixbuf_get_height(gdkpixbuf));
-
-	fbc->data_from_pixbuf(fbc, gdkpixbuf);
-
-	return fbc;
 }
 
 int main(int argc, char *argv[])
 {
-	int xoffset = 0, yoffset = 0;
 	int pagenum = 0;
 	double scale = 1.0;
 	char filename[256];
-	struct fbcanvas *fbc;
+	struct fbcanvas *fbc = fbcanvas_create(1,1);
 	WINDOW *win;
 
 	sprintf (filename, "file://%s", argv[1]);
@@ -80,9 +75,8 @@ int main(int argc, char *argv[])
 	cbreak();
 	keypad(win, 1); /* Handle KEY_xxx */
 
-	fbc = show_pdf(filename, scale, pagenum);
+	show_pdf(fbc, filename, scale, pagenum);
 	fbc->draw(fbc);
-	fbcanvas_free(fbc);
 
 	for (;;)
 	{
@@ -93,6 +87,8 @@ int main(int argc, char *argv[])
 			case KEY_NPAGE:
 			{
 				pagenum++;
+				show_pdf(fbc, filename, scale, pagenum);
+				fbc->draw(fbc);
 				break;
 			}
 
@@ -100,38 +96,46 @@ int main(int argc, char *argv[])
 			{
 				if (pagenum > 0)
 					pagenum--;
+				show_pdf(fbc, filename, scale, pagenum);
+				fbc->draw(fbc);
 				break;
 			}
 
 			case KEY_DOWN:
 			{
-				yoffset += 50;
+				fbc->yoffset += 50;
+				fbc->draw(fbc);
 				break;
 			}
 
 			case KEY_UP:
 			{
-				if (yoffset >= 50)
-					yoffset -= 50;
+				if (fbc->yoffset >= 50)
+					fbc->yoffset -= 50;
+				fbc->draw(fbc);
 				break;
 			}
 
 			case KEY_LEFT:
 			{
-				if (xoffset >= 50)
-					xoffset -= 50;
+				if (fbc->xoffset >= 50)
+					fbc->xoffset -= 50;
+				fbc->draw(fbc);
 				break;
 			}
 
 			case KEY_RIGHT:
 			{
-				xoffset += 50;
+				fbc->xoffset += 50;
+				fbc->draw(fbc);
 				break;
 			}
 
 			case '+':
 			{
 				scale += 0.5;
+				show_pdf(fbc, filename, scale, pagenum);
+				fbc->draw(fbc);
 				break;
 			}
 
@@ -139,18 +143,14 @@ int main(int argc, char *argv[])
 			{
 				if (scale >= 1.0)
 					scale -= 0.5;
+				show_pdf(fbc, filename, scale, pagenum);
+				fbc->draw(fbc);
 				break;
 			}
 
 			case KEY_END:
 				goto out;
                 }
-
-		fbc = show_pdf(filename, scale, pagenum);
-		fbc->xoffset = xoffset;
-		fbc->yoffset = yoffset;
-		fbc->draw(fbc);
-		fbcanvas_free(fbc);
 	}
 out:
 
