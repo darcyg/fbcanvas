@@ -229,11 +229,14 @@ static void data16_from_pixbuf(struct fbcanvas *fbc, GdkPixbuf *gdkpixbuf, int w
 			unsigned char blue = *src++;
 			unsigned char alpha = *src++;
 
-			/* TODO: RGB:n suhteiden pitäisi olla 5/6/5 bittiä. */
-			*(dst+0) = (((red * 32 / 256) << 3) & 0b11111000) |
-				   ((green * 64 / 256) & 0b00000111);
-			*(dst+1) = (((green * 64 / 256) << 5) & 0b11100000) |
-				   ((blue * 32 / 256) & 0b00011111);
+			unsigned short color = 0;
+
+			color |= ((32 * red / 256) & 0b00011111) << 11;
+			color |= ((64 * green / 256) & 0b00111111) << 5;
+			color |= ((32 * blue / 256) & 0b00011111) << 0;
+
+			*(dst+0) = (color & 0xFF00) >> 8;
+			*(dst+1) = color & 0x00FF;
 			dst += 2;
 		}
 	}
