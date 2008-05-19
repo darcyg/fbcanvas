@@ -113,6 +113,30 @@ int main(int argc, char *argv[])
 				break;
 			}
 
+			case KEY_DOWN:
+			{
+				/* TODO: yoffset += 50 */
+				break;
+			}
+
+			case KEY_UP:
+			{
+				/* TODO: yoffset -= 50 */
+				break;
+			}
+
+			case KEY_LEFT:
+			{
+				/* TODO: xoffset -= 50 */
+				break;
+			}
+
+			case KEY_RIGHT:
+			{
+				/* TODO: xoffset += 50 */
+				break;
+			}
+
 			case '+':
 			{
 				scale += 0.5;
@@ -127,7 +151,7 @@ int main(int argc, char *argv[])
 				break;
 			}
 
-			default:
+			case KEY_END:
 				goto out;
                 }
 	}
