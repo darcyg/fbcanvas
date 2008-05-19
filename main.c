@@ -10,27 +10,37 @@
 
 static void show_pdf(char *filename, double scale, int pagenum)
 {
+	static int page_count = -1;
+	static int current_pagenum = -1;
+	static PopplerDocument *document;
+	static PopplerPage *page = NULL;
 	unsigned char *src, *dst;
 	struct fbcanvas *fbc;
 	GdkPixbuf *gdkpixbuf;
 	GError *err = NULL;
-	PopplerDocument *document;
-	PopplerPage *page;
-	int page_count;
 	double width, height;
 	int i, j;
 
 	g_type_init();
 
-	document = poppler_document_new_from_file(filename, NULL, &err);
 	if (!document)
 	{
-		/* TODO: käsittele virhe */
+		document = poppler_document_new_from_file(filename, NULL, &err);
+		if (!document)
+		{
+			/* TODO: käsittele virhe */
+		}
+
+		page_count = poppler_document_get_n_pages(document);
 	}
 
-	page_count = poppler_document_get_n_pages(document);
+	if (pagenum != current_pagenum)
+	{
+		if (page)
+			g_object_unref(page);
+		page = poppler_document_get_page(document, pagenum);
+	}
 
-	page = poppler_document_get_page(document, pagenum);
 	if (!page)
 	{
 		/* TODO: käsittele virhe */
