@@ -123,8 +123,14 @@ static void draw_16bpp(struct fbcanvas *fbc)
 
 	for (j = 0; j < fbc->height - fbc->yoffset; j++)
 	{
+		if (j >= framebuffer.height)
+			break;
+
 		for (i = 0; i < fbc->width - fbc->xoffset; i++)
 		{
+			if (i >= framebuffer.width)
+				break;
+
 			src = (unsigned short *)fbc->buffer + fbc->width * (fbc->yoffset + j) +
 				fbc->xoffset + i;
 			dst = (unsigned short *)framebuffer.mem + framebuffer.width * j + i;
