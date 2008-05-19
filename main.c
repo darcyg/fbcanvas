@@ -3,6 +3,7 @@
  */
 
 #include <poppler/glib/poppler.h>
+#include <curses.h>
 #include <math.h>
 #include <string.h>
 #include "fbcanvas.h"
@@ -74,6 +75,64 @@ static void show_pdf(char *filename, double scale, int pagenum)
 
 int main(int argc, char *argv[])
 {
-	show_pdf("file:///home/terrop/src/fbcanvas.git/git.from.bottom.up.pdf", 1.0, 0);
+	int pagenum = 0;
+	double scale = 1.0;
+	char filename[256];
+	WINDOW *win;
+
+	sprintf (filename, "file://%s", argv[1]);
+
+	win = initscr();
+	refresh();
+	noecho();
+	cbreak();
+	keypad(win, 1); /* Handle KEY_xxx */
+
+	show_pdf(filename, scale, pagenum);
+
+	for (;;)
+	{
+		int ch = getch();
+
+		switch (ch)
+		{
+			case KEY_NPAGE:
+			{
+				pagenum++;
+				show_pdf(filename, scale, pagenum);
+				break;
+			}
+
+			case KEY_PPAGE:
+			{
+				if (pagenum > 0)
+				{
+					pagenum--;
+					show_pdf(filename, scale, pagenum);
+				}
+				break;
+			}
+
+			case '+':
+			{
+				scale += 0.5;
+				show_pdf(filename, scale, pagenum);
+				break;
+			}
+
+			case '-':
+			{
+				scale -= 0.5;
+				show_pdf(filename, scale, pagenum);
+				break;
+			}
+
+			default:
+				goto out;
+                }
+	}
+out:
+
+	endwin();
 	return 0;
 }
