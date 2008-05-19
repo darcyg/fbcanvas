@@ -8,7 +8,7 @@
 #include <string.h>
 #include "fbcanvas.h"
 
-static void show_pdf(char *filename, double scale, int pagenum)
+static struct fbcanvas *show_pdf(char *filename, double scale, int pagenum)
 {
 	static int page_count = -1;
 	static int current_pagenum = -1;
@@ -18,7 +18,7 @@ static void show_pdf(char *filename, double scale, int pagenum)
 	struct fbcanvas *fbc;
 	GdkPixbuf *gdkpixbuf;
 	GError *err = NULL;
-	double width, height;
+	static double width, height;
 	int i, j;
 
 	g_type_init();
@@ -39,6 +39,10 @@ static void show_pdf(char *filename, double scale, int pagenum)
 		if (page)
 			g_object_unref(page);
 		page = poppler_document_get_page(document, pagenum);
+		current_pagenum = pagenum;
+
+		poppler_page_get_size(page, &width, &height);
+		//fprintf(stderr, "Size: %lfx%lf\n", width, height);
 	}
 
 	if (!page)
@@ -46,8 +50,6 @@ static void show_pdf(char *filename, double scale, int pagenum)
 		/* TODO: käsittele virhe */
 	}
 
-	poppler_page_get_size(page, &width, &height);
-	fprintf(stderr, "Size: %lfx%lf\n", width, height);
 
 	gdkpixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
 		TRUE, 8, ceil(width * scale), ceil(height * scale));
@@ -79,15 +81,16 @@ static void show_pdf(char *filename, double scale, int pagenum)
 		}
 	}
 
-	fbcanvas_draw(fbc);
-	fbcanvas_destroy(fbc);
+	return fbc;
 }
 
 int main(int argc, char *argv[])
 {
+	int xoffset = 0, yoffset = 0;
 	int pagenum = 0;
 	double scale = 1.0;
 	char filename[256];
+	struct fbcanvas *fbc;
 	WINDOW *win;
 
 	sprintf (filename, "file://%s", argv[1]);
@@ -98,7 +101,9 @@ int main(int argc, char *argv[])
 	cbreak();
 	keypad(win, 1); /* Handle KEY_xxx */
 
-	show_pdf(filename, scale, pagenum);
+	fbc = show_pdf(filename, scale, pagenum);
+	fbcanvas_draw(fbc);
+	fbcanvas_free(fbc);
 
 	for (;;)
 	{
@@ -109,64 +114,68 @@ int main(int argc, char *argv[])
 			case KEY_NPAGE:
 			{
 				pagenum++;
-				show_pdf(filename, scale, pagenum);
 				break;
 			}
 
 			case KEY_PPAGE:
 			{
 				if (pagenum > 0)
-				{
 					pagenum--;
-					show_pdf(filename, scale, pagenum);
-				}
 				break;
 			}
 
 			case KEY_DOWN:
 			{
-				/* TODO: yoffset += 50 */
+				yoffset += 50;
 				break;
 			}
 
 			case KEY_UP:
 			{
-				/* TODO: yoffset -= 50 */
+				if (yoffset >= 50)
+					yoffset -= 50;
 				break;
 			}
 
 			case KEY_LEFT:
 			{
-				/* TODO: xoffset -= 50 */
+				if (xoffset >= 50)
+					xoffset -= 50;
 				break;
 			}
 
 			case KEY_RIGHT:
 			{
-				/* TODO: xoffset += 50 */
+				xoffset += 50;
 				break;
 			}
 
 			case '+':
 			{
 				scale += 0.5;
-				show_pdf(filename, scale, pagenum);
 				break;
 			}
 
 			case '-':
 			{
-				scale -= 0.5;
-				show_pdf(filename, scale, pagenum);
+				if (scale >= 1.0)
+					scale -= 0.5;
 				break;
 			}
 
 			case KEY_END:
 				goto out;
                 }
+
+		fbc = show_pdf(filename, scale, pagenum);
+		fbc->xoffset = xoffset;
+		fbc->yoffset = yoffset;
+		fbcanvas_draw(fbc);
+		fbcanvas_free(fbc);
 	}
 out:
 
+	fbcanvas_destroy(fbc);
 	endwin();
 	return 0;
 }

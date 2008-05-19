@@ -79,9 +79,17 @@ struct fbcanvas *fbcanvas_create(int width, int height)
 	return fbc;
 }
 
+void fbcanvas_free(struct fbcanvas *fbc)
+{
+	if (fbc->buffer)
+		free(fbc->buffer);
+	fbc->buffer = NULL;
+}
+
 void fbcanvas_destroy(struct fbcanvas *fbc)
 {
-	free(fbc->buffer);
+	if (fbc->buffer)
+		free(fbc->buffer);
 	free(fbc);
 
 	framebuffer.refcount--;
@@ -118,21 +126,31 @@ static void draw_16bpp(struct fbcanvas *fbc)
 	/* TODO: piirtäminen tehdään täällä. Ota huomioon offsetit ym.
 	 * TODO: tarkista ettei mennä framebufferin rajojen yli.
 	 */
+	static unsigned short empty = 0x0000;
 	unsigned int i, j;
 	unsigned short *src, *dst;
 
-	for (j = 0; j < fbc->height - fbc->yoffset; j++)
+	for (j = 0;; j++)
 	{
+		/* Framebufferin reuna tuli vastaan - lopetetaan. */
 		if (j >= framebuffer.height)
 			break;
 
-		for (i = 0; i < fbc->width - fbc->xoffset; i++)
+		for (i = 0;; i++)
 		{
+			/* Framebufferin reuna tuli vastaan - lopetetaan. */
 			if (i >= framebuffer.width)
 				break;
 
-			src = (unsigned short *)fbc->buffer + fbc->width * (fbc->yoffset + j) +
-				fbc->xoffset + i;
+			if ((j < fbc->height - fbc->yoffset) && (i < fbc->width - fbc->xoffset))
+			{
+				src = (unsigned short *)fbc->buffer +
+					fbc->width * (fbc->yoffset + j) +
+					fbc->xoffset + i;
+			} else {
+				src = &empty;
+			}
+
 			dst = (unsigned short *)framebuffer.mem + framebuffer.width * j + i;
 			*dst = *src;
 		}
