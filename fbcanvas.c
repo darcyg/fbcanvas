@@ -8,6 +8,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <fcntl.h>
+#include <magic.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,7 +32,7 @@ static void draw_16bpp(struct fbcanvas *fbc);
 
 static void open_image(struct fbcanvas *fbc, char *filename)
 {
-	fprintf(stderr, "open_image: %s\n", filename);
+	//fprintf(stderr, "open_image: %s\n", filename);
 }
 
 static void open_pdf(struct fbcanvas *fbc, char *filename)
@@ -61,15 +62,15 @@ static struct
 	void (*update)(struct fbcanvas *fbc);
 } file_ops[] = {
 	{
-		.ext = "jpg",
+		.ext = "JPEG",
 		.open = open_image,
 		.update = update_image,
 	}, {
-		.ext = "pdf",
+		.ext = "PDF",
 		.open = open_pdf,
 		.update = update_pdf,
 	}, {
-		.ext = "png",
+		.ext = "PNG",
 		.open = open_image,
 		.update = update_image,
 	}, {
@@ -107,8 +108,8 @@ struct fbcanvas *fbcanvas_create(char *filename)
 			framebuffer.height = fbinfo.yres;
 			framebuffer.bpp = fbinfo.bits_per_pixel;
 
-			printf("%d x %d x %d\n", framebuffer.width,
-				framebuffer.height, framebuffer.bpp);
+			//printf("%d x %d x %d\n", framebuffer.width,
+			//	framebuffer.height, framebuffer.bpp);
 
 			mem = mmap (NULL,
 				framebuffer.width * framebuffer.height * (framebuffer.bpp / 8),
@@ -145,26 +146,27 @@ struct fbcanvas *fbcanvas_create(char *filename)
 				exit(1);
 		}
 
-		/* Set correct update-method */
-		ext = strrchr(fbc->filename, '.');
-		if (!ext || *(ext+1) == '\0')
+		/* Determine file type */
 		{
-			fprintf(stderr, "Cannot determine file type: %s\n", fbc->filename);
-			exit(1);
-		} else ext++;
+			magic_t magic = magic_open(MAGIC_NONE);
+			int i, ret = magic_load(magic, NULL);
+			const char *type = magic_file(magic, filename);
 
-		for (i = 0; file_ops[i].ext; i++)
-		{
-			if (!strcmp(ext, file_ops[i].ext))
+			for (i = 0; file_ops[i].ext; i++)
 			{
-				fbc->open = file_ops[i].open;
-				fbc->update = file_ops[i].update;
-				goto type_ok;
+				if (!strncmp(type, file_ops[i].ext, strlen(file_ops[i].ext)))
+				{
+					magic_close(magic);
+					fbc->open = file_ops[i].open;
+					fbc->update = file_ops[i].update;
+					goto type_ok;
+				}
 			}
-		}
 
-		fprintf(stderr, "Unsupported file type: %s\n", ext);
-		exit(1);
+			fprintf(stderr, "Unsupported file type: %s\n", type);
+			magic_close(magic);
+			exit(1);
+		}
 
 type_ok:
 		fbc->open(fbc, filename);
