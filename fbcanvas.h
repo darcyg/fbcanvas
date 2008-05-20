@@ -9,11 +9,9 @@ struct fbcanvas
 	unsigned int height;
 	unsigned int xoffset;
 	unsigned int yoffset;
-	unsigned char *buffer;
 	GdkPixbuf *gdkpixbuf;
 
 	void (*draw)(struct fbcanvas *fbc);
-	void (*data_from_pixbuf)(struct fbcanvas *fbc, GdkPixbuf *gdkpixbuf, int w, int h);
 };
 
 struct fbcanvas *fbcanvas_create(int width, int height);

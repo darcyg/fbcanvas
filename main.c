@@ -52,10 +52,6 @@ static void show_pdf(struct fbcanvas *fbc, char *filename, double scale, int pag
 		TRUE, 8, ceil(width * scale), ceil(height * scale));
 	poppler_page_render_to_pixbuf(page, 0, 0,
 		ceil(width), ceil(height), scale, 0, fbc->gdkpixbuf);
-
-	fbc->data_from_pixbuf(fbc, fbc->gdkpixbuf,
-		gdk_pixbuf_get_width(fbc->gdkpixbuf),
-		gdk_pixbuf_get_height(fbc->gdkpixbuf));
 }
 
 int main(int argc, char *argv[])
