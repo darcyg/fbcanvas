@@ -69,6 +69,10 @@ static struct
 		.open = open_pdf,
 		.update = update_pdf,
 	}, {
+		.ext = "png",
+		.open = open_image,
+		.update = update_image,
+	}, {
 		NULL
 	}
 };

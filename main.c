@@ -9,7 +9,7 @@
 #include "fbcanvas.h"
 
 static char *supported_filetypes[] = {
-	"JPEG", "PDF", NULL
+	"JPEG", "PDF", "PNG", NULL
 };
 
 /* Return NULL or a string describing the unsupported file type.
