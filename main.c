@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 	int pagenum = 0;
 	double scale = 1.0;
 	char filename[256];
-	struct fbcanvas *fbc = fbcanvas_create(1,1);
+	struct fbcanvas *fbc = fbcanvas_create();
 	WINDOW *win;
 
 	sprintf (filename, "file://%s", argv[1]);

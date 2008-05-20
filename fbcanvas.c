@@ -24,7 +24,7 @@ static struct
 
 static void draw_16bpp(struct fbcanvas *fbc);
 
-struct fbcanvas *fbcanvas_create(int width, int height)
+struct fbcanvas *fbcanvas_create(void)
 {
 	struct fbcanvas *fbc = malloc(sizeof(*fbc));
 	if (fbc)
@@ -70,8 +70,6 @@ struct fbcanvas *fbcanvas_create(int width, int height)
 		}
 
 		fbc->gdkpixbuf = NULL;
-		fbc->width = width;
-		fbc->height = height;
 		fbc->xoffset = 0;
 		fbc->yoffset = 0;
 
@@ -121,8 +119,8 @@ static void draw_16bpp(struct fbcanvas *fbc)
 	unsigned short color;
 	unsigned char *data = gdk_pixbuf_get_pixels(fbc->gdkpixbuf);
 
-	fbc->width = gdk_pixbuf_get_width(fbc->gdkpixbuf);
-	fbc->height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
+	unsigned int width = gdk_pixbuf_get_width(fbc->gdkpixbuf);
+	unsigned int height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
 
 	for (y = 0;; y++)
 	{
@@ -136,10 +134,10 @@ static void draw_16bpp(struct fbcanvas *fbc)
 			if (x >= framebuffer.width)
 				break;
 
-			if ((y < fbc->height - fbc->yoffset) && (x < fbc->width - fbc->xoffset))
+			if ((y < height - fbc->yoffset) && (x < width - fbc->xoffset))
 			{
 				unsigned char *tmp = data +
-					4*fbc->width * (fbc->yoffset + y) +
+					4*width * (fbc->yoffset + y) +
 					4*(fbc->xoffset + x);
 
 				unsigned char red = *tmp++;
