@@ -2,7 +2,6 @@
  * main.c - 17.5.2008 - 20.5.2008 Ari & Tero Roponen
  */
 
-#define _GNU_SOURCE
 #include <magic.h>
 #include <ncurses.h>
 #include <stdlib.h>
@@ -46,7 +45,7 @@ int main(int argc, char *argv[])
 	char filename[256];
 	struct fbcanvas *fbc;
 	WINDOW *win;
-	char *canon_name, *descr;
+	char *descr;
 
 	if (argc != 2)
 	{
@@ -54,17 +53,12 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	canon_name = canonicalize_file_name (argv[1]);
-	sprintf (filename, "file://%s", canon_name);
-
-	if (descr = is_supported_filetype (canon_name))
+	if (descr = is_supported_filetype(argv[1]))
 	{
 		fprintf (stderr, "Can't handle type: %s\n", descr);
 		free (descr);
-		free (canon_name);
 		return 2;
 	}
-	free (canon_name);
 
 	atexit(cleanup);
 
@@ -74,7 +68,7 @@ int main(int argc, char *argv[])
 	cbreak();
 	keypad(win, 1); /* Handle KEY_xxx */
 
-	fbc = fbcanvas_create(filename);
+	fbc = fbcanvas_create(argv[1]);
 	fbc->update(fbc);
 
 	/* Main loop */
@@ -153,8 +147,8 @@ int main(int argc, char *argv[])
 				GError *err = NULL;
 				char savename[256];
 
-				sprintf(savename, "%s-pg-%d.png",
-					basename(fbc->filename), fbc->pagenum + 1);
+				sprintf(savename, "%s-pg-%d.png", basename(fbc->filename),
+					fbc->pagenum + 1);
 				if (!gdk_pixbuf_save(fbc->gdkpixbuf, savename, "png", &err))
 					fprintf (stderr, "%s", err->message);
 				break;

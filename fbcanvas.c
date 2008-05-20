@@ -1,6 +1,7 @@
 /*
  * fbcanvas.c - 17.5.2008 - 20.5.2008 Ari & Tero Roponen
  */
+#define _GNU_SOURCE
 #include <poppler/glib/poppler.h>
 #include <sys/types.h>
 #include <linux/fb.h>
@@ -36,16 +37,21 @@ static void open_image(struct fbcanvas *fbc, char *filename)
 static void open_pdf(struct fbcanvas *fbc, char *filename)
 {
 	GError *err = NULL;
+	char fullname[256];
+	char *canon_name = canonicalize_file_name(filename);
 
-	/* PDF vaatii absoluuttisen "file:///tiedostonimen". */
 	fprintf(stderr, "open_pdf: %s\n", filename);
 
-	fbc->document = poppler_document_new_from_file(filename, NULL, &err);
+	/* PDF vaatii absoluuttisen "file:///tiedostonimen". */
+	sprintf(fullname, "file://%s", canon_name);
+
+	fbc->document = poppler_document_new_from_file(fullname, NULL, &err);
 	if (!fbc->document)
 	{
 		/* TODO: käsittele virhe */
 	}
 
+	free(canon_name);
 	fbc->pagecount = poppler_document_get_n_pages(fbc->document);
 }
 
@@ -188,7 +194,7 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 static void update_image(struct fbcanvas *fbc)
 {
 	GError *err = NULL;
-	fbc->gdkpixbuf = gdk_pixbuf_new_from_file(fbc->filename + 7, &err); // 'file://'
+	fbc->gdkpixbuf = gdk_pixbuf_new_from_file(fbc->filename, &err);
 	if (err)
 	{
 		fprintf (stderr, "%s", err->message);
