@@ -24,11 +24,13 @@ static struct
 	.mem = MAP_FAILED
 };
 
+static void update_image(struct fbcanvas *fbc);
 static void update_pdf(struct fbcanvas *fbc);
 static void draw_16bpp(struct fbcanvas *fbc);
 
 struct fbcanvas *fbcanvas_create(char *filename)
 {
+	char *ext;
 	GError *err = NULL;
 	struct fbcanvas *fbc = malloc(sizeof(*fbc));
 	if (fbc)
@@ -75,15 +77,8 @@ struct fbcanvas *fbcanvas_create(char *filename)
 
 		g_type_init();
 
-		fbc->document = poppler_document_new_from_file(filename, NULL, &err);
-		if (!fbc->document)
-		{
-			/* TODO: käsittele virhe */
-		}
-
 		fbc->page = NULL;
-		fbc->pagecount = poppler_document_get_n_pages(fbc->document);
-		fbc->filename = strdup(basename(filename));
+		fbc->filename = strdup(filename);
 		fbc->gdkpixbuf = NULL;
 		fbc->xoffset = 0;
 		fbc->yoffset = 0;
@@ -99,6 +94,34 @@ struct fbcanvas *fbcanvas_create(char *filename)
 			default:
 				fprintf(stderr, "Unsupported depth: %d\n", framebuffer.bpp);
 				exit(1);
+		}
+
+		/* Set correct update-method */
+		ext = strrchr(fbc->filename, '.');
+		if (!ext)
+		{
+			fprintf(stderr, "Cannot determine file type: %s\n", fbc->filename);
+			exit(1);
+		}
+
+		if (!strcmp(ext, ".jpg"))
+		{
+			fbc->update = update_image;
+		} else if (!strcmp(ext, ".png")) {
+			fbc->update = update_image;
+		} else if (!strcmp(ext, ".gif")) {
+			fbc->update = update_image;
+		} else if (!strcmp(ext, ".pdf")) {
+			fbc->document = poppler_document_new_from_file(filename, NULL, &err);
+			if (!fbc->document)
+			{
+				/* TODO: käsittele virhe */
+			}
+			fbc->pagecount = poppler_document_get_n_pages(fbc->document);
+			fbc->update = update_pdf;
+		} else {
+			fprintf(stderr, "Unsupported file type: %s\n", ext);
+			exit(1);
 		}
 	}
 
@@ -124,6 +147,19 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 		munmap(framebuffer.mem,
 			framebuffer.width * framebuffer.height * (framebuffer.bpp / 8));
 	}
+}
+
+static void update_image(struct fbcanvas *fbc)
+{
+	GError *err = NULL;
+	fbc->gdkpixbuf = gdk_pixbuf_new_from_file(fbc->filename + 7, &err); // 'file://'
+	if (err)
+	{
+		fprintf (stderr, "%s", err->message);
+		exit(1);
+	}
+
+	fbc->gdkpixbuf = gdk_pixbuf_add_alpha(fbc->gdkpixbuf, FALSE, 0, 0, 0);
 }
 
 static void update_pdf(struct fbcanvas *fbc)

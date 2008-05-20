@@ -113,7 +113,8 @@ int main(int argc, char *argv[])
 				GError *err = NULL;
 				char savename[256];
 
-				sprintf(savename, "%s-pg-%d.png", fbc->filename, fbc->pagenum + 1);
+				sprintf(savename, "%s-pg-%d.png",
+					basename(fbc->filename), fbc->pagenum + 1);
 				if (!gdk_pixbuf_save(fbc->gdkpixbuf, savename, "png", &err))
 					fprintf (stderr, "%s", err->message);
 				break;
