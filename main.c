@@ -2,9 +2,11 @@
  * main.c - 17.5.2008 - 20.5.2008 Ari & Tero Roponen
  */
 
+#define _GNU_SOURCE
 #include <poppler/glib/poppler.h>
 #include <ncurses.h>
 #include <math.h>
+#include <stdlib.h>
 #include <string.h>
 #include "fbcanvas.h"
 
@@ -59,10 +61,21 @@ int main(int argc, char *argv[])
 	int pagenum = 0;
 	double scale = 1.0;
 	char filename[256];
-	struct fbcanvas *fbc = fbcanvas_create();
+	struct fbcanvas *fbc;
 	WINDOW *win;
+	char *canon_name;
 
-	sprintf (filename, "file://%s", argv[1]);
+	if (argc != 2)
+	{
+		fprintf (stderr, "Usage: %s file.pdf", argv[0]);
+		return 1;
+	}
+
+	canon_name = canonicalize_file_name (argv[1]);
+	sprintf (filename, "file://%s", canon_name);
+	free (canon_name);
+
+	fbc = fbcanvas_create ();
 
 	win = initscr();
 	refresh();
