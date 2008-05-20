@@ -1,6 +1,6 @@
 # Makefile - 20.5.2008 - 20.5.2008 Ari & Tero Roponen
 
-CFLAGS:=$(shell pkg-config --cflags poppler-glib)
+CFLAGS:=$(shell pkg-config --cflags poppler-glib) -Os
 LIBS:=$(shell pkg-config --libs poppler-glib) -lncurses
 
 oma: main.o fbcanvas.o
