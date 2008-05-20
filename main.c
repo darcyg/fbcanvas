@@ -32,21 +32,22 @@ int main(int argc, char *argv[])
 	keypad(win, 1); /* Handle KEY_xxx */
 
 	fbc = fbcanvas_create(filename);
-
 	fbc->update(fbc);
-	fbc->draw(fbc);
 
+	/* Main loop */
 	for (;;)
 	{
-		int ch = getch();
+		int ch;
 
+		fbc->draw (fbc);
+
+		ch = getch ();
 		switch (ch)
 		{
 			case KEY_NPAGE:
 			{
 				fbc->pagenum++;
 				fbc->update(fbc);
-				fbc->draw(fbc);
 				break;
 			}
 
@@ -56,7 +57,6 @@ int main(int argc, char *argv[])
 				{
 					fbc->pagenum--;
 					fbc->update(fbc);
-					fbc->draw(fbc);
 				}
 				break;
 			}
@@ -64,28 +64,24 @@ int main(int argc, char *argv[])
 			case KEY_DOWN:
 			{
 				fbc->yoffset += 50;
-				fbc->draw(fbc);
 				break;
 			}
 
 			case KEY_UP:
 			{
 				fbc->yoffset -= 50;
-				fbc->draw(fbc);
 				break;
 			}
 
 			case KEY_LEFT:
 			{
 				fbc->xoffset -= 50;
-				fbc->draw(fbc);
 				break;
 			}
 
 			case KEY_RIGHT:
 			{
 				fbc->xoffset += 50;
-				fbc->draw(fbc);
 				break;
 			}
 
@@ -93,7 +89,6 @@ int main(int argc, char *argv[])
 			{
 				fbc->scale += 0.5;
 				fbc->update(fbc);
-				fbc->draw(fbc);
 				break;
 			}
 
@@ -103,7 +98,6 @@ int main(int argc, char *argv[])
 				{
 					fbc->scale -= 0.5;
 					fbc->update(fbc);
-					fbc->draw(fbc);
 				}
 				break;
 			}
@@ -125,7 +119,6 @@ int main(int argc, char *argv[])
 				GdkPixbuf *tmp = gdk_pixbuf_flip(fbc->gdkpixbuf, TRUE);
 				gdk_pixbuf_unref(fbc->gdkpixbuf);
 				fbc->gdkpixbuf = tmp;
-				fbc->draw(fbc);
 				break;
 			}
 
@@ -134,7 +127,6 @@ int main(int argc, char *argv[])
 				GdkPixbuf *tmp = gdk_pixbuf_flip(fbc->gdkpixbuf, FALSE);
 				gdk_pixbuf_unref(fbc->gdkpixbuf);
 				fbc->gdkpixbuf = tmp;
-				fbc->draw(fbc);
 				break;
 			}
 
@@ -145,14 +137,12 @@ int main(int argc, char *argv[])
 				GdkPixbuf *tmp = gdk_pixbuf_rotate_simple(fbc->gdkpixbuf, angle);
 				gdk_pixbuf_unref(fbc->gdkpixbuf);
 				fbc->gdkpixbuf = tmp;
-				fbc->draw(fbc);
 				break;
 			}
 
 			case KEY_HOME:
 			{
 				fbc->yoffset = 0;
-				fbc->draw(fbc);
 				break;
 			}
 
