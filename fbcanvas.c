@@ -28,8 +28,49 @@ static void update_image(struct fbcanvas *fbc);
 static void update_pdf(struct fbcanvas *fbc);
 static void draw_16bpp(struct fbcanvas *fbc);
 
+static void open_image(struct fbcanvas *fbc, char *filename)
+{
+	fprintf(stderr, "open_image: %s\n", filename);
+}
+
+static void open_pdf(struct fbcanvas *fbc, char *filename)
+{
+	GError *err = NULL;
+
+	/* PDF vaatii absoluuttisen "file:///tiedostonimen". */
+	fprintf(stderr, "open_pdf: %s\n", filename);
+
+	fbc->document = poppler_document_new_from_file(filename, NULL, &err);
+	if (!fbc->document)
+	{
+		/* TODO: käsittele virhe */
+	}
+
+	fbc->pagecount = poppler_document_get_n_pages(fbc->document);
+}
+
+static struct
+{
+	char *ext;
+	void (*open)(struct fbcanvas *fbc, char *filename);
+	void (*update)(struct fbcanvas *fbc);
+} file_ops[] = {
+	{
+		.ext = "jpg",
+		.open = open_image,
+		.update = update_image,
+	}, {
+		.ext = "pdf",
+		.open = open_pdf,
+		.update = update_pdf,
+	}, {
+		NULL
+	}
+};
+
 struct fbcanvas *fbcanvas_create(char *filename)
 {
+	int i;
 	char *ext;
 	GError *err = NULL;
 	struct fbcanvas *fbc = malloc(sizeof(*fbc));
@@ -89,7 +130,6 @@ struct fbcanvas *fbcanvas_create(char *filename)
 		{
 			case 16:
 				fbc->draw = draw_16bpp;
-				fbc->update = update_pdf;
 				break;
 			default:
 				fprintf(stderr, "Unsupported depth: %d\n", framebuffer.bpp);
@@ -98,31 +138,27 @@ struct fbcanvas *fbcanvas_create(char *filename)
 
 		/* Set correct update-method */
 		ext = strrchr(fbc->filename, '.');
-		if (!ext)
+		if (!ext || *(ext+1) == '\0')
 		{
 			fprintf(stderr, "Cannot determine file type: %s\n", fbc->filename);
 			exit(1);
+		} else ext++;
+
+		for (i = 0; file_ops[i].ext; i++)
+		{
+			if (!strcmp(ext, file_ops[i].ext))
+			{
+				fbc->open = file_ops[i].open;
+				fbc->update = file_ops[i].update;
+				goto type_ok;
+			}
 		}
 
-		if (!strcmp(ext, ".jpg"))
-		{
-			fbc->update = update_image;
-		} else if (!strcmp(ext, ".png")) {
-			fbc->update = update_image;
-		} else if (!strcmp(ext, ".gif")) {
-			fbc->update = update_image;
-		} else if (!strcmp(ext, ".pdf")) {
-			fbc->document = poppler_document_new_from_file(filename, NULL, &err);
-			if (!fbc->document)
-			{
-				/* TODO: käsittele virhe */
-			}
-			fbc->pagecount = poppler_document_get_n_pages(fbc->document);
-			fbc->update = update_pdf;
-		} else {
-			fprintf(stderr, "Unsupported file type: %s\n", ext);
-			exit(1);
-		}
+		fprintf(stderr, "Unsupported file type: %s\n", ext);
+		exit(1);
+
+type_ok:
+		fbc->open(fbc, filename);
 	}
 
 	return fbc;

@@ -15,6 +15,7 @@ struct fbcanvas
 	PopplerPage *page;
 	GdkPixbuf *gdkpixbuf;
 
+	void (*open)(struct fbcanvas *fbc, char *filename);
 	void (*draw)(struct fbcanvas *fbc);
 	void (*update)(struct fbcanvas *fbc);
 };
