@@ -1,6 +1,7 @@
 /*
- * fbcanvas.c - 17.5.2008 - 17.5.2008 Ari & Tero Roponen
+ * fbcanvas.c - 17.5.2008 - 20.5.2008 Ari & Tero Roponen
  */
+#include <poppler/glib/poppler.h>
 #include <sys/types.h>
 #include <linux/fb.h>
 #include <sys/ioctl.h>
@@ -26,6 +27,7 @@ static void draw_16bpp(struct fbcanvas *fbc);
 
 struct fbcanvas *fbcanvas_create(char *filename)
 {
+	GError *err = NULL;
 	struct fbcanvas *fbc = malloc(sizeof(*fbc));
 	if (fbc)
 	{
@@ -69,13 +71,21 @@ struct fbcanvas *fbcanvas_create(char *filename)
 			framebuffer.refcount++;
 		}
 
-		fbc->filename = strdup(filename);
+		g_type_init();
+
+		fbc->document = poppler_document_new_from_file(filename, NULL, &err);
+		if (!fbc->document)
+		{
+			/* TODO: käsittele virhe */
+		}
+
+		fbc->pagecount = poppler_document_get_n_pages(fbc->document);
+		fbc->filename = strdup(basename(filename));
 		fbc->gdkpixbuf = NULL;
 		fbc->xoffset = 0;
 		fbc->yoffset = 0;
 		fbc->scale = 1.0;
 		fbc->pagenum = 0;
-		fbc->pagecount = -1;
 
 		switch (framebuffer.bpp)
 		{
@@ -91,14 +101,10 @@ struct fbcanvas *fbcanvas_create(char *filename)
 	return fbc;
 }
 
-void fbcanvas_free(struct fbcanvas *fbc)
-{
-	g_object_unref(fbc->gdkpixbuf);
-	fbc->gdkpixbuf = NULL;
-}
-
 void fbcanvas_destroy(struct fbcanvas *fbc)
 {
+	if (fbc->document)
+		g_object_unref(fbc->document);
 	if (fbc->gdkpixbuf)
 		g_object_unref(fbc->gdkpixbuf);
 	if (fbc->filename)

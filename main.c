@@ -10,28 +10,14 @@
 
 static void update_pdf(struct fbcanvas *fbc)
 {
-	static PopplerDocument *document;
 	static PopplerPage *page = NULL;
 	unsigned char *src, *dst;
 	GError *err = NULL;
 	static double width, height;
 
-	g_type_init();
-
-	if (!document)
-	{
-		document = poppler_document_new_from_file(fbc->filename, NULL, &err);
-		if (!document)
-		{
-			/* TODO: käsittele virhe */
-		}
-
-		fbc->pagecount = poppler_document_get_n_pages(document);
-	}
-
 	if (page)
 		g_object_unref(page);
-	page = poppler_document_get_page(document, fbc->pagenum);
+	page = poppler_document_get_page(fbc->document, fbc->pagenum);
 	if (!page)
 	{
 		/* TODO: käsittele virhe */
@@ -148,8 +134,7 @@ int main(int argc, char *argv[])
 				GError *err = NULL;
 				char savename[256];
 
-				sprintf(savename, "%s-pg-%d.png",
-					basename(fbc->filename), fbc->pagenum + 1);
+				sprintf(savename, "%s-pg-%d.png", fbc->filename, fbc->pagenum + 1);
 				if (!gdk_pixbuf_save(fbc->gdkpixbuf, savename, "png", &err))
 					fprintf (stderr, "%s", err->message);
 				break;

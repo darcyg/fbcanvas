@@ -11,6 +11,7 @@ struct fbcanvas
 	double scale;
 	unsigned int pagenum;
 	unsigned int pagecount;
+	PopplerDocument *document;
 	GdkPixbuf *gdkpixbuf;
 
 	void (*draw)(struct fbcanvas *fbc);
