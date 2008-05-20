@@ -8,8 +8,6 @@
 #include <string.h>
 #include "fbcanvas.h"
 
-static GdkPixbuf *gdkpixbuf;
-
 static void show_pdf(struct fbcanvas *fbc, char *filename, double scale, int pagenum)
 {
 	static int page_count = -1;
@@ -50,14 +48,14 @@ static void show_pdf(struct fbcanvas *fbc, char *filename, double scale, int pag
 	}
 
 
-	gdkpixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
+	fbc->gdkpixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
 		TRUE, 8, ceil(width * scale), ceil(height * scale));
 	poppler_page_render_to_pixbuf(page, 0, 0,
-		ceil(width), ceil(height), scale, 0, gdkpixbuf);
+		ceil(width), ceil(height), scale, 0, fbc->gdkpixbuf);
 
-	fbc->data_from_pixbuf(fbc, gdkpixbuf,
-		gdk_pixbuf_get_width(gdkpixbuf),
-		gdk_pixbuf_get_height(gdkpixbuf));
+	fbc->data_from_pixbuf(fbc, fbc->gdkpixbuf,
+		gdk_pixbuf_get_width(fbc->gdkpixbuf),
+		gdk_pixbuf_get_height(fbc->gdkpixbuf));
 }
 
 int main(int argc, char *argv[])
@@ -155,7 +153,7 @@ int main(int argc, char *argv[])
 				char savename[256];
 
 				sprintf(savename, "%s-pg-%d.png", basename(filename), pagenum);
-				if (!gdk_pixbuf_save(gdkpixbuf, savename, "png", &err))
+				if (!gdk_pixbuf_save(fbc->gdkpixbuf, savename, "png", &err))
 					fprintf (stderr, "%s", err->message);
 				break;
 			}
