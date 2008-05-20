@@ -158,11 +158,15 @@ static void draw_16bpp(struct fbcanvas *fbc)
 			if (x >= framebuffer.width)
 				break;
 
-			if ((y < height - pb_yoffset) && (x < width - pb_xoffset))
+			if (x < fb_xoffset || y < fb_yoffset)
+				goto empty;
+
+			if ((y - fb_yoffset < height - pb_yoffset) &&
+			    (x - fb_xoffset < width - pb_xoffset))
 			{
 				unsigned char *tmp = data +
-					4*width * (pb_yoffset + y) +
-					4*(pb_xoffset + x);
+					4*width * (pb_yoffset + y - fb_yoffset) +
+					4*(pb_xoffset + x - fb_xoffset);
 
 				unsigned char red = *tmp++;
 				unsigned char green = *tmp++;
