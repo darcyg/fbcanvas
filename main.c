@@ -154,6 +154,13 @@ int main(int argc, char *argv[])
 				break;
 			}
 
+			case KEY_HOME:
+			{
+				fbc->yoffset = 0;
+				fbc->draw(fbc);
+				break;
+			}
+
 			case KEY_END:
 				goto out;
                 }
