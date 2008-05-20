@@ -3,10 +3,38 @@
  */
 
 #define _GNU_SOURCE
+#include <magic.h>
 #include <ncurses.h>
 #include <stdlib.h>
 #include <string.h>
 #include "fbcanvas.h"
+
+static char *supported_filetypes[] = {
+	"JPEG", "PDF", NULL
+};
+
+/* Return NULL or a string describing the unsupported file type.
+   Returned string must be freed after use. */
+static char *is_supported_filetype (char *filename)
+{
+	magic_t magic = magic_open (MAGIC_NONE);
+	int i, ret = magic_load (magic, NULL);
+	const char *type = magic_file (magic, filename);
+
+	for (i = 0; supported_filetypes[i]; i++)
+	{
+		if (strncmp (type, supported_filetypes[i],
+			     strlen (supported_filetypes[i])) == 0)
+		{
+			magic_close (magic);
+			return NULL;
+		}
+	}
+
+	type = strdup (type);
+	magic_close (magic);
+	return (char *)type;
+}
 
 static void cleanup(void)
 {
@@ -18,7 +46,7 @@ int main(int argc, char *argv[])
 	char filename[256];
 	struct fbcanvas *fbc;
 	WINDOW *win;
-	char *canon_name;
+	char *canon_name, *descr;
 
 	if (argc != 2)
 	{
@@ -28,6 +56,14 @@ int main(int argc, char *argv[])
 
 	canon_name = canonicalize_file_name (argv[1]);
 	sprintf (filename, "file://%s", canon_name);
+
+	if (descr = is_supported_filetype (canon_name))
+	{
+		fprintf (stderr, "Can't handle type: %s\n", descr);
+		free (descr);
+		free (canon_name);
+		return 2;
+	}
 	free (canon_name);
 
 	atexit(cleanup);
