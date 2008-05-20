@@ -73,6 +73,9 @@ struct fbcanvas *fbcanvas_create(char *filename)
 		fbc->gdkpixbuf = NULL;
 		fbc->xoffset = 0;
 		fbc->yoffset = 0;
+		fbc->scale = 1.0;
+		fbc->pagenum = 0;
+		fbc->pagecount = -1;
 
 		switch (framebuffer.bpp)
 		{

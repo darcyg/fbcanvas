@@ -8,10 +8,8 @@
 #include <string.h>
 #include "fbcanvas.h"
 
-static void show_pdf(struct fbcanvas *fbc, double scale, int pagenum)
+static void update_pdf(struct fbcanvas *fbc)
 {
-	static int page_count = -1;
-	static int current_pagenum = -1;
 	static PopplerDocument *document;
 	static PopplerPage *page = NULL;
 	unsigned char *src, *dst;
@@ -28,36 +26,28 @@ static void show_pdf(struct fbcanvas *fbc, double scale, int pagenum)
 			/* TODO: käsittele virhe */
 		}
 
-		page_count = poppler_document_get_n_pages(document);
+		fbc->pagecount = poppler_document_get_n_pages(document);
 	}
 
-	if (pagenum != current_pagenum)
-	{
-		if (page)
-			g_object_unref(page);
-		page = poppler_document_get_page(document, pagenum);
-		current_pagenum = pagenum;
-
-		poppler_page_get_size(page, &width, &height);
-		//fprintf(stderr, "Size: %lfx%lf\n", width, height);
-	}
-
+	if (page)
+		g_object_unref(page);
+	page = poppler_document_get_page(document, fbc->pagenum);
 	if (!page)
 	{
 		/* TODO: käsittele virhe */
 	}
 
+	poppler_page_get_size(page, &width, &height);
+	//fprintf(stderr, "Size: %lfx%lf\n", width, height);
 
 	fbc->gdkpixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
-		TRUE, 8, ceil(width * scale), ceil(height * scale));
+		TRUE, 8, ceil(width * fbc->scale), ceil(height * fbc->scale));
 	poppler_page_render_to_pixbuf(page, 0, 0,
-		ceil(width), ceil(height), scale, 0, fbc->gdkpixbuf);
+		ceil(width), ceil(height), fbc->scale, 0, fbc->gdkpixbuf);
 }
 
 int main(int argc, char *argv[])
 {
-	int pagenum = 0;
-	double scale = 1.0;
 	char filename[256];
 	struct fbcanvas *fbc;
 	WINDOW *win;
@@ -72,7 +62,7 @@ int main(int argc, char *argv[])
 
 	fbc = fbcanvas_create(filename);
 
-	show_pdf(fbc, scale, pagenum);
+	update_pdf(fbc);
 	fbc->draw(fbc);
 
 	for (;;)
@@ -83,18 +73,20 @@ int main(int argc, char *argv[])
 		{
 			case KEY_NPAGE:
 			{
-				pagenum++;
-				show_pdf(fbc, scale, pagenum);
+				fbc->pagenum++;
+				update_pdf(fbc);
 				fbc->draw(fbc);
 				break;
 			}
 
 			case KEY_PPAGE:
 			{
-				if (pagenum > 0)
-					pagenum--;
-				show_pdf(fbc, scale, pagenum);
-				fbc->draw(fbc);
+				if (fbc->pagenum > 0)
+				{
+					fbc->pagenum--;
+					update_pdf(fbc);
+					fbc->draw(fbc);
+				}
 				break;
 			}
 
@@ -108,16 +100,20 @@ int main(int argc, char *argv[])
 			case KEY_UP:
 			{
 				if (fbc->yoffset >= 50)
+				{
 					fbc->yoffset -= 50;
-				fbc->draw(fbc);
+					fbc->draw(fbc);
+				}
 				break;
 			}
 
 			case KEY_LEFT:
 			{
 				if (fbc->xoffset >= 50)
+				{
 					fbc->xoffset -= 50;
-				fbc->draw(fbc);
+					fbc->draw(fbc);
+				}
 				break;
 			}
 
@@ -130,18 +126,20 @@ int main(int argc, char *argv[])
 
 			case '+':
 			{
-				scale += 0.5;
-				show_pdf(fbc, scale, pagenum);
+				fbc->scale += 0.5;
+				update_pdf(fbc);
 				fbc->draw(fbc);
 				break;
 			}
 
 			case '-':
 			{
-				if (scale >= 1.0)
-					scale -= 0.5;
-				show_pdf(fbc, scale, pagenum);
-				fbc->draw(fbc);
+				if (fbc->scale >= 1.0)
+				{
+					fbc->scale -= 0.5;
+					update_pdf(fbc);
+					fbc->draw(fbc);
+				}
 				break;
 			}
 
@@ -151,7 +149,7 @@ int main(int argc, char *argv[])
 				char savename[256];
 
 				sprintf(savename, "%s-pg-%d.png",
-					basename(fbc->filename), pagenum + 1);
+					basename(fbc->filename), fbc->pagenum + 1);
 				if (!gdk_pixbuf_save(fbc->gdkpixbuf, savename, "png", &err))
 					fprintf (stderr, "%s", err->message);
 				break;

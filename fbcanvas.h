@@ -8,6 +8,9 @@ struct fbcanvas
 	char *filename;
 	unsigned int xoffset;
 	unsigned int yoffset;
+	double scale;
+	unsigned int pagenum;
+	unsigned int pagecount;
 	GdkPixbuf *gdkpixbuf;
 
 	void (*draw)(struct fbcanvas *fbc);
