@@ -135,7 +135,7 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 	if (fbc->document)
 		g_object_unref(fbc->document);
 	if (fbc->gdkpixbuf)
-		gdk_pixbuf_unref(fbc->gdkpixbuf);
+		g_object_unref(fbc->gdkpixbuf);
 	if (fbc->filename)
 		free(fbc->filename);
 	free(fbc);

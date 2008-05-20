@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 			case 'x':
 			{
 				GdkPixbuf *tmp = gdk_pixbuf_flip(fbc->gdkpixbuf, TRUE);
-				gdk_pixbuf_unref(fbc->gdkpixbuf);
+				g_object_unref(fbc->gdkpixbuf);
 				fbc->gdkpixbuf = tmp;
 				fbc->draw(fbc);
 				break;
@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
 			case 'y':
 			{
 				GdkPixbuf *tmp = gdk_pixbuf_flip(fbc->gdkpixbuf, FALSE);
-				gdk_pixbuf_unref(fbc->gdkpixbuf);
+				g_object_unref(fbc->gdkpixbuf);
 				fbc->gdkpixbuf = tmp;
 				fbc->draw(fbc);
 				break;
@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
 			{
 				int angle = (ch == 'z' ? 90 : 270);
 				GdkPixbuf *tmp = gdk_pixbuf_rotate_simple(fbc->gdkpixbuf, angle);
-				gdk_pixbuf_unref(fbc->gdkpixbuf);
+				g_object_unref(fbc->gdkpixbuf);
 				fbc->gdkpixbuf = tmp;
 				fbc->draw(fbc);
 				break;
