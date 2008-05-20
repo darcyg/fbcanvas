@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
 
 				sprintf(savename, "%s-pg-%d.png", basename(fbc->filename),
 					fbc->pagenum + 1);
-				if (!gdk_pixbuf_save(fbc->gdkpixbuf, savename, "png", &err))
+				if (!gdk_pixbuf_save(fbc->gdkpixbuf, savename, "png", &err, NULL))
 					fprintf (stderr, "%s", err->message);
 				break;
 			}
