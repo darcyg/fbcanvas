@@ -40,15 +40,14 @@ static void open_pdf(struct fbcanvas *fbc, char *filename)
 	char fullname[256];
 	char *canon_name = canonicalize_file_name(filename);
 
-	fprintf(stderr, "open_pdf: %s\n", filename);
-
 	/* PDF vaatii absoluuttisen "file:///tiedostonimen". */
 	sprintf(fullname, "file://%s", canon_name);
 
 	fbc->document = poppler_document_new_from_file(fullname, NULL, &err);
 	if (!fbc->document)
 	{
-		/* TODO: käsittele virhe */
+		fprintf(stderr, "open_pdf: %s\n", err->message);
+		exit(1);
 	}
 
 	free(canon_name);
