@@ -53,8 +53,11 @@ int main(int argc, char *argv[])
 		{
 			case KEY_NPAGE:
 			{
-				fbc->pagenum++;
-				fbc->update(fbc);
+				if (fbc->pagenum < fbc->pagecount - 1)
+				{
+					fbc->pagenum++;
+					fbc->update(fbc);
+				}
 				break;
 			}
 
