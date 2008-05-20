@@ -5,14 +5,19 @@
 
 struct fbcanvas
 {
+	char *filename;
 	unsigned int xoffset;
 	unsigned int yoffset;
+	double scale;
+	unsigned int pagenum;
+	unsigned int pagecount;
+	PopplerDocument *document;
 	GdkPixbuf *gdkpixbuf;
 
 	void (*draw)(struct fbcanvas *fbc);
 };
 
-struct fbcanvas *fbcanvas_create(void);
+struct fbcanvas *fbcanvas_create(char *filename);
 void fbcanvas_destroy(struct fbcanvas *fbc);
 
 #endif /* FBCANVAS_H */
