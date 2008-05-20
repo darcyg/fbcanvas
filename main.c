@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
 				break;
 			}
 
-			case KEY_END:
+			case 27: /* ESC */
 				goto out;
                 }
 	}
