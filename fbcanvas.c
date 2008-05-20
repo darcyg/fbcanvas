@@ -160,6 +160,16 @@ static void update_image(struct fbcanvas *fbc)
 	}
 
 	fbc->gdkpixbuf = gdk_pixbuf_add_alpha(fbc->gdkpixbuf, FALSE, 0, 0, 0);
+
+	if (fbc->scale != 1.0)
+	{
+		GdkPixbuf *tmp = gdk_pixbuf_scale_simple(fbc->gdkpixbuf,
+			ceil(fbc->scale * gdk_pixbuf_get_width(fbc->gdkpixbuf)),
+			ceil(fbc->scale * gdk_pixbuf_get_height(fbc->gdkpixbuf)),
+			GDK_INTERP_BILINEAR);
+		g_object_unref(fbc->gdkpixbuf);
+		fbc->gdkpixbuf = tmp;
+	}
 }
 
 static void update_pdf(struct fbcanvas *fbc)
