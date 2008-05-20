@@ -9,7 +9,6 @@ struct fbcanvas
 	unsigned int height;
 	unsigned int xoffset;
 	unsigned int yoffset;
-	unsigned char bpp;
 	unsigned char *buffer;
 
 	void (*draw)(struct fbcanvas *fbc);

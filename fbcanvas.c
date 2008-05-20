@@ -22,9 +22,7 @@ static struct
 	.mem = MAP_FAILED
 };
 
-static void draw_8bpp(struct fbcanvas *fbc);
 static void draw_16bpp(struct fbcanvas *fbc);
-static void draw_24bpp(struct fbcanvas *fbc);
 static void data16_from_pixbuf(struct fbcanvas *fbc, GdkPixbuf *gdkpixbuf, int w, int h);
 
 struct fbcanvas *fbcanvas_create(int width, int height)
@@ -79,22 +77,16 @@ struct fbcanvas *fbcanvas_create(int width, int height)
 
 		switch (framebuffer.bpp)
 		{
-			case 8:
-				fbc->draw = draw_8bpp;
-				break;
 			case 16:
 				fbc->data_from_pixbuf = data16_from_pixbuf;
 				fbc->draw = draw_16bpp;
 				break;
-			case 24:
-				fbc->draw = draw_24bpp;
 			default:
 				fprintf(stderr, "Unsupported depth: %d\n", framebuffer.bpp);
 				exit(1);
 		}
 
-		fbc->bpp = framebuffer.bpp;
-		fbc->buffer = malloc(width * height * (fbc->bpp / 8));
+		fbc->buffer = malloc(width * height * (framebuffer.bpp / 8));
 		/* TODO: tarkista onnistuminen */
 	}
 
@@ -120,26 +112,6 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 	{
 		munmap(framebuffer.mem,
 			framebuffer.width * framebuffer.height * (framebuffer.bpp / 8));
-	}
-}
-
-static void draw_8bpp(struct fbcanvas *fbc)
-{
-	/* TODO: piirtäminen tehdään täällä. Ota huomioon offsetit ym.
-	 * TODO: tarkista ettei mennä framebufferin rajojen yli.
-	 */
-	unsigned int i, j;
-	unsigned char *src, *dst;
-
-	for (j = 0; j < fbc->height - fbc->yoffset; j++)
-	{
-		for (i = 0; i < fbc->width - fbc->xoffset; i++)
-		{
-			src = (unsigned char *)fbc->buffer + fbc->width * (fbc->yoffset + j) +
-				fbc->xoffset + i;
-			dst = (unsigned char *)framebuffer.mem + framebuffer.width * j + i;
-			*dst = *src;
-		}
 	}
 }
 
@@ -178,27 +150,6 @@ static void draw_16bpp(struct fbcanvas *fbc)
 		}
 	}
 }
-
-static void draw_24bpp(struct fbcanvas *fbc)
-{
-	/* TODO: piirtäminen tehdään täällä. Ota huomioon offsetit ym.
-	 * TODO: tarkista ettei mennä framebufferin rajojen yli.
-	 */
-	unsigned int i, j;
-	unsigned int *src, *dst;
-
-	for (j = 0; j < fbc->height - fbc->yoffset; j++)
-	{
-		for (i = 0; i < fbc->width - fbc->xoffset; i++)
-		{
-			src = (unsigned int *)fbc->buffer + fbc->width * (fbc->yoffset + j) +
-				fbc->xoffset + i;
-			dst = (unsigned int *)framebuffer.mem + framebuffer.width * j + i;
-			*dst = (*src & 0xFFFFFF00);
-		}
-	}
-}
-
 
 static void data16_from_pixbuf(struct fbcanvas *fbc, GdkPixbuf *gdkpixbuf, int w, int h)
 {
