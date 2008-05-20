@@ -36,6 +36,11 @@ static char *is_supported_filetype (char *filename)
 	return (char *)type;
 }
 
+static void cleanup(void)
+{
+	endwin();
+}
+
 int main(int argc, char *argv[])
 {
 	char filename[256];
@@ -61,6 +66,8 @@ int main(int argc, char *argv[])
 	}
 	free (canon_name);
 
+	atexit(cleanup);
+
 	win = initscr();
 	refresh();
 	noecho();
@@ -82,8 +89,11 @@ int main(int argc, char *argv[])
 		{
 			case KEY_NPAGE:
 			{
-				fbc->pagenum++;
-				fbc->update(fbc);
+				if (fbc->pagenum < fbc->pagecount - 1)
+				{
+					fbc->pagenum++;
+					fbc->update(fbc);
+				}
 				break;
 			}
 
@@ -189,6 +199,5 @@ int main(int argc, char *argv[])
 out:
 
 	fbcanvas_destroy(fbc);
-	endwin();
 	return 0;
 }
