@@ -96,21 +96,15 @@ int main(int argc, char *argv[])
 
 			case KEY_UP:
 			{
-				if (fbc->yoffset >= 50)
-				{
-					fbc->yoffset -= 50;
-					fbc->draw(fbc);
-				}
+				fbc->yoffset -= 50;
+				fbc->draw(fbc);
 				break;
 			}
 
 			case KEY_LEFT:
 			{
-				if (fbc->xoffset >= 50)
-				{
-					fbc->xoffset -= 50;
-					fbc->draw(fbc);
-				}
+				fbc->xoffset -= 50;
+				fbc->draw(fbc);
 				break;
 			}
 

@@ -6,8 +6,8 @@
 struct fbcanvas
 {
 	char *filename;
-	unsigned int xoffset;
-	unsigned int yoffset;
+	signed int xoffset;
+	signed int yoffset;
 	double scale;
 	unsigned int pagenum;
 	unsigned int pagecount;

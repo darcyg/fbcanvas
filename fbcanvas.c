@@ -133,6 +133,18 @@ static void draw_16bpp(struct fbcanvas *fbc)
 
 	unsigned int width = gdk_pixbuf_get_width(fbc->gdkpixbuf);
 	unsigned int height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
+	int pb_xoffset = 0, pb_yoffset = 0;
+	int fb_xoffset = 0, fb_yoffset = 0;
+
+	if (fbc->xoffset >= 0)
+		pb_xoffset = fbc->xoffset;
+	else
+		fb_xoffset = -fbc->xoffset;
+
+	if (fbc->yoffset >= 0)
+		pb_yoffset = fbc->yoffset;
+	else
+		fb_yoffset = -fbc->yoffset;
 
 	for (y = 0;; y++)
 	{
@@ -146,11 +158,11 @@ static void draw_16bpp(struct fbcanvas *fbc)
 			if (x >= framebuffer.width)
 				break;
 
-			if ((y < height - fbc->yoffset) && (x < width - fbc->xoffset))
+			if ((y < height - pb_yoffset) && (x < width - pb_xoffset))
 			{
 				unsigned char *tmp = data +
-					4*width * (fbc->yoffset + y) +
-					4*(fbc->xoffset + x);
+					4*width * (pb_yoffset + y) +
+					4*(pb_xoffset + x);
 
 				unsigned char red = *tmp++;
 				unsigned char green = *tmp++;
@@ -163,10 +175,12 @@ static void draw_16bpp(struct fbcanvas *fbc)
 				color |= ((32 * blue / 256) & 0b00011111) << 0;
 				src = &color;
 			} else {
+empty:
 				src = &empty;
 			}
 
-			dst = (unsigned short *)framebuffer.mem + framebuffer.width * y + x;
+			dst = (unsigned short *)framebuffer.mem +
+				y * framebuffer.width + x;
 			*dst = *src;
 		}
 	}
