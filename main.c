@@ -8,6 +8,11 @@
 #include <string.h>
 #include "fbcanvas.h"
 
+static void cleanup(void)
+{
+	endwin();
+}
+
 int main(int argc, char *argv[])
 {
 	char filename[256];
@@ -24,6 +29,8 @@ int main(int argc, char *argv[])
 	canon_name = canonicalize_file_name (argv[1]);
 	sprintf (filename, "file://%s", canon_name);
 	free (canon_name);
+
+	atexit(cleanup);
 
 	win = initscr();
 	refresh();
@@ -153,6 +160,5 @@ int main(int argc, char *argv[])
 out:
 
 	fbcanvas_destroy(fbc);
-	endwin();
 	return 0;
 }
