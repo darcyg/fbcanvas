@@ -51,8 +51,6 @@ int main(int argc, char *argv[])
 	sprintf (filename, "file://%s", canon_name);
 	free (canon_name);
 
-	fbc = fbcanvas_create (filename);
-
 	win = initscr();
 	refresh();
 	noecho();
