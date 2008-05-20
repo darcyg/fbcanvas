@@ -12,9 +12,11 @@ struct fbcanvas
 	unsigned int pagenum;
 	unsigned int pagecount;
 	PopplerDocument *document;
+	PopplerPage *page;
 	GdkPixbuf *gdkpixbuf;
 
 	void (*draw)(struct fbcanvas *fbc);
+	void (*update)(struct fbcanvas *fbc);
 };
 
 struct fbcanvas *fbcanvas_create(char *filename);

@@ -7,6 +7,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <fcntl.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,6 +24,7 @@ static struct
 	.mem = MAP_FAILED
 };
 
+static void update_pdf(struct fbcanvas *fbc);
 static void draw_16bpp(struct fbcanvas *fbc);
 
 struct fbcanvas *fbcanvas_create(char *filename)
@@ -79,6 +81,7 @@ struct fbcanvas *fbcanvas_create(char *filename)
 			/* TODO: käsittele virhe */
 		}
 
+		fbc->page = NULL;
 		fbc->pagecount = poppler_document_get_n_pages(fbc->document);
 		fbc->filename = strdup(basename(filename));
 		fbc->gdkpixbuf = NULL;
@@ -91,6 +94,7 @@ struct fbcanvas *fbcanvas_create(char *filename)
 		{
 			case 16:
 				fbc->draw = draw_16bpp;
+				fbc->update = update_pdf;
 				break;
 			default:
 				fprintf(stderr, "Unsupported depth: %d\n", framebuffer.bpp);
@@ -103,6 +107,8 @@ struct fbcanvas *fbcanvas_create(char *filename)
 
 void fbcanvas_destroy(struct fbcanvas *fbc)
 {
+	if (fbc->page)
+		g_object_unref(fbc->page);
 	if (fbc->document)
 		g_object_unref(fbc->document);
 	if (fbc->gdkpixbuf)
@@ -118,6 +124,28 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 		munmap(framebuffer.mem,
 			framebuffer.width * framebuffer.height * (framebuffer.bpp / 8));
 	}
+}
+
+static void update_pdf(struct fbcanvas *fbc)
+{
+	GError *err = NULL;
+	static double width, height;
+
+	if (fbc->page)
+		g_object_unref(fbc->page);
+	fbc->page = poppler_document_get_page(fbc->document, fbc->pagenum);
+	if (!fbc->page)
+	{
+		/* TODO: käsittele virhe */
+	}
+
+	poppler_page_get_size(fbc->page, &width, &height);
+	//fprintf(stderr, "Size: %lfx%lf\n", width, height);
+
+	fbc->gdkpixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
+		TRUE, 8, ceil(width * fbc->scale), ceil(height * fbc->scale));
+	poppler_page_render_to_pixbuf(fbc->page, 0, 0,
+		ceil(width), ceil(height), fbc->scale, 0, fbc->gdkpixbuf);
 }
 
 static void draw_16bpp(struct fbcanvas *fbc)
