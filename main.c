@@ -1,9 +1,9 @@
 /*
- * main.c - 17.5.2008 - 17.5.2008 Ari & Tero Roponen
+ * main.c - 17.5.2008 - 20.5.2008 Ari & Tero Roponen
  */
 
 #include <poppler/glib/poppler.h>
-#include <curses.h>
+#include <ncurses.h>
 #include <math.h>
 #include <string.h>
 #include "fbcanvas.h"
