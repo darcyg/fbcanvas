@@ -121,31 +121,31 @@ static void draw_16bpp(struct fbcanvas *fbc)
 	 * TODO: tarkista ettei mennä framebufferin rajojen yli.
 	 */
 	static unsigned short empty = 0x0000;
-	unsigned int i, j;
+	unsigned int x, y;
 	unsigned short *src, *dst;
 
-	for (j = 0;; j++)
+	for (y = 0;; y++)
 	{
 		/* Framebufferin reuna tuli vastaan - lopetetaan. */
-		if (j >= framebuffer.height)
+		if (y >= framebuffer.height)
 			break;
 
-		for (i = 0;; i++)
+		for (x = 0;; x++)
 		{
 			/* Framebufferin reuna tuli vastaan - lopetetaan. */
-			if (i >= framebuffer.width)
+			if (x >= framebuffer.width)
 				break;
 
-			if ((j < fbc->height - fbc->yoffset) && (i < fbc->width - fbc->xoffset))
+			if ((y < fbc->height - fbc->yoffset) && (x < fbc->width - fbc->xoffset))
 			{
 				src = (unsigned short *)fbc->buffer +
-					fbc->width * (fbc->yoffset + j) +
-					fbc->xoffset + i;
+					fbc->width * (fbc->yoffset + y) +
+					fbc->xoffset + x;
 			} else {
 				src = &empty;
 			}
 
-			dst = (unsigned short *)framebuffer.mem + framebuffer.width * j + i;
+			dst = (unsigned short *)framebuffer.mem + framebuffer.width * y + x;
 			*dst = *src;
 		}
 	}
