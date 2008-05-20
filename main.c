@@ -8,7 +8,7 @@
 #include <string.h>
 #include "fbcanvas.h"
 
-static void show_pdf(struct fbcanvas *fbc, char *filename, double scale, int pagenum)
+static void show_pdf(struct fbcanvas *fbc, double scale, int pagenum)
 {
 	static int page_count = -1;
 	static int current_pagenum = -1;
@@ -22,7 +22,7 @@ static void show_pdf(struct fbcanvas *fbc, char *filename, double scale, int pag
 
 	if (!document)
 	{
-		document = poppler_document_new_from_file(filename, NULL, &err);
+		document = poppler_document_new_from_file(fbc->filename, NULL, &err);
 		if (!document)
 		{
 			/* TODO: käsittele virhe */
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 	int pagenum = 0;
 	double scale = 1.0;
 	char filename[256];
-	struct fbcanvas *fbc = fbcanvas_create();
+	struct fbcanvas *fbc;
 	WINDOW *win;
 
 	sprintf (filename, "file://%s", argv[1]);
@@ -70,7 +70,9 @@ int main(int argc, char *argv[])
 	cbreak();
 	keypad(win, 1); /* Handle KEY_xxx */
 
-	show_pdf(fbc, filename, scale, pagenum);
+	fbc = fbcanvas_create(filename);
+
+	show_pdf(fbc, scale, pagenum);
 	fbc->draw(fbc);
 
 	for (;;)
@@ -82,7 +84,7 @@ int main(int argc, char *argv[])
 			case KEY_NPAGE:
 			{
 				pagenum++;
-				show_pdf(fbc, filename, scale, pagenum);
+				show_pdf(fbc, scale, pagenum);
 				fbc->draw(fbc);
 				break;
 			}
@@ -91,7 +93,7 @@ int main(int argc, char *argv[])
 			{
 				if (pagenum > 0)
 					pagenum--;
-				show_pdf(fbc, filename, scale, pagenum);
+				show_pdf(fbc, scale, pagenum);
 				fbc->draw(fbc);
 				break;
 			}
@@ -129,7 +131,7 @@ int main(int argc, char *argv[])
 			case '+':
 			{
 				scale += 0.5;
-				show_pdf(fbc, filename, scale, pagenum);
+				show_pdf(fbc, scale, pagenum);
 				fbc->draw(fbc);
 				break;
 			}
@@ -138,7 +140,7 @@ int main(int argc, char *argv[])
 			{
 				if (scale >= 1.0)
 					scale -= 0.5;
-				show_pdf(fbc, filename, scale, pagenum);
+				show_pdf(fbc, scale, pagenum);
 				fbc->draw(fbc);
 				break;
 			}
@@ -148,7 +150,8 @@ int main(int argc, char *argv[])
 				GError *err = NULL;
 				char savename[256];
 
-				sprintf(savename, "%s-pg-%d.png", basename(filename), pagenum);
+				sprintf(savename, "%s-pg-%d.png",
+					basename(fbc->filename), pagenum + 1);
 				if (!gdk_pixbuf_save(fbc->gdkpixbuf, savename, "png", &err))
 					fprintf (stderr, "%s", err->message);
 				break;

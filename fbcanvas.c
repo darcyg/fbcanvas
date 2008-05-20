@@ -24,7 +24,7 @@ static struct
 
 static void draw_16bpp(struct fbcanvas *fbc);
 
-struct fbcanvas *fbcanvas_create(void)
+struct fbcanvas *fbcanvas_create(char *filename)
 {
 	struct fbcanvas *fbc = malloc(sizeof(*fbc));
 	if (fbc)
@@ -69,6 +69,7 @@ struct fbcanvas *fbcanvas_create(void)
 			framebuffer.refcount++;
 		}
 
+		fbc->filename = strdup(filename);
 		fbc->gdkpixbuf = NULL;
 		fbc->xoffset = 0;
 		fbc->yoffset = 0;
@@ -97,6 +98,8 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 {
 	if (fbc->gdkpixbuf)
 		g_object_unref(fbc->gdkpixbuf);
+	if (fbc->filename)
+		free(fbc->filename);
 	free(fbc);
 
 	framebuffer.refcount--;
