@@ -62,6 +62,14 @@ static struct
 	void (*update)(struct fbcanvas *fbc);
 } file_ops[] = {
 	{
+		.ext = "PC bitmap",
+		.open = open_image,
+		.update = update_image,
+	}, {
+		.ext = "PCX",
+		.open = open_image,
+		.update = update_image,
+	}, {
 		.ext = "GIF image",
 		.open = open_image,
 		.update = update_image,
@@ -75,6 +83,18 @@ static struct
 		.update = update_pdf,
 	}, {
 		.ext = "PNG",
+		.open = open_image,
+		.update = update_image,
+	}, {
+		.ext = "Netpbm PPM",
+		.open = open_image,
+		.update = update_image,
+	}, {
+		.ext = "TIFF image data",
+		.open = open_image,
+		.update = update_image,
+	}, {
+		.ext = "X pixmap image text",
 		.open = open_image,
 		.update = update_image,
 	}, {
