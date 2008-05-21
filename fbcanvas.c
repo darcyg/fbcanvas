@@ -62,6 +62,10 @@ static struct
 	void (*update)(struct fbcanvas *fbc);
 } file_ops[] = {
 	{
+		.ext = "GIF image",
+		.open = open_image,
+		.update = update_image,
+	}, {
 		.ext = "JPEG",
 		.open = open_image,
 		.update = update_image,
