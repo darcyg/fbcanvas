@@ -57,44 +57,44 @@ static void open_pdf(struct fbcanvas *fbc, char *filename)
 
 static struct
 {
-	char *ext;
+	char *type;
 	void (*open)(struct fbcanvas *fbc, char *filename);
 	void (*update)(struct fbcanvas *fbc);
 } file_ops[] = {
 	{
-		.ext = "PC bitmap",
+		.type = "PC bitmap",
 		.open = open_image,
 		.update = update_image,
 	}, {
-		.ext = "PCX",
+		.type = "PCX",
 		.open = open_image,
 		.update = update_image,
 	}, {
-		.ext = "GIF image",
+		.type = "GIF image",
 		.open = open_image,
 		.update = update_image,
 	}, {
-		.ext = "JPEG",
+		.type = "JPEG",
 		.open = open_image,
 		.update = update_image,
 	}, {
-		.ext = "PDF",
+		.type = "PDF",
 		.open = open_pdf,
 		.update = update_pdf,
 	}, {
-		.ext = "PNG",
+		.type = "PNG",
 		.open = open_image,
 		.update = update_image,
 	}, {
-		.ext = "Netpbm PPM",
+		.type = "Netpbm PPM",
 		.open = open_image,
 		.update = update_image,
 	}, {
-		.ext = "TIFF image data",
+		.type = "TIFF image data",
 		.open = open_image,
 		.update = update_image,
 	}, {
-		.ext = "X pixmap image text",
+		.type = "X pixmap image text",
 		.open = open_image,
 		.update = update_image,
 	}, {
@@ -104,8 +104,6 @@ static struct
 
 struct fbcanvas *fbcanvas_create(char *filename)
 {
-	int i;
-	char *ext;
 	GError *err = NULL;
 	struct fbcanvas *fbc = malloc(sizeof(*fbc));
 	if (fbc)
@@ -176,9 +174,10 @@ struct fbcanvas *fbcanvas_create(char *filename)
 			int i, ret = magic_load(magic, NULL);
 			const char *type = magic_file(magic, filename);
 
-			for (i = 0; file_ops[i].ext; i++)
+			/* Try to identify file by its header */
+			for (i = 0; file_ops[i].type; i++)
 			{
-				if (!strncmp(type, file_ops[i].ext, strlen(file_ops[i].ext)))
+				if (!strncmp(type, file_ops[i].type, strlen(file_ops[i].type)))
 				{
 					magic_close(magic);
 					fbc->open = file_ops[i].open;
@@ -186,6 +185,8 @@ struct fbcanvas *fbcanvas_create(char *filename)
 					goto type_ok;
 				}
 			}
+
+			/* TODO: Try to identify file by its extension */
 
 			fprintf(stderr, "Unsupported file type: %s\n", type);
 			magic_close(magic);
