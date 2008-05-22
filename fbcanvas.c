@@ -258,8 +258,6 @@ static void update_image(struct fbcanvas *fbc)
 	}
 
 	fbc->gdkpixbuf = gdk_pixbuf_add_alpha(fbc->gdkpixbuf, FALSE, 0, 0, 0);
-	fbc->width = gdk_pixbuf_get_width(fbc->gdkpixbuf);
-	fbc->height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
 
 	if (fbc->scale != 1.0)
 	{
@@ -270,6 +268,9 @@ static void update_image(struct fbcanvas *fbc)
 		g_object_unref(fbc->gdkpixbuf);
 		fbc->gdkpixbuf = tmp;
 	}
+
+	fbc->width = gdk_pixbuf_get_width(fbc->gdkpixbuf);
+	fbc->height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
 }
 
 static void update_pdf(struct fbcanvas *fbc)
@@ -292,6 +293,9 @@ static void update_pdf(struct fbcanvas *fbc)
 		TRUE, 8, ceil(width * fbc->scale), ceil(height * fbc->scale));
 	poppler_page_render_to_pixbuf(fbc->page, 0, 0,
 		ceil(width), ceil(height), fbc->scale, 0, fbc->gdkpixbuf);
+
+	fbc->width = gdk_pixbuf_get_width(fbc->gdkpixbuf);
+	fbc->height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
 }
 
 static void draw_16bpp(struct fbcanvas *fbc)
