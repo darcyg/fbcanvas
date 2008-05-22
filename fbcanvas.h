@@ -18,6 +18,7 @@ struct fbcanvas
 	void (*open)(struct fbcanvas *fbc, char *filename);
 	void (*draw)(struct fbcanvas *fbc);
 	void (*update)(struct fbcanvas *fbc);
+	void (*scroll)(struct fbcanvas *fbc, int dx, int dy);
 };
 
 struct fbcanvas *fbcanvas_create(char *filename);

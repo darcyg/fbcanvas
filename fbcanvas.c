@@ -102,6 +102,13 @@ static struct
 	}
 };
 
+static void fbcanvas_scroll(struct fbcanvas *fbc, int dx, int dy)
+{
+	/* TODO: tarkista ettei mennä reunusten ohi */
+	fbc->xoffset += dx;
+	fbc->yoffset += dy;
+}
+
 struct fbcanvas *fbcanvas_create(char *filename)
 {
 	GError *err = NULL;
@@ -150,6 +157,7 @@ struct fbcanvas *fbcanvas_create(char *filename)
 
 		g_type_init();
 
+		fbc->scroll = fbcanvas_scroll;
 		fbc->page = NULL;
 		fbc->filename = strdup(filename);
 		fbc->gdkpixbuf = NULL;

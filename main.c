@@ -4,6 +4,7 @@
 
 #include <magic.h>
 #include <ncurses.h>
+#undef scroll
 #include <stdlib.h>
 #include <string.h>
 #include "fbcanvas.h"
@@ -68,25 +69,25 @@ int main(int argc, char *argv[])
 
 			case KEY_DOWN:
 			{
-				fbc->yoffset += 50;
+				fbc->scroll(fbc, 0, 50);
 				break;
 			}
 
 			case KEY_UP:
 			{
-				fbc->yoffset -= 50;
+				fbc->scroll(fbc, 0, -50);
 				break;
 			}
 
 			case KEY_LEFT:
 			{
-				fbc->xoffset -= 50;
+				fbc->scroll(fbc, -50, 0);
 				break;
 			}
 
 			case KEY_RIGHT:
 			{
-				fbc->xoffset += 50;
+				fbc->scroll(fbc, 50, 0);
 				break;
 			}
 
