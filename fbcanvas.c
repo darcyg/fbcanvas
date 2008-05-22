@@ -107,6 +107,24 @@ static void fbcanvas_scroll(struct fbcanvas *fbc, int dx, int dy)
 	/* TODO: tarkista ettei mennä reunusten ohi */
 	fbc->xoffset += dx;
 	fbc->yoffset += dy;
+
+	if (fbc->xoffset >= 0)
+	{
+		if (fbc->xoffset >= (int)fbc->width)
+			fbc->xoffset = fbc->width - 1;
+	} else {
+		if (-fbc->xoffset >= framebuffer.width)
+			fbc->xoffset = -(framebuffer.width - 1);
+	}
+
+	if (fbc->yoffset >= 0)
+	{
+		if (fbc->yoffset >= (int)fbc->height)
+			fbc->yoffset = fbc->height - 1;
+	} else {
+		if (-fbc->yoffset >= framebuffer.height)
+			fbc->yoffset = -(framebuffer.height - 1);
+	}
 }
 
 struct fbcanvas *fbcanvas_create(char *filename)
@@ -240,12 +258,14 @@ static void update_image(struct fbcanvas *fbc)
 	}
 
 	fbc->gdkpixbuf = gdk_pixbuf_add_alpha(fbc->gdkpixbuf, FALSE, 0, 0, 0);
+	fbc->width = gdk_pixbuf_get_width(fbc->gdkpixbuf);
+	fbc->height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
 
 	if (fbc->scale != 1.0)
 	{
 		GdkPixbuf *tmp = gdk_pixbuf_scale_simple(fbc->gdkpixbuf,
-			ceil(fbc->scale * gdk_pixbuf_get_width(fbc->gdkpixbuf)),
-			ceil(fbc->scale * gdk_pixbuf_get_height(fbc->gdkpixbuf)),
+			ceil(fbc->scale * fbc->width),
+			ceil(fbc->scale * fbc->height),
 			GDK_INTERP_BILINEAR);
 		g_object_unref(fbc->gdkpixbuf);
 		fbc->gdkpixbuf = tmp;
