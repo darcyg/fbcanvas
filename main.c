@@ -93,16 +93,16 @@ int main(int argc, char *argv[])
 
 			case '+':
 			{
-				fbc->scale += 0.5;
+				fbc->scale += 0.1;
 				fbc->update(fbc);
 				break;
 			}
 
 			case '-':
 			{
-				if (fbc->scale >= 1.0)
+				if (fbc->scale >= 0.2)
 				{
-					fbc->scale -= 0.5;
+					fbc->scale -= 0.1;
 					fbc->update(fbc);
 				}
 				break;
