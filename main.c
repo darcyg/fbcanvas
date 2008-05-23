@@ -143,6 +143,9 @@ int main(int argc, char *argv[])
 				GdkPixbuf *tmp = gdk_pixbuf_rotate_simple(fbc->gdkpixbuf, angle);
 				g_object_unref(fbc->gdkpixbuf);
 				fbc->gdkpixbuf = tmp;
+				fbc->width = gdk_pixbuf_get_width(fbc->gdkpixbuf);
+				fbc->height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
+				fbc->scroll(fbc, 0, 0); /* Update offsets */
 				break;
 			}
 
