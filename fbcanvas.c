@@ -15,6 +15,8 @@
 #include <string.h>
 #include "fbcanvas.h"
 
+static unsigned short empty_background_color = 0x0000;
+
 static struct
 {
 	unsigned char *mem;
@@ -300,10 +302,6 @@ static void update_pdf(struct fbcanvas *fbc)
 
 static void draw_16bpp(struct fbcanvas *fbc)
 {
-	/* TODO: piirtäminen tehdään täällä. Ota huomioon offsetit ym.
-	 * TODO: tarkista ettei mennä framebufferin rajojen yli.
-	 */
-	static unsigned short empty = 0x0000;
 	unsigned int x, y;
 	unsigned short *src, *dst;
 	unsigned short color;
@@ -358,7 +356,7 @@ static void draw_16bpp(struct fbcanvas *fbc)
 				src = &color;
 			} else {
 empty:
-				src = &empty;
+				src = &empty_background_color;
 			}
 
 			dst = (unsigned short *)framebuffer.mem +

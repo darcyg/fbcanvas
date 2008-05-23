@@ -69,25 +69,25 @@ int main(int argc, char *argv[])
 
 			case KEY_DOWN:
 			{
-				fbc->scroll(fbc, 0, fbc->height / 10);
+				fbc->scroll(fbc, 0, fbc->height / 20);
 				break;
 			}
 
 			case KEY_UP:
 			{
-				fbc->scroll(fbc, 0, -(fbc->height / 10));
+				fbc->scroll(fbc, 0, -(fbc->height / 20));
 				break;
 			}
 
 			case KEY_LEFT:
 			{
-				fbc->scroll(fbc, -(fbc->width / 10), 0);
+				fbc->scroll(fbc, -(fbc->width / 20), 0);
 				break;
 			}
 
 			case KEY_RIGHT:
 			{
-				fbc->scroll(fbc, fbc->width / 10, 0);
+				fbc->scroll(fbc, fbc->width / 20, 0);
 				break;
 			}
 
