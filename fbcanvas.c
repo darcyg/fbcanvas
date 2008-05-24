@@ -17,16 +17,59 @@
 
 static unsigned short empty_background_color = 0x0000;
 
-static struct
+struct framebuffer
 {
 	unsigned char *mem;
-	int width;
-	int height;
-	int bpp;
-	int refcount;
-} framebuffer = {
-	.mem = MAP_FAILED
+	unsigned int width;
+	unsigned int height;
+	unsigned int bpp;
 };
+
+struct framebuffer *open_framebuffer(char *fbdev)
+{
+	struct framebuffer *fb = malloc(sizeof(*fb));
+	if (fb)
+	{
+		struct fb_var_screeninfo fbinfo;
+		int fd = open("/dev/fb0", O_RDWR);
+		if (fd < 0)
+		{
+			/* TODO: käsittele virhe */
+			perror("open");
+		}
+
+		if (ioctl(fd, FBIOGET_VSCREENINFO, &fbinfo) < 0)
+		{
+			/* TODO: käsittele virhe */
+			perror("ioctl");
+		}
+
+		fb->width = fbinfo.xres;
+		fb->height = fbinfo.yres;
+		fb->bpp = fbinfo.bits_per_pixel;
+
+		//printf("%d x %d x %d\n", fb->width, fb->height, fb->bpp);
+		fb->mem = mmap(NULL, fb->width * fb->height * (fb->bpp / 8),
+			PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+		if (fb->mem == MAP_FAILED)
+		{
+			/* TODO: käsittele virhe */
+			perror("mmap");
+		}
+
+		close(fd);
+	}
+
+	return fb;
+}
+
+void close_framebuffer(struct framebuffer *fb)
+{
+	munmap(fb->mem, fb->width * fb->height * (fb->bpp / 8));
+	free(fb);
+}
+
+static struct framebuffer *framebuffer;
 
 static void update_image(struct fbcanvas *fbc);
 static void update_pdf(struct fbcanvas *fbc);
@@ -115,8 +158,8 @@ static void fbcanvas_scroll(struct fbcanvas *fbc, int dx, int dy)
 		if (fbc->xoffset >= (int)fbc->width)
 			fbc->xoffset = fbc->width - 1;
 	} else {
-		if (-fbc->xoffset >= framebuffer.width)
-			fbc->xoffset = -(framebuffer.width - 1);
+		if (-fbc->xoffset >= framebuffer->width)
+			fbc->xoffset = -(framebuffer->width - 1);
 	}
 
 	if (fbc->yoffset >= 0)
@@ -124,8 +167,8 @@ static void fbcanvas_scroll(struct fbcanvas *fbc, int dx, int dy)
 		if (fbc->yoffset >= (int)fbc->height)
 			fbc->yoffset = fbc->height - 1;
 	} else {
-		if (-fbc->yoffset >= framebuffer.height)
-			fbc->yoffset = -(framebuffer.height - 1);
+		if (-fbc->yoffset >= framebuffer->height)
+			fbc->yoffset = -(framebuffer->height - 1);
 	}
 }
 
@@ -135,47 +178,10 @@ struct fbcanvas *fbcanvas_create(char *filename)
 	struct fbcanvas *fbc = malloc(sizeof(*fbc));
 	if (fbc)
 	{
-		/* Yritetään avata framebuffer-laite, ellei se ole jo auki. */
-		if (framebuffer.refcount == 0)
-		{
-			void *mem;
-			struct fb_var_screeninfo fbinfo;
-			int fd = open("/dev/fb0", O_RDWR);
-			if (fd < 0)
-			{
-				/* TODO: käsittele virhe */
-				perror("open");
-			}
-
-			if (ioctl(fd, FBIOGET_VSCREENINFO, &fbinfo) < 0)
-			{
-				/* TODO: käsittele virhe */
-				perror("ioctl");
-			}
-
-			framebuffer.width = fbinfo.xres;
-			framebuffer.height = fbinfo.yres;
-			framebuffer.bpp = fbinfo.bits_per_pixel;
-
-			//printf("%d x %d x %d\n", framebuffer.width,
-			//	framebuffer.height, framebuffer.bpp);
-
-			mem = mmap (NULL,
-				framebuffer.width * framebuffer.height * (framebuffer.bpp / 8),
-				PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-			if (mem == MAP_FAILED)
-		        {
-				/* TODO: käsittele virhe */
-				perror("mmap");
-			}
-
-			close(fd);
-
-			framebuffer.mem = mem;
-			framebuffer.refcount++;
-		}
-
 		g_type_init();
+
+		/* TODO: tarkista onnistuminen */
+		framebuffer = open_framebuffer("/dev/fb0");
 
 		fbc->scroll = fbcanvas_scroll;
 		fbc->page = NULL;
@@ -186,13 +192,13 @@ struct fbcanvas *fbcanvas_create(char *filename)
 		fbc->scale = 1.0;
 		fbc->pagenum = 0;
 
-		switch (framebuffer.bpp)
+		switch (framebuffer->bpp)
 		{
 			case 16:
 				fbc->draw = draw_16bpp;
 				break;
 			default:
-				fprintf(stderr, "Unsupported depth: %d\n", framebuffer.bpp);
+				fprintf(stderr, "Unsupported depth: %d\n", framebuffer->bpp);
 				exit(1);
 		}
 
@@ -240,13 +246,7 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 		free(fbc->filename);
 	free(fbc);
 
-	framebuffer.refcount--;
-
-	if (framebuffer.refcount == 0)
-	{
-		munmap(framebuffer.mem,
-			framebuffer.width * framebuffer.height * (framebuffer.bpp / 8));
-	}
+	close_framebuffer(framebuffer);
 }
 
 static void update_image(struct fbcanvas *fbc)
@@ -325,13 +325,13 @@ static void draw_16bpp(struct fbcanvas *fbc)
 	for (y = 0;; y++)
 	{
 		/* Framebufferin reuna tuli vastaan - lopetetaan. */
-		if (y >= framebuffer.height)
+		if (y >= framebuffer->height)
 			break;
 
 		for (x = 0;; x++)
 		{
 			/* Framebufferin reuna tuli vastaan - lopetetaan. */
-			if (x >= framebuffer.width)
+			if (x >= framebuffer->width)
 				break;
 
 			if (x < fb_xoffset || y < fb_yoffset)
@@ -359,8 +359,8 @@ empty:
 				src = &empty_background_color;
 			}
 
-			dst = (unsigned short *)framebuffer.mem +
-				y * framebuffer.width + x;
+			dst = (unsigned short *)framebuffer->mem +
+				y * framebuffer->width + x;
 			*dst = *src;
 		}
 	}
