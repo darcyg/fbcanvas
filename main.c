@@ -1,5 +1,5 @@
 /*
- * main.c - 17.5.2008 - 20.5.2008 Ari & Tero Roponen
+ * main.c - 17.5.2008 - 24.5.2008 Ari & Tero Roponen
  */
 
 #include <magic.h>
@@ -7,6 +7,7 @@
 #undef scroll
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "fbcanvas.h"
 
 static void cleanup(void)
@@ -14,15 +15,44 @@ static void cleanup(void)
 	endwin();
 }
 
+static int parse_arguments (int argc, char *argv[])
+{
+	extern char *optarg;
+	char *opts = "p:x:y:";
+	int i;
+	
+	while ((i = getopt (argc, argv, opts)) != -1)
+	{
+		switch (i)
+		{
+		default:
+			fprintf (stderr, "Invalid option: %c", i);
+			return 1;
+		case 'p':
+			fprintf (stderr, "Page: %s\n", optarg);
+			break;
+		case 'x':
+			fprintf (stderr, "X: %s\n", optarg);
+			break;
+		case 'y':
+			fprintf (stderr, "Y: %s\n", optarg);
+			break;
+		}
+	}
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
+	extern int optind;
+
 	char filename[256];
 	struct fbcanvas *fbc;
 	WINDOW *win;
 
-	if (argc != 2)
+	if (parse_arguments (argc, argv) || (optind != argc - 1))
 	{
-		fprintf (stderr, "Usage: %s file.pdf\n", argv[0]);
+		fprintf (stderr, "Usage: %s [-pn] [-xn] [-yn] file.pdf\n", argv[0]);
 		return 1;
 	}
 
@@ -34,7 +64,7 @@ int main(int argc, char *argv[])
 	cbreak();
 	keypad(win, 1); /* Handle KEY_xxx */
 
-	fbc = fbcanvas_create(argv[1]);
+	fbc = fbcanvas_create(argv[optind]);
 	fbc->update(fbc);
 
 	/* Main loop */
