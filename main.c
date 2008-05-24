@@ -10,6 +10,13 @@
 #include <unistd.h>
 #include "fbcanvas.h"
 
+static struct
+{
+	int page;
+	int x;
+	int y;
+} prefs = {0};
+
 static void cleanup(void)
 {
 	endwin();
@@ -29,13 +36,13 @@ static int parse_arguments (int argc, char *argv[])
 			fprintf (stderr, "Invalid option: %c", i);
 			return 1;
 		case 'p':
-			fprintf (stderr, "Page: %s\n", optarg);
+			prefs.page = atoi (optarg) - 1;
 			break;
 		case 'x':
-			fprintf (stderr, "X: %s\n", optarg);
+			prefs.x = atoi (optarg);
 			break;
 		case 'y':
-			fprintf (stderr, "Y: %s\n", optarg);
+			prefs.y = atoi (optarg);
 			break;
 		}
 	}
@@ -65,6 +72,9 @@ int main(int argc, char *argv[])
 	keypad(win, 1); /* Handle KEY_xxx */
 
 	fbc = fbcanvas_create(argv[optind]);
+	if (prefs.page < fbc->pagecount)
+		fbc->pagenum = prefs.page;
+
 	fbc->update(fbc);
 
 	/* Main loop */
@@ -190,6 +200,8 @@ int main(int argc, char *argv[])
                 }
 	}
 out:
+	fprintf (stderr, "%s %s -p%d\n", argv[0],
+		 argv[optind], fbc->pagenum + 1);
 
 	fbcanvas_destroy(fbc);
 	return 0;
