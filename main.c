@@ -13,8 +13,8 @@
 static struct
 {
 	int page;
-	int x;
-	int y;
+	signed int x;
+	signed int y;
 } prefs = {0};
 
 static void cleanup(void)
@@ -74,6 +74,8 @@ int main(int argc, char *argv[])
 	fbc = fbcanvas_create(argv[optind]);
 	if (prefs.page < fbc->pagecount)
 		fbc->pagenum = prefs.page;
+	fbc->xoffset = prefs.x;
+	fbc->yoffset = prefs.y;
 
 	fbc->update(fbc);
 
@@ -200,8 +202,9 @@ int main(int argc, char *argv[])
                 }
 	}
 out:
-	fprintf (stderr, "%s %s -p%d\n", argv[0],
-		 argv[optind], fbc->pagenum + 1);
+	fprintf (stderr, "%s %s -p%d -x%d -y%d\n", argv[0],
+		 argv[optind], fbc->pagenum + 1,
+		 fbc->xoffset, fbc->yoffset);
 
 	fbcanvas_destroy(fbc);
 	return 0;
