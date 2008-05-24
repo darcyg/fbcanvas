@@ -15,7 +15,8 @@ static struct
 	int page;
 	signed int x;
 	signed int y;
-} prefs = {0};
+	double scale;
+} prefs = {0, 0, 0, 1.0};
 
 static void cleanup(void)
 {
@@ -25,7 +26,7 @@ static void cleanup(void)
 static int parse_arguments (int argc, char *argv[])
 {
 	extern char *optarg;
-	char *opts = "p:x:y:";
+	char *opts = "p:s:x:y:";
 	int i;
 	
 	while ((i = getopt (argc, argv, opts)) != -1)
@@ -37,6 +38,10 @@ static int parse_arguments (int argc, char *argv[])
 			return 1;
 		case 'p':
 			prefs.page = atoi (optarg) - 1;
+			break;
+		case 's':
+			prefs.scale = strtod (optarg, NULL);
+			fprintf (stderr, "%f\n", prefs.scale);
 			break;
 		case 'x':
 			prefs.x = atoi (optarg);
@@ -76,6 +81,7 @@ int main(int argc, char *argv[])
 		fbc->pagenum = prefs.page;
 	fbc->xoffset = prefs.x;
 	fbc->yoffset = prefs.y;
+	fbc->scale = prefs.scale;
 
 	fbc->update(fbc);
 
@@ -202,9 +208,9 @@ int main(int argc, char *argv[])
                 }
 	}
 out:
-	fprintf (stderr, "%s %s -p%d -x%d -y%d\n", argv[0],
+	fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n", argv[0],
 		 argv[optind], fbc->pagenum + 1,
-		 fbc->xoffset, fbc->yoffset);
+		 fbc->scale, fbc->xoffset, fbc->yoffset);
 
 	fbcanvas_destroy(fbc);
 	return 0;

@@ -264,8 +264,8 @@ static void update_image(struct fbcanvas *fbc)
 	if (fbc->scale != 1.0)
 	{
 		GdkPixbuf *tmp = gdk_pixbuf_scale_simple(fbc->gdkpixbuf,
-			ceil(fbc->scale * fbc->width),
-			ceil(fbc->scale * fbc->height),
+			ceil(fbc->scale * gdk_pixbuf_get_width(fbc->gdkpixbuf)),
+			ceil(fbc->scale * gdk_pixbuf_get_height(fbc->gdkpixbuf)),
 			GDK_INTERP_BILINEAR);
 		g_object_unref(fbc->gdkpixbuf);
 		fbc->gdkpixbuf = tmp;
