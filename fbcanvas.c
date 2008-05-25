@@ -207,6 +207,11 @@ struct fbcanvas *fbcanvas_create(char *filename)
 			magic_t magic = magic_open(MAGIC_NONE);
 			int i, ret = magic_load(magic, NULL);
 			const char *type = magic_file(magic, filename);
+			if (!type)
+			{
+				fprintf(stderr, "Could not determine file type: %s\n", filename);
+				goto unknown;
+			}
 
 			/* Try to identify file by its header */
 			for (i = 0; file_ops[i].type; i++)
@@ -221,8 +226,8 @@ struct fbcanvas *fbcanvas_create(char *filename)
 			}
 
 			/* TODO: Try to identify file by its extension */
-
 			fprintf(stderr, "Unsupported file type: %s\n", type);
+unknown:
 			magic_close(magic);
 			exit(1);
 		}
