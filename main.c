@@ -210,6 +210,7 @@ int main(int argc, char *argv[])
 				break;
 			}
 
+			case 'q':
 			case 27: /* ESC */
 				goto out;
                 }
