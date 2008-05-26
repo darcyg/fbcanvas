@@ -203,6 +203,13 @@ int main(int argc, char *argv[])
 				break;
 			}
 
+			case KEY_END:
+			{
+				// XXX: 600 = framebuffer.height
+				fbc->yoffset = fbc->height - 600;
+				break;
+			}
+
 			case 27: /* ESC */
 				goto out;
                 }
