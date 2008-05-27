@@ -59,56 +59,13 @@ static int parse_arguments (int argc, char *argv[])
 	return 0;
 }
 
-int main(int argc, char *argv[])
+static void main_loop (struct fbcanvas *fbc)
 {
-	extern int optind;
-
-	char filename[256];
-	struct fbcanvas *fbc;
-	WINDOW *win;
-
-	int last_y, last = 0;
-
-	if (parse_arguments (argc, argv) || (optind != argc - 1))
-	{
-		fprintf (stderr, "Usage: %s [-c] [-pn] [-sn] [-xn] [-yn] file.pdf\n", argv[0]);
-		return 1;
-	}
-
-	if (!just_pagecount)
-	{
-		atexit(cleanup);
-
-		win = initscr();
-		refresh();
-		noecho();
-		cbreak();
-		keypad(win, 1); /* Handle KEY_xxx */
-	}
-
-	fbc = fbcanvas_create(argv[optind]);
-	if (just_pagecount)
-	{
-		fprintf(stderr, "%s has %d page%s.\n",
-			fbc->filename,
-			fbc->pagecount,
-			fbc->pagecount > 1 ? "s":"");
-		goto out_nostatus;
-	}
-
-	if (prefs.page < fbc->pagecount)
-		fbc->pagenum = prefs.page;
-	fbc->xoffset = prefs.x;
-	fbc->yoffset = prefs.y;
-	fbc->scale = prefs.scale;
-
-	fbc->update(fbc);
+	int last_y, command, last = 0;
 
 	/* Main loop */
-	for (;;)
+	for (;last != -1;)
 	{
-		int command;
-
 		fbc->draw (fbc);
 
 		command = getch ();
@@ -243,8 +200,7 @@ int main(int argc, char *argv[])
 				{
 					fbc->yoffset = last_y;
 					command = 0;
-				} else
-				{
+				} else {
 					last_y = fbc->yoffset;
 					// XXX: 600 = framebuffer.height
 					fbc->yoffset = fbc->height - 600;
@@ -254,11 +210,58 @@ int main(int argc, char *argv[])
 
 			case 'q':
 			case 27: /* ESC */
-				goto out;
+				command = -1; /* exit */
+				break;
                 }
 		last = command;
 	}
-out:
+}
+
+int main(int argc, char *argv[])
+{
+	extern int optind;
+
+	char filename[256];
+	struct fbcanvas *fbc;
+	WINDOW *win;
+
+	if (parse_arguments (argc, argv) || (optind != argc - 1))
+	{
+		fprintf (stderr, "Usage: %s [-c] [-pn] [-sn] [-xn] [-yn] file.pdf\n", argv[0]);
+		return 1;
+	}
+
+	if (!just_pagecount)
+	{
+		atexit(cleanup);
+
+		win = initscr();
+		refresh();
+		noecho();
+		cbreak();
+		keypad(win, 1); /* Handle KEY_xxx */
+	}
+
+	fbc = fbcanvas_create(argv[optind]);
+	if (just_pagecount)
+	{
+		fprintf(stderr, "%s has %d page%s.\n",
+			fbc->filename,
+			fbc->pagecount,
+			fbc->pagecount > 1 ? "s":"");
+		goto out_nostatus;
+	}
+
+	if (prefs.page < fbc->pagecount)
+		fbc->pagenum = prefs.page;
+	fbc->xoffset = prefs.x;
+	fbc->yoffset = prefs.y;
+	fbc->scale = prefs.scale;
+
+	fbc->update(fbc);
+
+	main_loop (fbc);
+
 	fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n", argv[0],
 		 argv[optind], fbc->pagenum + 1,
 		 fbc->scale, fbc->xoffset, fbc->yoffset);
