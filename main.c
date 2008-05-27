@@ -18,11 +18,6 @@ static struct
 	double scale;
 } prefs = {0, 0, 0, 1.0};
 
-static void cleanup(void)
-{
-	endwin();
-}
-
 static int just_pagecount;
 
 static int parse_arguments (int argc, char *argv[])
@@ -62,6 +57,12 @@ static int parse_arguments (int argc, char *argv[])
 static void main_loop (struct fbcanvas *fbc)
 {
 	int last_y, command, last = 0;
+	WINDOW *win = initscr();
+
+	refresh();
+	noecho();
+	cbreak();
+	keypad(win, 1); /* Handle KEY_xxx */
 
 	/* Main loop */
 	for (;last != -1;)
@@ -215,6 +216,8 @@ static void main_loop (struct fbcanvas *fbc)
                 }
 		last = command;
 	}
+
+	endwin ();
 }
 
 int main(int argc, char *argv[])
@@ -223,23 +226,11 @@ int main(int argc, char *argv[])
 
 	char filename[256];
 	struct fbcanvas *fbc;
-	WINDOW *win;
 
 	if (parse_arguments (argc, argv) || (optind != argc - 1))
 	{
 		fprintf (stderr, "Usage: %s [-c] [-pn] [-sn] [-xn] [-yn] file.pdf\n", argv[0]);
 		return 1;
-	}
-
-	if (!just_pagecount)
-	{
-		atexit(cleanup);
-
-		win = initscr();
-		refresh();
-		noecho();
-		cbreak();
-		keypad(win, 1); /* Handle KEY_xxx */
 	}
 
 	fbc = fbcanvas_create(argv[optind]);
@@ -260,7 +251,8 @@ int main(int argc, char *argv[])
 
 	fbc->update(fbc);
 
-	main_loop (fbc);
+	if (! just_pagecount)
+		main_loop (fbc);
 
 	fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n", argv[0],
 		 argv[optind], fbc->pagenum + 1,
