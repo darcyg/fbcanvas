@@ -1,5 +1,5 @@
 /*
- * main.c - 17.5.2008 - 24.5.2008 Ari & Tero Roponen
+ * main.c - 17.5.2008 - 27.5.2008 Ari & Tero Roponen
  */
 
 #include <magic.h>
@@ -67,6 +67,8 @@ int main(int argc, char *argv[])
 	struct fbcanvas *fbc;
 	WINDOW *win;
 
+	int last_y, last = 0;
+
 	if (parse_arguments (argc, argv) || (optind != argc - 1))
 	{
 		fprintf (stderr, "Usage: %s [-c] [-pn] [-sn] [-xn] [-yn] file.pdf\n", argv[0]);
@@ -105,12 +107,12 @@ int main(int argc, char *argv[])
 	/* Main loop */
 	for (;;)
 	{
-		int ch;
+		int command;
 
 		fbc->draw (fbc);
 
-		ch = getch ();
-		switch (ch)
+		command = getch ();
+		switch (command)
 		{
 			case KEY_NPAGE:
 			{
@@ -204,7 +206,7 @@ int main(int argc, char *argv[])
 			case 'z':
 			case 'Z':
 			{
-				int angle = (ch == 'z' ? 90 : 270);
+				int angle = (command == 'z' ? 90 : 270);
 				GdkPixbuf *tmp = gdk_pixbuf_rotate_simple(fbc->gdkpixbuf, angle);
 				g_object_unref(fbc->gdkpixbuf);
 				fbc->gdkpixbuf = tmp;
@@ -216,14 +218,29 @@ int main(int argc, char *argv[])
 
 			case KEY_HOME:
 			{
-				fbc->yoffset = 0;
+				if (last == command)
+				{
+					fbc->yoffset = last_y;
+					command = 0;
+				} else {
+					last_y = fbc->yoffset;
+					fbc->yoffset = 0;
+				}
 				break;
 			}
 
 			case KEY_END:
 			{
-				// XXX: 600 = framebuffer.height
-				fbc->yoffset = fbc->height - 600;
+				if (last == command)
+				{
+					fbc->yoffset = last_y;
+					command = 0;
+				} else
+				{
+					last_y = fbc->yoffset;
+					// XXX: 600 = framebuffer.height
+					fbc->yoffset = fbc->height - 600;
+				}
 				break;
 			}
 
@@ -231,6 +248,7 @@ int main(int argc, char *argv[])
 			case 27: /* ESC */
 				goto out;
                 }
+		last = command;
 	}
 out:
 	fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n", argv[0],
