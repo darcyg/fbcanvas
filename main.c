@@ -124,6 +124,14 @@ static void main_loop (struct fbcanvas *fbc)
 				break;
 			}
 
+			case '0' ... '9':
+			{
+				double scale = 1.0 + 0.1 * (command - '0');
+				fbc->scale = scale;
+				fbc->update (fbc);
+				break;
+			}
+
 			case '+':
 			{
 				fbc->scale += 0.1;
