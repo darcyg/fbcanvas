@@ -78,6 +78,7 @@ static void draw_16bpp(struct fbcanvas *fbc);
 static void open_image(struct fbcanvas *fbc, char *filename)
 {
 	//fprintf(stderr, "open_image: %s\n", filename);
+	fbc->pagecount = 1;
 }
 
 static void open_pdf(struct fbcanvas *fbc, char *filename)
@@ -184,6 +185,7 @@ struct fbcanvas *fbcanvas_create(char *filename)
 		framebuffer = open_framebuffer("/dev/fb0");
 
 		fbc->scroll = fbcanvas_scroll;
+		fbc->document = NULL;
 		fbc->page = NULL;
 		fbc->filename = strdup(filename);
 		fbc->gdkpixbuf = NULL;

@@ -23,10 +23,12 @@ static void cleanup(void)
 	endwin();
 }
 
+static int just_pagecount;
+
 static int parse_arguments (int argc, char *argv[])
 {
 	extern char *optarg;
-	char *opts = "p:s:x:y:";
+	char *opts = "cp:s:x:y:";
 	int i;
 	
 	while ((i = getopt (argc, argv, opts)) != -1)
@@ -36,6 +38,9 @@ static int parse_arguments (int argc, char *argv[])
 		default:
 			fprintf (stderr, "Invalid option: %c", i);
 			return 1;
+		case 'c':
+			just_pagecount = 1;
+			break;
 		case 'p':
 			prefs.page = atoi (optarg) - 1;
 			break;
@@ -64,19 +69,31 @@ int main(int argc, char *argv[])
 
 	if (parse_arguments (argc, argv) || (optind != argc - 1))
 	{
-		fprintf (stderr, "Usage: %s [-pn] [-sn] [-xn] [-yn] file.pdf\n", argv[0]);
+		fprintf (stderr, "Usage: %s [-c] [-pn] [-sn] [-xn] [-yn] file.pdf\n", argv[0]);
 		return 1;
 	}
 
-	atexit(cleanup);
+	if (!just_pagecount)
+	{
+		atexit(cleanup);
 
-	win = initscr();
-	refresh();
-	noecho();
-	cbreak();
-	keypad(win, 1); /* Handle KEY_xxx */
+		win = initscr();
+		refresh();
+		noecho();
+		cbreak();
+		keypad(win, 1); /* Handle KEY_xxx */
+	}
 
 	fbc = fbcanvas_create(argv[optind]);
+	if (just_pagecount)
+	{
+		fprintf(stderr, "%s has %d page%s.\n",
+			fbc->filename,
+			fbc->pagecount,
+			fbc->pagecount > 1 ? "s":"");
+		goto out_nostatus;
+	}
+
 	if (prefs.page < fbc->pagecount)
 		fbc->pagenum = prefs.page;
 	fbc->xoffset = prefs.x;
@@ -219,7 +236,7 @@ out:
 	fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n", argv[0],
 		 argv[optind], fbc->pagenum + 1,
 		 fbc->scale, fbc->xoffset, fbc->yoffset);
-
+out_nostatus:
 	fbcanvas_destroy(fbc);
 	return 0;
 }
