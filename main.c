@@ -54,88 +54,102 @@ static int parse_arguments (int argc, char *argv[])
 	return 0;
 }
 
-/* current command char and previous command char */
-static int command, last;
+/* previous command char */
+static int last;
 static struct fbcanvas *fbc;
 static int last_y;
 
-static void cmd_unbound (void)
+#define DEFUN(name) static int cmd_ ##name (int command)
+#define SET(key,command) [key] = cmd_ ##command
+
+DEFUN (unbound)
 {
 	printf ("\a"); /* bell */
 	fflush (stdout);
+	return 0;
 }
 
-static void cmd_quit (void)
+DEFUN (quit)
 {
-	command = -1;		/* exit */
+	return 1;		/* exit */
 }
 
-static void cmd_redraw (void)
+DEFUN (redraw)
 {
 	/* Nothing to do */
+	return 0;
 }
 
-static void cmd_next_page (void)
+DEFUN (next_page)
 {
 	if (fbc->pagenum < fbc->pagecount - 1)
 	{
 		fbc->pagenum++;
 		fbc->update(fbc);
 	}
+	return 0;
 }
 
-static void cmd_prev_page (void)
+DEFUN (prev_page)
 {
 	if (fbc->pagenum > 0)
 	{
 		fbc->pagenum--;
 		fbc->update(fbc);
 	}
+	return 0;
 }
 
-static void cmd_down (void)
+DEFUN (down)
 {
 	fbc->scroll(fbc, 0, fbc->height / 20);
+	return 0;
 }
 
-static void cmd_up (void)
+DEFUN (up)
 {
 	fbc->scroll(fbc, 0, -(fbc->height / 20));
+	return 0;
 }
 
-static void cmd_left (void)
+DEFUN (left)
 {
 	fbc->scroll(fbc, -(fbc->width / 20), 0);
+	return 0;
 }
 
-static void cmd_right (void)
+DEFUN (right)
 {
 	fbc->scroll(fbc, fbc->width / 20, 0);
+	return 0;
 }
 
-static void cmd_set_zoom (void)
+DEFUN (set_zoom)
 {
 	double scale = 1.0 + 0.1 * (command - '0');
 	fbc->scale = scale;
 	fbc->update (fbc);
+	return 0;
 }
 
-static void cmd_zoom_in (void)
+DEFUN (zoom_in)
 {
 	fbc->scale += 0.1;
 	fbc->update(fbc);
+	return 0;
 }
 
-static void cmd_zoom_out (void)
+DEFUN (zoom_out)
 {
 	if (fbc->scale >= 0.2)
 	{
 		fbc->scale -= 0.1;
 		fbc->update(fbc);
 	}
+	return 0;
 }
 
-static void cmd_save (void)
+DEFUN (save)
 {
 	GError *err = NULL;
 	char savename[256];
@@ -143,23 +157,26 @@ static void cmd_save (void)
 	sprintf(savename, "%s-pg-%d.png", basename(fbc->filename), fbc->pagenum + 1);
 	if (!gdk_pixbuf_save(fbc->gdkpixbuf, savename, "png", &err, NULL))
 		fprintf (stderr, "%s", err->message);
+	return 0;
 }
 
-static void cmd_flip_x (void)
+DEFUN (flip_x)
 {
 	GdkPixbuf *tmp = gdk_pixbuf_flip(fbc->gdkpixbuf, TRUE);
 	g_object_unref(fbc->gdkpixbuf);
 	fbc->gdkpixbuf = tmp;
+	return 0;
 }
 
-static void cmd_flip_y (void)
+DEFUN (flip_y)
 {
 	GdkPixbuf *tmp = gdk_pixbuf_flip(fbc->gdkpixbuf, FALSE);
 	g_object_unref(fbc->gdkpixbuf);
 	fbc->gdkpixbuf = tmp;
+	return 0;
 }
 
-static void cmd_flip_z (void)
+DEFUN (flip_z)
 {
 	int angle = (command == 'z' ? 90 : 270);
 	GdkPixbuf *tmp = gdk_pixbuf_rotate_simple(fbc->gdkpixbuf, angle);
@@ -168,9 +185,10 @@ static void cmd_flip_z (void)
 	fbc->width = gdk_pixbuf_get_width(fbc->gdkpixbuf);
 	fbc->height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
 	fbc->scroll(fbc, 0, 0); /* Update offsets */
+	return 0;
 }
 
-static void cmd_goto_top (void)
+DEFUN (goto_top)
 {
 	if (last == command)
 	{
@@ -180,9 +198,10 @@ static void cmd_goto_top (void)
 		last_y = fbc->yoffset;
 		fbc->yoffset = 0;
 	}
+	return 0;
 }
 
-static void cmd_goto_bottom (void)
+DEFUN (goto_bottom)
 {
 	if (last == command)
 	{
@@ -193,27 +212,23 @@ static void cmd_goto_bottom (void)
 		// XXX: 600 = framebuffer.height
 		fbc->yoffset = fbc->height - 600;
 	}
+	return 0;
 }
 
-typedef void (*command_t) (void);
-command_t keymap[] = { [12] = cmd_redraw, /* CTRL-L */
-		       [27] = cmd_quit,	  /* ESC */
-		       ['q'] = cmd_quit,
-		       ['s'] = cmd_save,
-		       ['x'] = cmd_flip_x,
-		       ['y'] = cmd_flip_y,
-		       ['z'] = cmd_flip_z,
-		       ['Z'] = cmd_flip_z,
-		       [KEY_HOME] = cmd_goto_top, [KEY_END] = cmd_goto_bottom,
-		       [KEY_NPAGE] = cmd_next_page, [KEY_PPAGE] = cmd_prev_page,
-		       [KEY_DOWN] = cmd_down, [KEY_UP] = cmd_up,
-		       [KEY_LEFT] = cmd_left, [KEY_RIGHT] = cmd_right,
-		       ['0'] = cmd_set_zoom, ['1'] = cmd_set_zoom,
-		       ['2'] = cmd_set_zoom, ['3'] = cmd_set_zoom,
-		       ['4'] = cmd_set_zoom, ['5'] = cmd_set_zoom,
-		       ['6'] = cmd_set_zoom, ['7'] = cmd_set_zoom,
-		       ['8'] = cmd_set_zoom, ['9'] = cmd_set_zoom,
-		       ['+'] = cmd_zoom_in, ['-'] = cmd_zoom_out,
+typedef int (*command_t) (int command);
+command_t keymap[] = {
+	SET (12, redraw), /* CTRL-L */
+	SET (27, quit),	 /* ESC */
+	SET ('q', quit), SET ('s', save), SET ('x', flip_x),
+	SET ('y', flip_y), SET ('z', flip_z), SET ('Z', flip_z),
+	SET (KEY_HOME, goto_top), SET (KEY_END, goto_bottom),
+	SET (KEY_NPAGE, next_page), SET (KEY_PPAGE, prev_page),
+	SET (KEY_DOWN, down), SET (KEY_UP, up),
+	SET (KEY_LEFT, left), SET (KEY_RIGHT, right),
+	SET ('0', set_zoom), SET ('1', set_zoom), SET ('2', set_zoom),
+	SET ('3', set_zoom), SET ('4', set_zoom), SET ('5', set_zoom),
+	SET ('6', set_zoom), SET ('7', set_zoom), SET ('8', set_zoom),
+	SET ('9', set_zoom), SET ('+', zoom_in), SET ('-', zoom_out),
 };
 
 static command_t get_command (int ch)
@@ -225,6 +240,7 @@ static command_t get_command (int ch)
 
 static void main_loop (void)
 {
+	int ch;
 	command_t cmd;
 	WINDOW *win = initscr();
 
@@ -234,14 +250,15 @@ static void main_loop (void)
 	keypad(win, 1); /* Handle KEY_xxx */
 
 	/* Main loop */
-	for (;last != -1;)
+	for (;;)
 	{
 		fbc->draw (fbc);
 
-		command = getch ();
-		cmd = get_command (command);
-		cmd ();
-		last = command;
+		ch = getch ();
+		cmd = get_command (ch);
+		if (cmd (ch))
+			break;
+		last = ch;
 	}
 
 	endwin ();
