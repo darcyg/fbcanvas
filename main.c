@@ -54,9 +54,178 @@ static int parse_arguments (int argc, char *argv[])
 	return 0;
 }
 
-static void main_loop (struct fbcanvas *fbc)
+/* current command char and previous command char */
+static int command, last;
+static struct fbcanvas *fbc;
+static int last_y;
+
+static void cmd_unbound (void)
 {
-	int last_y, command, last = 0;
+	printf ("\a"); /* bell */
+	fflush (stdout);
+}
+
+static void cmd_quit (void)
+{
+	command = -1;		/* exit */
+}
+
+static void cmd_redraw (void)
+{
+	/* Nothing to do */
+}
+
+static void cmd_next_page (void)
+{
+	if (fbc->pagenum < fbc->pagecount - 1)
+	{
+		fbc->pagenum++;
+		fbc->update(fbc);
+	}
+}
+
+static void cmd_prev_page (void)
+{
+	if (fbc->pagenum > 0)
+	{
+		fbc->pagenum--;
+		fbc->update(fbc);
+	}
+}
+
+static void cmd_down (void)
+{
+	fbc->scroll(fbc, 0, fbc->height / 20);
+}
+
+static void cmd_up (void)
+{
+	fbc->scroll(fbc, 0, -(fbc->height / 20));
+}
+
+static void cmd_left (void)
+{
+	fbc->scroll(fbc, -(fbc->width / 20), 0);
+}
+
+static void cmd_right (void)
+{
+	fbc->scroll(fbc, fbc->width / 20, 0);
+}
+
+static void cmd_set_zoom (void)
+{
+	double scale = 1.0 + 0.1 * (command - '0');
+	fbc->scale = scale;
+	fbc->update (fbc);
+}
+
+static void cmd_zoom_in (void)
+{
+	fbc->scale += 0.1;
+	fbc->update(fbc);
+}
+
+static void cmd_zoom_out (void)
+{
+	if (fbc->scale >= 0.2)
+	{
+		fbc->scale -= 0.1;
+		fbc->update(fbc);
+	}
+}
+
+static void cmd_save (void)
+{
+	GError *err = NULL;
+	char savename[256];
+
+	sprintf(savename, "%s-pg-%d.png", basename(fbc->filename), fbc->pagenum + 1);
+	if (!gdk_pixbuf_save(fbc->gdkpixbuf, savename, "png", &err, NULL))
+		fprintf (stderr, "%s", err->message);
+}
+
+static void cmd_flip_x (void)
+{
+	GdkPixbuf *tmp = gdk_pixbuf_flip(fbc->gdkpixbuf, TRUE);
+	g_object_unref(fbc->gdkpixbuf);
+	fbc->gdkpixbuf = tmp;
+}
+
+static void cmd_flip_y (void)
+{
+	GdkPixbuf *tmp = gdk_pixbuf_flip(fbc->gdkpixbuf, FALSE);
+	g_object_unref(fbc->gdkpixbuf);
+	fbc->gdkpixbuf = tmp;
+}
+
+static void cmd_flip_z (void)
+{
+	int angle = (command == 'z' ? 90 : 270);
+	GdkPixbuf *tmp = gdk_pixbuf_rotate_simple(fbc->gdkpixbuf, angle);
+	g_object_unref(fbc->gdkpixbuf);
+	fbc->gdkpixbuf = tmp;
+	fbc->width = gdk_pixbuf_get_width(fbc->gdkpixbuf);
+	fbc->height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
+	fbc->scroll(fbc, 0, 0); /* Update offsets */
+}
+
+static void cmd_goto_top (void)
+{
+	if (last == command)
+	{
+		fbc->yoffset = last_y;
+		command = 0;
+	} else {
+		last_y = fbc->yoffset;
+		fbc->yoffset = 0;
+	}
+}
+
+static void cmd_goto_bottom (void)
+{
+	if (last == command)
+	{
+		fbc->yoffset = last_y;
+		command = 0;
+	} else {
+		last_y = fbc->yoffset;
+		// XXX: 600 = framebuffer.height
+		fbc->yoffset = fbc->height - 600;
+	}
+}
+
+typedef void (*command_t) (void);
+command_t keymap[] = { [12] = cmd_redraw, /* CTRL-L */
+		       [27] = cmd_quit,	  /* ESC */
+		       ['q'] = cmd_quit,
+		       ['s'] = cmd_save,
+		       ['x'] = cmd_flip_x,
+		       ['y'] = cmd_flip_y,
+		       ['z'] = cmd_flip_z,
+		       ['Z'] = cmd_flip_z,
+		       [KEY_HOME] = cmd_goto_top, [KEY_END] = cmd_goto_bottom,
+		       [KEY_NPAGE] = cmd_next_page, [KEY_PPAGE] = cmd_prev_page,
+		       [KEY_DOWN] = cmd_down, [KEY_UP] = cmd_up,
+		       [KEY_LEFT] = cmd_left, [KEY_RIGHT] = cmd_right,
+		       ['0'] = cmd_set_zoom, ['1'] = cmd_set_zoom,
+		       ['2'] = cmd_set_zoom, ['3'] = cmd_set_zoom,
+		       ['4'] = cmd_set_zoom, ['5'] = cmd_set_zoom,
+		       ['6'] = cmd_set_zoom, ['7'] = cmd_set_zoom,
+		       ['8'] = cmd_set_zoom, ['9'] = cmd_set_zoom,
+		       ['+'] = cmd_zoom_in, ['-'] = cmd_zoom_out,
+};
+
+static command_t get_command (int ch)
+{
+	if (ch < sizeof (keymap))
+		return keymap[ch] ?: cmd_unbound;
+	return cmd_unbound;
+}
+
+static void main_loop (void)
+{
+	command_t cmd;
 	WINDOW *win = initscr();
 
 	refresh();
@@ -70,158 +239,8 @@ static void main_loop (struct fbcanvas *fbc)
 		fbc->draw (fbc);
 
 		command = getch ();
-		switch (command)
-		{
-			default:
-				printf ("\a"); /* bell */
-				fflush (stdout);
-				break;
-
-			case 12: /* CTRL-L */
-				break;
-
-			case KEY_NPAGE:
-			{
-				if (fbc->pagenum < fbc->pagecount - 1)
-				{
-					fbc->pagenum++;
-					fbc->update(fbc);
-				}
-				break;
-			}
-
-			case KEY_PPAGE:
-			{
-				if (fbc->pagenum > 0)
-				{
-					fbc->pagenum--;
-					fbc->update(fbc);
-				}
-				break;
-			}
-
-			case KEY_DOWN:
-			{
-				fbc->scroll(fbc, 0, fbc->height / 20);
-				break;
-			}
-
-			case KEY_UP:
-			{
-				fbc->scroll(fbc, 0, -(fbc->height / 20));
-				break;
-			}
-
-			case KEY_LEFT:
-			{
-				fbc->scroll(fbc, -(fbc->width / 20), 0);
-				break;
-			}
-
-			case KEY_RIGHT:
-			{
-				fbc->scroll(fbc, fbc->width / 20, 0);
-				break;
-			}
-
-			case '0' ... '9':
-			{
-				double scale = 1.0 + 0.1 * (command - '0');
-				fbc->scale = scale;
-				fbc->update (fbc);
-				break;
-			}
-
-			case '+':
-			{
-				fbc->scale += 0.1;
-				fbc->update(fbc);
-				break;
-			}
-
-			case '-':
-			{
-				if (fbc->scale >= 0.2)
-				{
-					fbc->scale -= 0.1;
-					fbc->update(fbc);
-				}
-				break;
-			}
-
-			case 's':
-			{
-				GError *err = NULL;
-				char savename[256];
-
-				sprintf(savename, "%s-pg-%d.png", basename(fbc->filename),
-					fbc->pagenum + 1);
-				if (!gdk_pixbuf_save(fbc->gdkpixbuf, savename, "png", &err, NULL))
-					fprintf (stderr, "%s", err->message);
-				break;
-			}
-
-			case 'x':
-			{
-				GdkPixbuf *tmp = gdk_pixbuf_flip(fbc->gdkpixbuf, TRUE);
-				g_object_unref(fbc->gdkpixbuf);
-				fbc->gdkpixbuf = tmp;
-				break;
-			}
-
-			case 'y':
-			{
-				GdkPixbuf *tmp = gdk_pixbuf_flip(fbc->gdkpixbuf, FALSE);
-				g_object_unref(fbc->gdkpixbuf);
-				fbc->gdkpixbuf = tmp;
-				break;
-			}
-
-			case 'z':
-			case 'Z':
-			{
-				int angle = (command == 'z' ? 90 : 270);
-				GdkPixbuf *tmp = gdk_pixbuf_rotate_simple(fbc->gdkpixbuf, angle);
-				g_object_unref(fbc->gdkpixbuf);
-				fbc->gdkpixbuf = tmp;
-				fbc->width = gdk_pixbuf_get_width(fbc->gdkpixbuf);
-				fbc->height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
-				fbc->scroll(fbc, 0, 0); /* Update offsets */
-				break;
-			}
-
-			case KEY_HOME:
-			{
-				if (last == command)
-				{
-					fbc->yoffset = last_y;
-					command = 0;
-				} else {
-					last_y = fbc->yoffset;
-					fbc->yoffset = 0;
-				}
-				break;
-			}
-
-			case KEY_END:
-			{
-				if (last == command)
-				{
-					fbc->yoffset = last_y;
-					command = 0;
-				} else {
-					last_y = fbc->yoffset;
-					// XXX: 600 = framebuffer.height
-					fbc->yoffset = fbc->height - 600;
-				}
-				break;
-			}
-
-			case 'q':
-			case 27: /* ESC */
-				command = -1; /* exit */
-				break;
-                }
+		cmd = get_command (command);
+		cmd ();
 		last = command;
 	}
 
@@ -231,9 +250,7 @@ static void main_loop (struct fbcanvas *fbc)
 int main(int argc, char *argv[])
 {
 	extern int optind;
-
 	char filename[256];
-	struct fbcanvas *fbc;
 
 	if (parse_arguments (argc, argv) || (optind != argc - 1))
 	{
@@ -260,7 +277,7 @@ int main(int argc, char *argv[])
 	fbc->update(fbc);
 
 	if (! just_pagecount)
-		main_loop (fbc);
+		main_loop ();
 
 	fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n", argv[0],
 		 argv[optind], fbc->pagenum + 1,
