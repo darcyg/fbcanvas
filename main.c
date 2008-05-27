@@ -114,6 +114,14 @@ int main(int argc, char *argv[])
 		command = getch ();
 		switch (command)
 		{
+			default:
+				printf ("\a"); /* bell */
+				fflush (stdout);
+				break;
+
+			case 12: /* CTRL-L */
+				break;
+
 			case KEY_NPAGE:
 			{
 				if (fbc->pagenum < fbc->pagecount - 1)
