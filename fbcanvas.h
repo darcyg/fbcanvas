@@ -18,6 +18,7 @@ struct fbcanvas
 	GdkPixbuf *gdkpixbuf;
 
 	void (*open)(struct fbcanvas *fbc, char *filename);
+	void (*close)(struct fbcanvas *fbc);
 	void (*draw)(struct fbcanvas *fbc);
 	void (*update)(struct fbcanvas *fbc);
 	void (*scroll)(struct fbcanvas *fbc, int dx, int dy);
