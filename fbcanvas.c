@@ -81,6 +81,13 @@ static void open_image(struct fbcanvas *fbc, char *filename)
 	fbc->pagecount = 1;
 }
 
+static void close_image(struct fbcanvas *fbc)
+{
+	if (fbc->gdkpixbuf)
+		g_object_unref(fbc->gdkpixbuf);
+	fbc->gdkpixbuf = NULL;
+}
+
 static void open_pdf(struct fbcanvas *fbc, char *filename)
 {
 	GError *err = NULL;
@@ -90,6 +97,7 @@ static void open_pdf(struct fbcanvas *fbc, char *filename)
 	/* PDF vaatii absoluuttisen "file:///tiedostonimen". */
 	sprintf(fullname, "file://%s", canon_name);
 
+	fbc->page = NULL;
 	fbc->document = poppler_document_new_from_file(fullname, NULL, &err);
 	if (!fbc->document)
 	{
@@ -101,47 +109,70 @@ static void open_pdf(struct fbcanvas *fbc, char *filename)
 	fbc->pagecount = poppler_document_get_n_pages(fbc->document);
 }
 
+static void close_pdf(struct fbcanvas *fbc)
+{
+	if (fbc->page)
+		g_object_unref(fbc->page);
+	if (fbc->document)
+		g_object_unref(fbc->document);
+	if (fbc->gdkpixbuf)
+		g_object_unref(fbc->gdkpixbuf);
+	fbc->page = NULL;
+	fbc->document = NULL;
+	fbc->gdkpixbuf = NULL;
+}
+
 static struct
 {
 	char *type;
 	void (*open)(struct fbcanvas *fbc, char *filename);
+	void (*close)(struct fbcanvas *fbc);
 	void (*update)(struct fbcanvas *fbc);
 } file_ops[] = {
 	{
 		.type = "PC bitmap",
 		.open = open_image,
+		.close = close_image,
 		.update = update_image,
 	}, {
 		.type = "PCX",
 		.open = open_image,
+		.close = close_image,
 		.update = update_image,
 	}, {
 		.type = "GIF image",
 		.open = open_image,
+		.close = close_image,
 		.update = update_image,
 	}, {
 		.type = "JPEG",
 		.open = open_image,
+		.close = close_image,
 		.update = update_image,
 	}, {
 		.type = "PDF",
 		.open = open_pdf,
+		.close = close_pdf,
 		.update = update_pdf,
 	}, {
 		.type = "PNG",
 		.open = open_image,
+		.close = close_image,
 		.update = update_image,
 	}, {
 		.type = "Netpbm PPM",
 		.open = open_image,
+		.close = close_image,
 		.update = update_image,
 	}, {
 		.type = "TIFF image data",
 		.open = open_image,
+		.close = close_image,
 		.update = update_image,
 	}, {
 		.type = "X pixmap image text",
 		.open = open_image,
+		.close = close_image,
 		.update = update_image,
 	}, {
 		NULL
@@ -184,9 +215,8 @@ struct fbcanvas *fbcanvas_create(char *filename)
 		/* TODO: tarkista onnistuminen */
 		framebuffer = open_framebuffer("/dev/fb0");
 
+		/* Set common fields */
 		fbc->scroll = fbcanvas_scroll;
-		fbc->document = NULL;
-		fbc->page = NULL;
 		fbc->filename = strdup(filename);
 		fbc->gdkpixbuf = NULL;
 		fbc->xoffset = 0;
@@ -222,6 +252,7 @@ struct fbcanvas *fbcanvas_create(char *filename)
 				{
 					magic_close(magic);
 					fbc->open = file_ops[i].open;
+					fbc->close = file_ops[i].close;
 					fbc->update = file_ops[i].update;
 					goto type_ok;
 				}
@@ -243,12 +274,11 @@ type_ok:
 
 void fbcanvas_destroy(struct fbcanvas *fbc)
 {
-	if (fbc->page)
-		g_object_unref(fbc->page);
-	if (fbc->document)
-		g_object_unref(fbc->document);
-	if (fbc->gdkpixbuf)
-		g_object_unref(fbc->gdkpixbuf);
+	/* Free file-type-specific fields */
+	if (fbc->close)
+		fbc->close(fbc);
+
+	/* Free common fields */
 	if (fbc->filename)
 		free(fbc->filename);
 	free(fbc);
