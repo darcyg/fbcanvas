@@ -54,12 +54,7 @@ static int parse_arguments (int argc, char *argv[])
 	return 0;
 }
 
-/* previous command char */
-static int last;
-static struct fbcanvas *fbc;
-static int last_y;
-
-#define DEFUN(name) static int cmd_ ##name (int command)
+#define DEFUN(name) static int cmd_ ##name (struct fbcanvas *fbc, int command, int last)
 #define SET(key,command) [key] = cmd_ ##command
 
 DEFUN (unbound)
@@ -190,10 +185,12 @@ DEFUN (flip_z)
 
 DEFUN (goto_top)
 {
+	static int last_y;
 	if (last == command)
 	{
+		int tmp = fbc->yoffset;
 		fbc->yoffset = last_y;
-		command = 0;
+		last_y = tmp;
 	} else {
 		last_y = fbc->yoffset;
 		fbc->yoffset = 0;
@@ -203,10 +200,12 @@ DEFUN (goto_top)
 
 DEFUN (goto_bottom)
 {
+	static int last_y;
 	if (last == command)
 	{
+		int tmp = fbc->yoffset;
 		fbc->yoffset = last_y;
-		command = 0;
+		last_y = tmp;
 	} else {
 		last_y = fbc->yoffset;
 		// XXX: 600 = framebuffer.height
@@ -215,7 +214,7 @@ DEFUN (goto_bottom)
 	return 0;
 }
 
-typedef int (*command_t) (int command);
+typedef int (*command_t) (struct fbcanvas *, int command, int last);
 command_t keymap[] = {
 	SET (12, redraw), /* CTRL-L */
 	SET (27, quit),	 /* ESC */
@@ -238,9 +237,9 @@ static command_t get_command (int ch)
 	return cmd_unbound;
 }
 
-static void main_loop (void)
+static void main_loop (struct fbcanvas *fbc)
 {
-	int ch;
+	int ch, last = 0;
 	command_t cmd;
 	WINDOW *win = initscr();
 
@@ -256,7 +255,7 @@ static void main_loop (void)
 
 		ch = getch ();
 		cmd = get_command (ch);
-		if (cmd (ch))
+		if (cmd (fbc,ch, last))
 			break;
 		last = ch;
 	}
@@ -267,6 +266,8 @@ static void main_loop (void)
 int main(int argc, char *argv[])
 {
 	extern int optind;
+
+	struct fbcanvas *fbc;
 	char filename[256];
 
 	if (parse_arguments (argc, argv) || (optind != argc - 1))
@@ -294,7 +295,7 @@ int main(int argc, char *argv[])
 	fbc->update(fbc);
 
 	if (! just_pagecount)
-		main_loop ();
+		main_loop (fbc);
 
 	fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n", argv[0],
 		 argv[optind], fbc->pagenum + 1,
