@@ -78,6 +78,7 @@ static void draw_16bpp(struct fbcanvas *fbc);
 static void open_image(struct fbcanvas *fbc, char *filename)
 {
 	//fprintf(stderr, "open_image: %s\n", filename);
+	fbc->page = NULL;
 	fbc->pagecount = 1;
 }
 

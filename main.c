@@ -155,6 +155,32 @@ DEFUN (save)
 	return 0;
 }
 
+DEFUN (dump_text)
+{
+	PopplerRectangle rec = {0, 0, fbc->width, fbc->height};
+	char *str;
+
+	/* fbc->page is currently only used with PDF-files. */
+	if (!fbc->page)
+		return 0;
+
+	str = poppler_page_get_text(fbc->page, POPPLER_SELECTION_LINE, &rec);
+	if (str)
+	{
+		FILE *fp;
+		char savename[256];
+		sprintf(savename, "%s-pg-%d.txt", basename(fbc->filename), fbc->pagenum + 1);
+		fp = fopen(savename, "w+");
+		if (fp)
+		{
+			fprintf(fp, "%s", str);
+			fclose (fp);
+		}
+	}
+
+	return 0;
+}
+
 DEFUN (flip_x)
 {
 	GdkPixbuf *tmp = gdk_pixbuf_flip(fbc->gdkpixbuf, TRUE);
@@ -218,7 +244,7 @@ typedef int (*command_t) (struct fbcanvas *, int command, int last);
 command_t keymap[] = {
 	SET (12, redraw), /* CTRL-L */
 	SET (27, quit),	 /* ESC */
-	SET ('q', quit), SET ('s', save), SET ('x', flip_x),
+	SET ('q', quit), SET ('s', save), SET ('t', dump_text), SET ('x', flip_x),
 	SET ('y', flip_y), SET ('z', flip_z), SET ('Z', flip_z),
 	SET (KEY_HOME, goto_top), SET (KEY_END, goto_bottom),
 	SET (KEY_NPAGE, next_page), SET (KEY_PPAGE, prev_page),
