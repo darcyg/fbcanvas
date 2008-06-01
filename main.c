@@ -19,11 +19,12 @@ static struct
 } prefs = {0, 0, 0, 1.0};
 
 static int just_pagecount;
+static char *grep_str;
 
 static int parse_arguments (int argc, char *argv[])
 {
 	extern char *optarg;
-	char *opts = "cp:s:x:y:";
+	char *opts = "cg:p:s:x:y:";
 	int i;
 	
 	while ((i = getopt (argc, argv, opts)) != -1)
@@ -35,6 +36,9 @@ static int parse_arguments (int argc, char *argv[])
 			return 1;
 		case 'c':
 			just_pagecount = 1;
+			break;
+		case 'g':
+			grep_str = strdup(optarg);
 			break;
 		case 'p':
 			prefs.page = atoi (optarg) - 1;
@@ -309,6 +313,40 @@ int main(int argc, char *argv[])
 			fbc->filename,
 			fbc->pagecount,
 			fbc->pagecount > 1 ? "s":"");
+		goto out_nostatus;
+	}
+
+	if (grep_str)/* fbc->page is currently only used with PDF-files. */
+	{
+		int i;
+
+		/* Set up methods */
+		fbc->update(fbc);
+
+		if (!fbc->page)
+		{
+			fprintf(stderr, "%s",
+				"Grepping is only implemented for PDF-files\n");
+			goto out_nostatus;
+		}
+
+		for (i = 0; i < fbc->pagecount; i++)
+		{
+			char *str;
+			PopplerRectangle rec = {0, 0, fbc->width, fbc->height};
+			fbc->page = poppler_document_get_page(fbc->document, i);
+			str = poppler_page_get_text(fbc->page, POPPLER_SELECTION_LINE, &rec);
+
+			if (!str)
+				continue;
+			/* TODO: use regexps */
+			if (strstr(str, grep_str))
+			{
+				printf("== '%s' found: %s, Page %d ==\n%s",
+					grep_str, fbc->filename, i + 1, str);
+			}
+		}
+
 		goto out_nostatus;
 	}
 
