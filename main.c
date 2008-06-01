@@ -293,7 +293,7 @@ static void main_loop (struct fbcanvas *fbc)
 	endwin ();
 }
 
-/* TODO: use read regexps. */
+/* TODO: use real regexps. */
 static int pdf_grep (struct fbcanvas *fbc, char *regexp)
 {
 	int i, ret = 1, len = strlen (regexp);
