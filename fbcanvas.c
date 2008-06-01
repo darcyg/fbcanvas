@@ -125,7 +125,7 @@ static int grep_pdf(struct fbcanvas *fbc, char *regexp)
 				ret = 0; /* found match */
 
 				/* try to find line beginning and end. */
-				while (beg < str && beg[-1] != '\n')
+				while (beg > str && beg[-1] != '\n')
 					beg--;
 				while (*end && *end != '\n')
 					end++;
