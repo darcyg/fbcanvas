@@ -1,5 +1,5 @@
 /*
- * main.c - 17.5.2008 - 27.5.2008 Ari & Tero Roponen
+ * main.c - 17.5.2008 - 1.6.2008 Ari & Tero Roponen
  */
 
 #include <magic.h>
@@ -292,16 +292,64 @@ static void main_loop (struct fbcanvas *fbc)
 	endwin ();
 }
 
+/* TODO: use real regexps. */
+static int pdf_grep (struct fbcanvas *fbc, char *regexp)
+{
+	int i, ret = 1, len = strlen (regexp);
+	char *str, *beg, *end;
+
+	/* Set up methods & canvas size. */
+	fbc->update (fbc);
+
+	if (!fbc->page)
+	{
+		fprintf (stderr, "%s",
+			 "Grepping is only implemented for PDF-files\n");
+		return 1;
+	}
+
+	for (i = 0; i < fbc->pagecount; i++)
+	{
+		PopplerRectangle rec = {0, 0, fbc->width, fbc->height};
+		fbc->page = poppler_document_get_page (fbc->document, i);
+		str = poppler_page_get_text (fbc->page, POPPLER_SELECTION_LINE, &rec);
+
+		while (str)
+		{
+			beg = strstr (str, regexp);
+			end = beg + len;
+
+			if (beg)
+			{
+				ret = 0; /* found match */
+
+				/* try to find line beginning and end. */
+				while (beg < str && beg[-1] != '\n')
+					beg--;
+				while (*end && *end != '\n')
+					end++;
+
+				printf ("%s:%d: %.*s\n", fbc->filename, i + 1, end - beg, beg);
+				str = end;
+			} else str = NULL;
+		}
+	}
+
+	return ret;
+}
+
 int main(int argc, char *argv[])
 {
 	extern int optind;
 
+	int ret = 0;
 	struct fbcanvas *fbc;
 	char filename[256];
 
 	if (parse_arguments (argc, argv) || (optind != argc - 1))
 	{
-		fprintf (stderr, "Usage: %s [-c] [-pn] [-sn] [-xn] [-yn] file.pdf\n", argv[0]);
+		fprintf (stderr, "Usage: %s [-c] [-g regexp] [-pn] [-sn]"
+			 " [-xn] [-yn] file.pdf\n", argv[0]);
 		return 1;
 	}
 
@@ -315,37 +363,9 @@ int main(int argc, char *argv[])
 		goto out_nostatus;
 	}
 
-	if (grep_str)/* fbc->page is currently only used with PDF-files. */
+	if (grep_str)
 	{
-		int i;
-
-		/* Set up methods */
-		fbc->update(fbc);
-
-		if (!fbc->page)
-		{
-			fprintf(stderr, "%s",
-				"Grepping is only implemented for PDF-files\n");
-			goto out_nostatus;
-		}
-
-		for (i = 0; i < fbc->pagecount; i++)
-		{
-			char *str;
-			PopplerRectangle rec = {0, 0, fbc->width, fbc->height};
-			fbc->page = poppler_document_get_page(fbc->document, i);
-			str = poppler_page_get_text(fbc->page, POPPLER_SELECTION_LINE, &rec);
-
-			if (!str)
-				continue;
-			/* TODO: use regexps */
-			if (strstr(str, grep_str))
-			{
-				printf("== '%s' found: %s, Page %d ==\n%s",
-					grep_str, fbc->filename, i + 1, str);
-			}
-		}
-
+		ret = pdf_grep (fbc, grep_str);
 		goto out_nostatus;
 	}
 
@@ -365,5 +385,5 @@ int main(int argc, char *argv[])
 		 fbc->scale, fbc->xoffset, fbc->yoffset);
 out_nostatus:
 	fbcanvas_destroy(fbc);
-	return 0;
+	return ret;
 }
