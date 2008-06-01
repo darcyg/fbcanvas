@@ -6,8 +6,12 @@
 struct fbcanvas
 {
 	char *filename;
-	unsigned int width;
-	unsigned int height;
+	unsigned char *hwmem;	/* mmap()ed framebuffer memory	*/
+	unsigned int width;	/* Virtual width		*/
+	unsigned int height;	/* Virtual height		*/
+	unsigned int hwwidth;	/* Hardware width		*/
+	unsigned int hwheight;	/* Hardware height		*/
+	unsigned int hwdepth;	/* Hardware color depth		*/
 	signed int xoffset;
 	signed int yoffset;
 	double scale;

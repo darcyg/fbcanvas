@@ -238,8 +238,7 @@ DEFUN (goto_bottom)
 		last_y = tmp;
 	} else {
 		last_y = fbc->yoffset;
-		// XXX: 600 = framebuffer.height
-		fbc->yoffset = fbc->height - 600;
+		fbc->yoffset = fbc->height - fbc->hwheight;
 	}
 	return 0;
 }

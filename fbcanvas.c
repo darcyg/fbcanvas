@@ -17,59 +17,36 @@
 
 static unsigned short empty_background_color = 0x0000;
 
-struct framebuffer
+void open_framebuffer(struct fbcanvas *fbc, char *fbdev)
 {
-	unsigned char *mem;
-	unsigned int width;
-	unsigned int height;
-	unsigned int bpp;
-};
-
-struct framebuffer *open_framebuffer(char *fbdev)
-{
-	struct framebuffer *fb = malloc(sizeof(*fb));
-	if (fb)
+	struct fb_var_screeninfo fbinfo;
+	int fd = open("/dev/fb0", O_RDWR);
+	if (fd < 0)
 	{
-		struct fb_var_screeninfo fbinfo;
-		int fd = open("/dev/fb0", O_RDWR);
-		if (fd < 0)
-		{
-			/* TODO: käsittele virhe */
-			perror("open");
-		}
-
-		if (ioctl(fd, FBIOGET_VSCREENINFO, &fbinfo) < 0)
-		{
-			/* TODO: käsittele virhe */
-			perror("ioctl");
-		}
-
-		fb->width = fbinfo.xres;
-		fb->height = fbinfo.yres;
-		fb->bpp = fbinfo.bits_per_pixel;
-
-		//printf("%d x %d x %d\n", fb->width, fb->height, fb->bpp);
-		fb->mem = mmap(NULL, fb->width * fb->height * (fb->bpp / 8),
-			PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-		if (fb->mem == MAP_FAILED)
-		{
-			/* TODO: käsittele virhe */
-			perror("mmap");
-		}
-
-		close(fd);
+		/* TODO: käsittele virhe */
+		perror("open");
 	}
 
-	return fb;
-}
+	if (ioctl(fd, FBIOGET_VSCREENINFO, &fbinfo) < 0)
+	{
+		/* TODO: käsittele virhe */
+		perror("ioctl");
+	}
 
-void close_framebuffer(struct framebuffer *fb)
-{
-	munmap(fb->mem, fb->width * fb->height * (fb->bpp / 8));
-	free(fb);
-}
+	fbc->hwwidth = fbinfo.xres;
+	fbc->hwheight = fbinfo.yres;
+	fbc->hwdepth = fbinfo.bits_per_pixel;
 
-static struct framebuffer *framebuffer;
+	fbc->hwmem = mmap(NULL, fbc->hwwidth * fbc->hwheight * (fbc->hwdepth / 8),
+			  PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	if (fbc->hwmem == MAP_FAILED)
+	{
+		/* TODO: käsittele virhe */
+		perror("mmap");
+	}
+
+	close(fd);
+}
 
 static void update_image(struct fbcanvas *fbc);
 static void update_pdf(struct fbcanvas *fbc);
@@ -191,8 +168,8 @@ static void fbcanvas_scroll(struct fbcanvas *fbc, int dx, int dy)
 		if (fbc->xoffset >= (int)fbc->width)
 			fbc->xoffset = fbc->width - 1;
 	} else {
-		if (-fbc->xoffset >= framebuffer->width)
-			fbc->xoffset = -(framebuffer->width - 1);
+		if (-fbc->xoffset >= fbc->hwwidth)
+			fbc->xoffset = -(fbc->hwwidth - 1);
 	}
 
 	if (fbc->yoffset >= 0)
@@ -200,8 +177,8 @@ static void fbcanvas_scroll(struct fbcanvas *fbc, int dx, int dy)
 		if (fbc->yoffset >= (int)fbc->height)
 			fbc->yoffset = fbc->height - 1;
 	} else {
-		if (-fbc->yoffset >= framebuffer->height)
-			fbc->yoffset = -(framebuffer->height - 1);
+		if (-fbc->yoffset >= fbc->hwheight)
+			fbc->yoffset = -(fbc->hwheight - 1);
 	}
 }
 
@@ -214,7 +191,7 @@ struct fbcanvas *fbcanvas_create(char *filename)
 		g_type_init();
 
 		/* TODO: tarkista onnistuminen */
-		framebuffer = open_framebuffer("/dev/fb0");
+		open_framebuffer(fbc, "/dev/fb0");
 
 		/* Set common fields */
 		fbc->scroll = fbcanvas_scroll;
@@ -225,13 +202,13 @@ struct fbcanvas *fbcanvas_create(char *filename)
 		fbc->scale = 1.0;
 		fbc->pagenum = 0;
 
-		switch (framebuffer->bpp)
+		switch (fbc->hwdepth)
 		{
 			case 16:
 				fbc->draw = draw_16bpp;
 				break;
 			default:
-				fprintf(stderr, "Unsupported depth: %d\n", framebuffer->bpp);
+				fprintf(stderr, "Unsupported depth: %d\n", fbc->hwdepth);
 				exit(1);
 		}
 
@@ -282,9 +259,11 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 	/* Free common fields */
 	if (fbc->filename)
 		free(fbc->filename);
-	free(fbc);
 
-	close_framebuffer(framebuffer);
+	/* Unmap framebuffer */
+	munmap(fbc->hwmem, fbc->hwwidth * fbc->hwheight * (fbc->hwdepth / 8));
+
+	free(fbc);
 }
 
 static void update_image(struct fbcanvas *fbc)
@@ -363,13 +342,13 @@ static void draw_16bpp(struct fbcanvas *fbc)
 	for (y = 0;; y++)
 	{
 		/* Framebufferin reuna tuli vastaan - lopetetaan. */
-		if (y >= framebuffer->height)
+		if (y >= fbc->hwheight)
 			break;
 
 		for (x = 0;; x++)
 		{
 			/* Framebufferin reuna tuli vastaan - lopetetaan. */
-			if (x >= framebuffer->width)
+			if (x >= fbc->hwwidth)
 				break;
 
 			if (x < fb_xoffset || y < fb_yoffset)
@@ -397,8 +376,8 @@ empty:
 				src = &empty_background_color;
 			}
 
-			dst = (unsigned short *)framebuffer->mem +
-				y * framebuffer->width + x;
+			dst = (unsigned short *)fbc->hwmem +
+				y * fbc->hwwidth + x;
 			*dst = *src;
 		}
 	}
