@@ -349,7 +349,8 @@ int main(int argc, char *argv[])
 
 	if (parse_arguments (argc, argv) || (optind != argc - 1))
 	{
-		fprintf (stderr, "Usage: %s [-c] [-pn] [-sn] [-xn] [-yn] file.pdf\n", argv[0]);
+		fprintf (stderr, "Usage: %s [-c] [-g regexp] [-pn] [-sn]"
+			 " [-xn] [-yn] file.pdf\n", argv[0]);
 		return 1;
 	}
 
