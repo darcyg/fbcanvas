@@ -100,12 +100,60 @@ static void close_pdf(struct fbcanvas *fbc)
 	fbc->gdkpixbuf = NULL;
 }
 
+static int grep_pdf(struct fbcanvas *fbc, char *regexp)
+{
+	/* TODO: use real regexps. */
+	int i, ret = 1, len = strlen (regexp);
+	char *str, *beg, *end;
+
+	/* Set up methods & canvas size. */
+	fbc->update (fbc);
+
+	if (!fbc->page)
+	{
+		fprintf (stderr, "%s",
+			 "Grepping is only implemented for PDF-files\n");
+		return 1;
+	}
+
+	for (i = 0; i < fbc->pagecount; i++)
+	{
+		PopplerRectangle rec = {0, 0, fbc->width, fbc->height};
+		fbc->page = poppler_document_get_page (fbc->document, i);
+		str = poppler_page_get_text (fbc->page, POPPLER_SELECTION_LINE, &rec);
+
+		while (str)
+		{
+			beg = strstr (str, regexp);
+			end = beg + len;
+
+			if (beg)
+			{
+				ret = 0; /* found match */
+
+				/* try to find line beginning and end. */
+				while (beg < str && beg[-1] != '\n')
+					beg--;
+				while (*end && *end != '\n')
+					end++;
+
+				printf ("%s:%d: %.*s\n", fbc->filename, i + 1, end - beg, beg);
+				str = end;
+			} else str = NULL;
+		}
+	}
+
+	return ret;
+}
+
 static struct
 {
 	char *type;
 	void (*open)(struct fbcanvas *fbc, char *filename);
 	void (*close)(struct fbcanvas *fbc);
 	void (*update)(struct fbcanvas *fbc);
+
+	int (*grep)(struct fbcanvas *fbc, char *regexp);
 } file_ops[] = {
 	{
 		.type = "PC bitmap",
@@ -132,6 +180,7 @@ static struct
 		.open = open_pdf,
 		.close = close_pdf,
 		.update = update_pdf,
+		.grep = grep_pdf,
 	}, {
 		.type = "PNG",
 		.open = open_image,
@@ -232,6 +281,7 @@ struct fbcanvas *fbcanvas_create(char *filename)
 					fbc->open = file_ops[i].open;
 					fbc->close = file_ops[i].close;
 					fbc->update = file_ops[i].update;
+					fbc->grep = file_ops[i].grep;
 					goto type_ok;
 				}
 			}

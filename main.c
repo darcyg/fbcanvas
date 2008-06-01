@@ -292,52 +292,6 @@ static void main_loop (struct fbcanvas *fbc)
 	endwin ();
 }
 
-/* TODO: use real regexps. */
-static int pdf_grep (struct fbcanvas *fbc, char *regexp)
-{
-	int i, ret = 1, len = strlen (regexp);
-	char *str, *beg, *end;
-
-	/* Set up methods & canvas size. */
-	fbc->update (fbc);
-
-	if (!fbc->page)
-	{
-		fprintf (stderr, "%s",
-			 "Grepping is only implemented for PDF-files\n");
-		return 1;
-	}
-
-	for (i = 0; i < fbc->pagecount; i++)
-	{
-		PopplerRectangle rec = {0, 0, fbc->width, fbc->height};
-		fbc->page = poppler_document_get_page (fbc->document, i);
-		str = poppler_page_get_text (fbc->page, POPPLER_SELECTION_LINE, &rec);
-
-		while (str)
-		{
-			beg = strstr (str, regexp);
-			end = beg + len;
-
-			if (beg)
-			{
-				ret = 0; /* found match */
-
-				/* try to find line beginning and end. */
-				while (beg < str && beg[-1] != '\n')
-					beg--;
-				while (*end && *end != '\n')
-					end++;
-
-				printf ("%s:%d: %.*s\n", fbc->filename, i + 1, end - beg, beg);
-				str = end;
-			} else str = NULL;
-		}
-	}
-
-	return ret;
-}
-
 int main(int argc, char *argv[])
 {
 	extern int optind;
@@ -365,7 +319,11 @@ int main(int argc, char *argv[])
 
 	if (grep_str)
 	{
-		ret = pdf_grep (fbc, grep_str);
+		if (fbc->grep)
+			ret = fbc->grep(fbc, grep_str);
+		else
+			fprintf(stderr, "%s",
+				"Sorry, grepping is not implemented for this file type.\n");
 		goto out_nostatus;
 	}
 

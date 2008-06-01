@@ -26,6 +26,8 @@ struct fbcanvas
 	void (*draw)(struct fbcanvas *fbc);
 	void (*update)(struct fbcanvas *fbc);
 	void (*scroll)(struct fbcanvas *fbc, int dx, int dy);
+
+	int (*grep)(struct fbcanvas *fbc, char *regexp);
 };
 
 struct fbcanvas *fbcanvas_create(char *filename);
