@@ -109,13 +109,6 @@ static int grep_pdf(struct fbcanvas *fbc, char *regexp)
 	/* Set up methods & canvas size. */
 	fbc->update (fbc);
 
-	if (!fbc->page)
-	{
-		fprintf (stderr, "%s",
-			 "Grepping is only implemented for PDF-files\n");
-		return 1;
-	}
-
 	for (i = 0; i < fbc->pagecount; i++)
 	{
 		PopplerRectangle rec = {0, 0, fbc->width, fbc->height};
