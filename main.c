@@ -2,9 +2,12 @@
  * main.c - 17.5.2008 - 1.6.2008 Ari & Tero Roponen
  */
 
+#include <fcntl.h>
 #include <magic.h>
 #include <ncurses.h>
 #undef scroll
+#include <linux/vt.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -266,16 +269,43 @@ static command_t get_command (int ch)
 	return cmd_unbound;
 }
 
+static struct fbcanvas *ugly_hack;
+
+static void handle_signal(int s)
+{
+	int fd = open("/dev/tty", O_RDWR);
+	if (fd)
+	{
+		if (s == SIGUSR1) /* */
+		{
+			/* Release display */
+			ioctl(fd, VT_RELDISP, 1);
+		} else if (s == SIGUSR2) {
+			/* Acquire display */
+			ioctl(fd, VT_RELDISP, VT_ACKACQ);
+			// ungetch(12); /* Ctrl-L */
+			ugly_hack->draw(ugly_hack);
+		}
+
+		close(fd);
+	}
+}
+
 static void main_loop (struct fbcanvas *fbc)
 {
 	int ch, last = 0;
 	command_t cmd;
 	WINDOW *win = initscr();
 
+	signal(SIGUSR1, handle_signal);
+	signal(SIGUSR2, handle_signal);
+
 	refresh();
 	noecho();
 	cbreak();
 	keypad(win, 1); /* Handle KEY_xxx */
+
+	ugly_hack = fbc;
 
 	/* Main loop */
 	for (;;)
@@ -295,7 +325,7 @@ static void main_loop (struct fbcanvas *fbc)
 int main(int argc, char *argv[])
 {
 	extern int optind;
-
+	int fd;
 	int ret = 0;
 	struct fbcanvas *fbc;
 	char filename[256];
@@ -334,6 +364,20 @@ int main(int argc, char *argv[])
 	fbc->scale = prefs.scale;
 
 	fbc->update(fbc);
+
+	/* Asetetaan konsolinvaihto lähettämään signaaleja */
+	fd = open("/dev/tty", O_RDWR);
+	if (fd >= 0)
+	{
+		struct vt_mode vt_mode;
+		ioctl(fd, VT_GETMODE, &vt_mode);
+		vt_mode.mode = VT_PROCESS; /* Tämä prosessi hoitaa vaihdot. */
+		vt_mode.waitv = 0;
+		vt_mode.relsig = SIGUSR1;
+		vt_mode.acqsig = SIGUSR2;
+		ioctl(fd, VT_SETMODE, &vt_mode);
+		close(fd);
+	}
 
 	if (! just_pagecount)
 		main_loop (fbc);
