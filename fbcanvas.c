@@ -1,7 +1,6 @@
 /*
  * fbcanvas.c - 17.5.2008 - 20.5.2008 Ari & Tero Roponen
  */
-#define _GNU_SOURCE
 #include <poppler/glib/poppler.h>
 #include <sys/types.h>
 #include <linux/fb.h>
@@ -66,84 +65,36 @@ static void close_image(struct fbcanvas *fbc)
 	fbc->gdkpixbuf = NULL;
 }
 
-extern struct file_ops pdf_ops;
+extern struct file_info pdf_info;
+
+static struct file_ops generic_image_ops =
+{
+	.open = open_image,
+	.close = close_image,
+	.update = update_image,
+};
 
 /* TODO: siirrä nämä oikeisiin tiedostoihin */
-static struct file_ops bmp_ops =
-{
-	.type = "PC bitmap",
-	.open = open_image,
-	.close = close_image,
-	.update = update_image,
-};
+static struct file_info bmp_info = {"PC bitmap", &generic_image_ops};
+static struct file_info gif_info = {"GIF image data", &generic_image_ops};
+static struct file_info jpg_info = {"JPEG", &generic_image_ops};
+static struct file_info pcx_info = {"PCX", &generic_image_ops};
+static struct file_info png_info = {"PNG", &generic_image_ops};
+static struct file_info ppm_info = {"Netpbm PPM", &generic_image_ops};
+static struct file_info tiff_info = {"TIFF image data", &generic_image_ops};
+static struct file_info xpm_info = {"X pixmap image text", &generic_image_ops};
 
-static struct file_ops gif_ops =
+static struct file_info *file_info[] =
 {
-	.type = "GIF image data",
-	.open = open_image,
-	.close = close_image,
-	.update = update_image,
-};
-
-static struct file_ops jpg_ops =
-{
-	.type = "JPEG",
-	.open = open_image,
-	.close = close_image,
-	.update = update_image,
-};
-
-static struct file_ops pcx_ops =
-{
-	.type = "PCX",
-	.open = open_image,
-	.close = close_image,
-	.update = update_image,
-};
-
-static struct file_ops png_ops =
-{
-	.type = "PNG",
-	.open = open_image,
-	.close = close_image,
-	.update = update_image,
-};
-
-static struct file_ops ppm_ops =
-{
-	.type = "Netpbm PPM",
-	.open = open_image,
-	.close = close_image,
-	.update = update_image,
-};
-
-static struct file_ops tiff_ops =
-{
-	.type = "TIFF image data",
-	.open = open_image,
-	.close = close_image,
-	.update = update_image,
-};
-
-static struct file_ops xpm_ops =
-{
-	.type = "X pixmap image text",
-	.open = open_image,
-	.close = close_image,
-	.update = update_image,
-};
-
-static struct file_ops *file_ops[] =
-{
-	&bmp_ops,
-	&gif_ops,
-	&jpg_ops,
-	&pcx_ops,
-	&pdf_ops,
-	&png_ops,
-	&ppm_ops,
-	&tiff_ops,
-	&xpm_ops,
+	&bmp_info,
+	&gif_info,
+	&jpg_info,
+	&pcx_info,
+	&pdf_info,
+	&png_info,
+	&ppm_info,
+	&tiff_info,
+	&xpm_info,
 	NULL
 };
 
@@ -214,12 +165,12 @@ struct fbcanvas *fbcanvas_create(char *filename)
 			}
 
 			/* Try to identify file by its header */
-			for (i = 0; file_ops[i]; i++)
+			for (i = 0; file_info[i]; i++)
 			{
-				if (!strncmp(type, file_ops[i]->type, strlen(file_ops[i]->type)))
+				if (!strncmp(type, file_info[i]->type, strlen(file_info[i]->type)))
 				{
 					magic_close(magic);
-					fbc->ops = file_ops[i];
+					fbc->ops = file_info[i]->ops;
 					goto type_ok;
 				}
 			}

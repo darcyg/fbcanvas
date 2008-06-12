@@ -1,5 +1,8 @@
 #include <poppler/glib/poppler.h>
 #include "fbcanvas.h"
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
 static void open_pdf(struct fbcanvas *fbc, char *filename)
 {
@@ -42,7 +45,7 @@ static int grep_pdf(struct fbcanvas *fbc, char *regexp)
 	char *str, *beg, *end;
 
 	/* Set up methods & canvas size. */
-	fbc->update (fbc);
+	fbc->ops->update (fbc);
 
 	for (i = 0; i < fbc->pagecount; i++)
 	{
@@ -101,11 +104,13 @@ static void update_pdf(struct fbcanvas *fbc)
 	fbc->height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
 }
 
-struct file_ops pdf_ops =
+static struct file_ops pdf_ops =
 {
-	.type = "PDF",
 	.open = open_pdf,
 	.close = close_pdf,
 	.update = update_pdf,
 	.grep = grep_pdf,
 };
+
+struct file_info pdf_info = {"PDF", &pdf_ops};
+
