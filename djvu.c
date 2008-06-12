@@ -58,9 +58,10 @@ static void update_djvu(struct fbcanvas *fbc)
 	ddjvu_rect_t pagerec = {0, 0, width*fbc->scale, height*fbc->scale};
 	ddjvu_rect_t renderrec = pagerec;
 
-	ddjvu_format_t *pixelformat = ddjvu_format_create(DDJVU_FORMAT_BGR24, 0, NULL);
+	ddjvu_format_t *pixelformat = ddjvu_format_create(DDJVU_FORMAT_RGB24, 0, NULL);
 	ddjvu_format_set_row_order(pixelformat, 1);
 	ddjvu_format_set_y_direction(pixelformat, 1);
+	ddjvu_format_set_ditherbits(pixelformat, 16);
 
 	if (fbc->gdkpixbuf)
 		g_object_unref(fbc->gdkpixbuf);
