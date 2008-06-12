@@ -52,16 +52,23 @@ static void close_djvu(struct fbcanvas *fbc)
 
 static void update_djvu(struct fbcanvas *fbc)
 {
+	unsigned int rgb[] =
+	{
+		0b00000000000000001111100000000000, /* R */
+		0b00000000000000000000011111100000, /* G */
+		0b00000000000000000000000000011111, /* B */
+	};
+
 	int width = ddjvu_page_get_width(page);
 	int height = ddjvu_page_get_height(page);
 
 	ddjvu_rect_t pagerec = {0, 0, width*fbc->scale, height*fbc->scale};
 	ddjvu_rect_t renderrec = pagerec;
 
-	ddjvu_format_t *pixelformat = ddjvu_format_create(DDJVU_FORMAT_RGB24, 0, NULL);
+	ddjvu_format_t *pixelformat = ddjvu_format_create(DDJVU_FORMAT_RGBMASK32, 3, rgb);
 	ddjvu_format_set_row_order(pixelformat, 1);
 	ddjvu_format_set_y_direction(pixelformat, 1);
-	ddjvu_format_set_ditherbits(pixelformat, 16);
+	//ddjvu_format_set_ditherbits(pixelformat, 16);
 
 	if (fbc->gdkpixbuf)
 		g_object_unref(fbc->gdkpixbuf);
@@ -76,7 +83,7 @@ static void update_djvu(struct fbcanvas *fbc)
 
 
 	ddjvu_page_render(page, DDJVU_RENDER_COLOR, &pagerec, &renderrec,
-		pixelformat, fbc->width * 4, gdk_pixbuf_get_pixels(fbc->gdkpixbuf));
+		pixelformat, fbc->scale * width * 4, gdk_pixbuf_get_pixels(fbc->gdkpixbuf));
 
 	ddjvu_format_release (pixelformat);
 }
