@@ -1,7 +1,8 @@
 /*
- * main.c - 17.5.2008 - 1.6.2008 Ari & Tero Roponen
+ * main.c - 17.5.2008 - 12.6.2008 Ari & Tero Roponen
  */
 
+#include <argp.h>
 #include <fcntl.h>
 #include <magic.h>
 #include <ncurses.h>
@@ -24,39 +25,47 @@ static struct
 static int just_pagecount;
 static char *grep_str;
 
-static int parse_arguments (int argc, char *argv[])
+/* Can't be static. */
+const char *argp_program_version = "fb version 20080612";
+
+static struct argp_option options[] = {
+	{"count", 'c', NULL, 0, "display page count"},
+	{"grep", 'g', "TEXT", 0, "search for text"},
+	{"page", 'p', "PAGE", 0, "goto given page"},
+	{"scale", 's', "SCALE", 0, "set scale factor"},
+	{NULL, 'x', "X", 0, "set x-offset"},
+	{NULL, 'y', "Y", 0, "set y-offset"},
+	{NULL}
+};
+
+error_t parse_arguments (int key, char *arg, struct argp_state *state)
 {
-	extern char *optarg;
-	char *opts = "cg:p:s:x:y:";
-	int i;
-	
-	while ((i = getopt (argc, argv, opts)) != -1)
+	switch (key)
 	{
-		switch (i)
-		{
-		default:
-			fprintf (stderr, "Invalid option: %c", i);
-			return 1;
-		case 'c':
-			just_pagecount = 1;
-			break;
-		case 'g':
-			grep_str = strdup(optarg);
-			break;
-		case 'p':
-			prefs.page = atoi (optarg) - 1;
-			break;
-		case 's':
-			prefs.scale = strtod (optarg, NULL);
-			fprintf (stderr, "%f\n", prefs.scale);
-			break;
-		case 'x':
-			prefs.x = atoi (optarg);
-			break;
-		case 'y':
-			prefs.y = atoi (optarg);
-			break;
-		}
+	default:
+		return ARGP_ERR_UNKNOWN;
+	case 'c':
+		just_pagecount = 1;
+		break;
+	case 'g':
+		grep_str = strdup (arg);
+		break;
+	case 'p':
+		prefs.page = atoi (arg) - 1;
+		break;
+	case 's':
+		prefs.scale = strtod (arg, NULL);
+		fprintf (stderr, "%f\n", prefs.scale);
+		break;
+	case 'x':
+		prefs.x = atoi (arg);
+		break;
+	case 'y':
+		prefs.y = atoi (arg);
+		break;
+	case ARGP_KEY_END:
+		if (state->arg_num != 1)
+			argp_usage (state);
 	}
 	return 0;
 }
@@ -324,20 +333,16 @@ static void main_loop (struct fbcanvas *fbc)
 
 int main(int argc, char *argv[])
 {
-	extern int optind;
-	int fd;
+	int ind, fd;
 	int ret = 0;
 	struct fbcanvas *fbc;
 	char filename[256];
 
-	if (parse_arguments (argc, argv) || (optind != argc - 1))
-	{
-		fprintf (stderr, "Usage: %s [-c] [-g regexp] [-pn] [-sn]"
-			 " [-xn] [-yn] file.pdf\n", argv[0]);
-		return 1;
-	}
+	struct argp argp = {options, parse_arguments, "FILE", };
 
-	fbc = fbcanvas_create(argv[optind]);
+	argp_parse (&argp, argc, argv, 0, &ind, NULL);
+
+	fbc = fbcanvas_create(argv[ind]);
 	if (just_pagecount)
 	{
 		fprintf(stderr, "%s has %d page%s.\n",
@@ -383,7 +388,7 @@ int main(int argc, char *argv[])
 		main_loop (fbc);
 
 	fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n", argv[0],
-		 argv[optind], fbc->pagenum + 1,
+		 argv[ind], fbc->pagenum + 1,
 		 fbc->scale, fbc->xoffset, fbc->yoffset);
 out_nostatus:
 	fbcanvas_destroy(fbc);
