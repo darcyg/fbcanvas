@@ -260,14 +260,6 @@ static void setup_keys (void)
 	SET ('9', set_zoom); SET ('+', zoom_in); SET ('-', zoom_out);
 };
 
-static command_t get_command (int ch)
-{
-	void *command = lookup_key (ch);
-	if (command)
-		return (command_t) command;
-	return cmd_unbound;
-}
-
 static struct fbcanvas *ugly_hack;
 
 static void handle_signal(int s)
@@ -309,12 +301,16 @@ static void main_loop (struct fbcanvas *fbc)
 
 	if (setjmp (exit_loop) == 0)
 	{
+		void *command;
 		for (;;)		/* Main loop */
 		{
 			fbc->draw (fbc);
 
 			ch = getch ();
-			get_command (ch) (fbc, ch, last);
+			command = lookup_key (ch);
+			if (! command)
+				command = cmd_unbound;
+			((command_t) command) (fbc, ch, last);
 			last = ch;
 		}
 	}
