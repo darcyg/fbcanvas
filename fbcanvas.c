@@ -342,6 +342,9 @@ static void update_pdf(struct fbcanvas *fbc)
 
 	if (fbc->page)
 		g_object_unref(fbc->page);
+	if (fbc->gdkpixbuf)
+		g_object_unref(fbc->gdkpixbuf);
+
 	fbc->page = poppler_document_get_page(fbc->document, fbc->pagenum);
 	if (!fbc->page)
 	{
