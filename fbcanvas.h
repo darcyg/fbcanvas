@@ -30,6 +30,16 @@ struct fbcanvas
 	int (*grep)(struct fbcanvas *fbc, char *regexp);
 };
 
+struct file_ops
+{
+	char *type;
+	void (*open)(struct fbcanvas *fbc, char *filename);
+	void (*close)(struct fbcanvas *fbc);
+	void (*update)(struct fbcanvas *fbc);
+
+	int (*grep)(struct fbcanvas *fbc, char *regexp);
+};
+
 struct fbcanvas *fbcanvas_create(char *filename);
 void fbcanvas_destroy(struct fbcanvas *fbc);
 

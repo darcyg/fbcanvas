@@ -66,137 +66,85 @@ static void close_image(struct fbcanvas *fbc)
 	fbc->gdkpixbuf = NULL;
 }
 
-static void open_pdf(struct fbcanvas *fbc, char *filename)
+extern struct file_ops pdf_ops;
+
+/* TODO: siirrä nämä oikeisiin tiedostoihin */
+static struct file_ops bmp_ops =
 {
-	GError *err = NULL;
-	char fullname[256];
-	char *canon_name = canonicalize_file_name(filename);
+	.type = "PC bitmap",
+	.open = open_image,
+	.close = close_image,
+	.update = update_image,
+};
 
-	/* PDF vaatii absoluuttisen "file:///tiedostonimen". */
-	sprintf(fullname, "file://%s", canon_name);
-
-	fbc->page = NULL;
-	fbc->document = poppler_document_new_from_file(fullname, NULL, &err);
-	if (!fbc->document)
-	{
-		fprintf(stderr, "open_pdf: %s\n", err->message);
-		exit(1);
-	}
-
-	free(canon_name);
-	fbc->pagecount = poppler_document_get_n_pages(fbc->document);
-}
-
-static void close_pdf(struct fbcanvas *fbc)
+static struct file_ops gif_ops =
 {
-	if (fbc->page)
-		g_object_unref(fbc->page);
-	if (fbc->document)
-		g_object_unref(fbc->document);
-	if (fbc->gdkpixbuf)
-		g_object_unref(fbc->gdkpixbuf);
-	fbc->page = NULL;
-	fbc->document = NULL;
-	fbc->gdkpixbuf = NULL;
-}
+	.type = "GIF image data",
+	.open = open_image,
+	.close = close_image,
+	.update = update_image,
+};
 
-static int grep_pdf(struct fbcanvas *fbc, char *regexp)
+static struct file_ops jpg_ops =
 {
-	/* TODO: use real regexps. */
-	int i, ret = 1, len = strlen (regexp);
-	char *str, *beg, *end;
+	.type = "JPEG",
+	.open = open_image,
+	.close = close_image,
+	.update = update_image,
+};
 
-	/* Set up methods & canvas size. */
-	fbc->update (fbc);
-
-	for (i = 0; i < fbc->pagecount; i++)
-	{
-		PopplerRectangle rec = {0, 0, fbc->width, fbc->height};
-		fbc->page = poppler_document_get_page (fbc->document, i);
-		str = poppler_page_get_text (fbc->page, POPPLER_SELECTION_LINE, &rec);
-
-		while (str)
-		{
-			beg = strstr (str, regexp);
-			end = beg + len;
-
-			if (beg)
-			{
-				ret = 0; /* found match */
-
-				/* try to find line beginning and end. */
-				while (beg > str && beg[-1] != '\n')
-					beg--;
-				while (*end && *end != '\n')
-					end++;
-
-				printf ("%s:%d: %.*s\n", fbc->filename, i + 1, end - beg, beg);
-				str = end;
-			} else str = NULL;
-		}
-	}
-
-	return ret;
-}
-
-static struct
+static struct file_ops pcx_ops =
 {
-	char *type;
-	void (*open)(struct fbcanvas *fbc, char *filename);
-	void (*close)(struct fbcanvas *fbc);
-	void (*update)(struct fbcanvas *fbc);
+	.type = "PCX",
+	.open = open_image,
+	.close = close_image,
+	.update = update_image,
+};
 
-	int (*grep)(struct fbcanvas *fbc, char *regexp);
-} file_ops[] = {
-	{
-		.type = "PC bitmap",
-		.open = open_image,
-		.close = close_image,
-		.update = update_image,
-	}, {
-		.type = "PCX",
-		.open = open_image,
-		.close = close_image,
-		.update = update_image,
-	}, {
-		.type = "GIF image",
-		.open = open_image,
-		.close = close_image,
-		.update = update_image,
-	}, {
-		.type = "JPEG",
-		.open = open_image,
-		.close = close_image,
-		.update = update_image,
-	}, {
-		.type = "PDF",
-		.open = open_pdf,
-		.close = close_pdf,
-		.update = update_pdf,
-		.grep = grep_pdf,
-	}, {
-		.type = "PNG",
-		.open = open_image,
-		.close = close_image,
-		.update = update_image,
-	}, {
-		.type = "Netpbm PPM",
-		.open = open_image,
-		.close = close_image,
-		.update = update_image,
-	}, {
-		.type = "TIFF image data",
-		.open = open_image,
-		.close = close_image,
-		.update = update_image,
-	}, {
-		.type = "X pixmap image text",
-		.open = open_image,
-		.close = close_image,
-		.update = update_image,
-	}, {
-		NULL
-	}
+static struct file_ops png_ops =
+{
+	.type = "PNG",
+	.open = open_image,
+	.close = close_image,
+	.update = update_image,
+};
+
+static struct file_ops ppm_ops =
+{
+	.type = "Netpbm PPM",
+	.open = open_image,
+	.close = close_image,
+	.update = update_image,
+};
+
+static struct file_ops tiff_ops =
+{
+	.type = "TIFF image data",
+	.open = open_image,
+	.close = close_image,
+	.update = update_image,
+};
+
+static struct file_ops xpm_ops =
+{
+	.type = "X pixmap image text",
+	.open = open_image,
+	.close = close_image,
+	.update = update_image,
+};
+
+static struct file_ops *file_ops[] =
+{
+	&bmp_ops,
+	&gif_ops,
+	&jpg_ops,
+	&pcx_ops,
+	&pdf_ops,
+	&png_ops,
+	&ppm_ops,
+	&tiff_ops,
+	&xpm_ops,
+	NULL
 };
 
 static void fbcanvas_scroll(struct fbcanvas *fbc, int dx, int dy)
@@ -266,15 +214,16 @@ struct fbcanvas *fbcanvas_create(char *filename)
 			}
 
 			/* Try to identify file by its header */
-			for (i = 0; file_ops[i].type; i++)
+			for (i = 0; file_ops[i]; i++)
 			{
-				if (!strncmp(type, file_ops[i].type, strlen(file_ops[i].type)))
+				if (!strncmp(type, file_ops[i]->type, strlen(file_ops[i]->type)))
 				{
 					magic_close(magic);
-					fbc->open = file_ops[i].open;
-					fbc->close = file_ops[i].close;
-					fbc->update = file_ops[i].update;
-					fbc->grep = file_ops[i].grep;
+					/* TODO: fbc->ops = file_ops[i]->ops */
+					fbc->open = file_ops[i]->open;
+					fbc->close = file_ops[i]->close;
+					fbc->update = file_ops[i]->update;
+					fbc->grep = file_ops[i]->grep;
 					goto type_ok;
 				}
 			}
@@ -330,34 +279,6 @@ static void update_image(struct fbcanvas *fbc)
 		g_object_unref(fbc->gdkpixbuf);
 		fbc->gdkpixbuf = tmp;
 	}
-
-	fbc->width = gdk_pixbuf_get_width(fbc->gdkpixbuf);
-	fbc->height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
-}
-
-static void update_pdf(struct fbcanvas *fbc)
-{
-	GError *err = NULL;
-	static double width, height;
-
-	if (fbc->page)
-		g_object_unref(fbc->page);
-	if (fbc->gdkpixbuf)
-		g_object_unref(fbc->gdkpixbuf);
-
-	fbc->page = poppler_document_get_page(fbc->document, fbc->pagenum);
-	if (!fbc->page)
-	{
-		/* TODO: käsittele virhe */
-	}
-
-	poppler_page_get_size(fbc->page, &width, &height);
-	//fprintf(stderr, "Size: %lfx%lf\n", width, height);
-
-	fbc->gdkpixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
-		TRUE, 8, ceil(width * fbc->scale), ceil(height * fbc->scale));
-	poppler_page_render_to_pixbuf(fbc->page, 0, 0,
-		ceil(width), ceil(height), fbc->scale, 0, fbc->gdkpixbuf);
 
 	fbc->width = gdk_pixbuf_get_width(fbc->gdkpixbuf);
 	fbc->height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
