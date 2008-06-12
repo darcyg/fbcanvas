@@ -47,42 +47,17 @@ void open_framebuffer(struct fbcanvas *fbc, char *fbdev)
 	close(fd);
 }
 
-static void update_image(struct fbcanvas *fbc);
-static void update_pdf(struct fbcanvas *fbc);
 static void draw_16bpp(struct fbcanvas *fbc);
 
-static void open_image(struct fbcanvas *fbc, char *filename)
-{
-	//fprintf(stderr, "open_image: %s\n", filename);
-	fbc->page = NULL;
-	fbc->pagecount = 1;
-}
-
-static void close_image(struct fbcanvas *fbc)
-{
-	if (fbc->gdkpixbuf)
-		g_object_unref(fbc->gdkpixbuf);
-	fbc->gdkpixbuf = NULL;
-}
-
+extern struct file_info bmp_info;
+extern struct file_info gif_info;
+extern struct file_info jpg_info;
+extern struct file_info pcx_info;
 extern struct file_info pdf_info;
-
-static struct file_ops generic_image_ops =
-{
-	.open = open_image,
-	.close = close_image,
-	.update = update_image,
-};
-
-/* TODO: siirrä nämä oikeisiin tiedostoihin */
-static struct file_info bmp_info = {"PC bitmap", &generic_image_ops};
-static struct file_info gif_info = {"GIF image data", &generic_image_ops};
-static struct file_info jpg_info = {"JPEG", &generic_image_ops};
-static struct file_info pcx_info = {"PCX", &generic_image_ops};
-static struct file_info png_info = {"PNG", &generic_image_ops};
-static struct file_info ppm_info = {"Netpbm PPM", &generic_image_ops};
-static struct file_info tiff_info = {"TIFF image data", &generic_image_ops};
-static struct file_info xpm_info = {"X pixmap image text", &generic_image_ops};
+extern struct file_info png_info;
+extern struct file_info ppm_info;
+extern struct file_info tiff_info;
+extern struct file_info xpm_info;
 
 static struct file_info *file_info[] =
 {
@@ -203,32 +178,6 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 	munmap(fbc->hwmem, fbc->hwwidth * fbc->hwheight * (fbc->hwdepth / 8));
 
 	free(fbc);
-}
-
-static void update_image(struct fbcanvas *fbc)
-{
-	GError *err = NULL;
-	fbc->gdkpixbuf = gdk_pixbuf_new_from_file(fbc->filename, &err);
-	if (err)
-	{
-		fprintf (stderr, "%s", err->message);
-		exit(1);
-	}
-
-	fbc->gdkpixbuf = gdk_pixbuf_add_alpha(fbc->gdkpixbuf, FALSE, 0, 0, 0);
-
-	if (fbc->scale != 1.0)
-	{
-		GdkPixbuf *tmp = gdk_pixbuf_scale_simple(fbc->gdkpixbuf,
-			ceil(fbc->scale * gdk_pixbuf_get_width(fbc->gdkpixbuf)),
-			ceil(fbc->scale * gdk_pixbuf_get_height(fbc->gdkpixbuf)),
-			GDK_INTERP_BILINEAR);
-		g_object_unref(fbc->gdkpixbuf);
-		fbc->gdkpixbuf = tmp;
-	}
-
-	fbc->width = gdk_pixbuf_get_width(fbc->gdkpixbuf);
-	fbc->height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
 }
 
 static void draw_16bpp(struct fbcanvas *fbc)

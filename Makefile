@@ -3,7 +3,7 @@
 CFLAGS:=$(shell pkg-config --cflags poppler-glib) -Os -D_GNU_SOURCE
 LIBS:=$(shell pkg-config --libs poppler-glib) -lncurses -lmagic
 
-oma: main.o fbcanvas.o pdf.o
+oma: main.o fbcanvas.o pdf.o pixbuf.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
 .PHONY: clean
