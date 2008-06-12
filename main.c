@@ -333,11 +333,57 @@ static void main_loop (struct fbcanvas *fbc)
 	endwin ();
 }
 
+static int count_pages (char *filename)
+{
+	struct fbcanvas *fbc = fbcanvas_create (filename);
+	fprintf (stderr, "%s has %d page%s.\n",
+		 fbc->filename, fbc->pagecount,
+		 fbc->pagecount > 1 ? "s":"");
+	fbcanvas_destroy (fbc);
+	return 0;
+}
+
+static int grep_text (char *filename, char *text)
+{
+	struct fbcanvas *fbc = fbcanvas_create (filename);
+	int ret;
+
+	if (fbc->ops->grep)
+	{
+		ret = fbc->ops->grep (fbc, text);
+	} else {
+		fprintf (stderr, "%s",
+			 "Sorry, grepping is not implemented for this file type.\n");
+		ret = 1;
+	}
+	fbcanvas_destroy (fbc);
+	return ret;
+}
+
+static int view_file (char *file, struct prefs *prefs)
+{
+	struct fbcanvas *fbc = fbcanvas_create (file);
+
+	if (prefs->page < fbc->pagecount)
+		fbc->pagenum = prefs->page;
+	fbc->xoffset = prefs->x;
+	fbc->yoffset = prefs->y;
+	fbc->scale = prefs->scale;
+
+	fbc->ops->update (fbc);
+
+	main_loop (fbc);
+
+	fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n",
+		 program_invocation_short_name,
+		 file, fbc->pagenum + 1,
+		 fbc->scale, fbc->xoffset, fbc->yoffset);
+}
+
 int main(int argc, char *argv[])
 {
 	int ind, fd;
 	int ret = 0;
-	struct fbcanvas *fbc;
 	char filename[256];
 
 	struct prefs prefs = {0, 0, 0, 1.0, };
@@ -345,33 +391,10 @@ int main(int argc, char *argv[])
 
 	argp_parse (&argp, argc, argv, 0, &ind, &prefs);
 
-	fbc = fbcanvas_create(argv[ind]);
 	if (prefs.just_pagecount)
-	{
-		fprintf(stderr, "%s has %d page%s.\n",
-			fbc->filename,
-			fbc->pagecount,
-			fbc->pagecount > 1 ? "s":"");
-		goto out_nostatus;
-	}
-
-	if (prefs.grep_str)
-	{
-		if (fbc->ops->grep)
-			ret = fbc->ops->grep(fbc, prefs.grep_str);
-		else
-			fprintf(stderr, "%s",
-				"Sorry, grepping is not implemented for this file type.\n");
-		goto out_nostatus;
-	}
-
-	if (prefs.page < fbc->pagecount)
-		fbc->pagenum = prefs.page;
-	fbc->xoffset = prefs.x;
-	fbc->yoffset = prefs.y;
-	fbc->scale = prefs.scale;
-
-	fbc->ops->update(fbc);
+		return count_pages (argv[ind]);
+	else if (prefs.grep_str)
+		return grep_text (argv[ind], prefs.grep_str);
 
 	/* Asetetaan konsolinvaihto lähettämään signaaleja */
 	fd = open("/dev/tty", O_RDWR);
@@ -387,13 +410,5 @@ int main(int argc, char *argv[])
 		close(fd);
 	}
 
-	if (! prefs.just_pagecount)
-		main_loop (fbc);
-
-	fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n", argv[0],
-		 argv[ind], fbc->pagenum + 1,
-		 fbc->scale, fbc->xoffset, fbc->yoffset);
-out_nostatus:
-	fbcanvas_destroy(fbc);
-	return ret;
+	return view_file (argv[ind], &prefs);
 }
