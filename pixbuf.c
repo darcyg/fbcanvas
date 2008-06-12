@@ -4,7 +4,7 @@
 
 static void open_pixbuf(struct fbcanvas *fbc, char *filename)
 {
-	fbc->page = NULL;
+	fbc->page = NULL; // TODO: tyhjennä tämä yleisessä koodissa
 	fbc->pagecount = 1;
 }
 

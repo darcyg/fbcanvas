@@ -29,8 +29,11 @@ struct fbcanvas
 	double scale;
 	unsigned int pagenum;
 	unsigned int pagecount;
+
+	/* TODO: tee näistä tiedostokohtaisia. Nämä kuuluvat PDF:lle. */
 	PopplerDocument *document;
 	PopplerPage *page;
+
 	GdkPixbuf *gdkpixbuf;
 
 	struct file_ops *ops;

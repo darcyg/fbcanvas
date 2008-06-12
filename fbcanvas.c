@@ -50,6 +50,7 @@ void open_framebuffer(struct fbcanvas *fbc, char *fbdev)
 static void draw_16bpp(struct fbcanvas *fbc);
 
 extern struct file_info bmp_info;
+extern struct file_info djvu_info;
 extern struct file_info gif_info;
 extern struct file_info jpg_info;
 extern struct file_info pcx_info;
@@ -62,6 +63,7 @@ extern struct file_info xpm_info;
 static struct file_info *file_info[] =
 {
 	&bmp_info,
+	&djvu_info,
 	&gif_info,
 	&jpg_info,
 	&pcx_info,
