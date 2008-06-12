@@ -14,16 +14,16 @@
 #include <unistd.h>
 #include "fbcanvas.h"
 
-static struct
+struct prefs
 {
 	int page;
 	signed int x;
 	signed int y;
 	double scale;
-} prefs = {0, 0, 0, 1.0};
 
-static int just_pagecount;
-static char *grep_str;
+	int just_pagecount;
+	char *grep_str;
+};
 
 /* Can't be static. */
 const char *argp_program_version = "fb version 20080612";
@@ -40,28 +40,30 @@ static struct argp_option options[] = {
 
 error_t parse_arguments (int key, char *arg, struct argp_state *state)
 {
+	struct prefs *prefs = state->input;
+
 	switch (key)
 	{
 	default:
 		return ARGP_ERR_UNKNOWN;
 	case 'c':
-		just_pagecount = 1;
+		prefs->just_pagecount = 1;
 		break;
 	case 'g':
-		grep_str = strdup (arg);
+		prefs->grep_str = strdup (arg);
 		break;
 	case 'p':
-		prefs.page = atoi (arg) - 1;
+		prefs->page = atoi (arg) - 1;
 		break;
 	case 's':
-		prefs.scale = strtod (arg, NULL);
-		fprintf (stderr, "%f\n", prefs.scale);
+		prefs->scale = strtod (arg, NULL);
+//		fprintf (stderr, "%f\n", prefs->scale);
 		break;
 	case 'x':
-		prefs.x = atoi (arg);
+		prefs->x = atoi (arg);
 		break;
 	case 'y':
-		prefs.y = atoi (arg);
+		prefs->y = atoi (arg);
 		break;
 	case ARGP_KEY_END:
 		if (state->arg_num != 1)
@@ -338,12 +340,13 @@ int main(int argc, char *argv[])
 	struct fbcanvas *fbc;
 	char filename[256];
 
+	struct prefs prefs = {0, 0, 0, 1.0, };
 	struct argp argp = {options, parse_arguments, "FILE", };
 
-	argp_parse (&argp, argc, argv, 0, &ind, NULL);
+	argp_parse (&argp, argc, argv, 0, &ind, &prefs);
 
 	fbc = fbcanvas_create(argv[ind]);
-	if (just_pagecount)
+	if (prefs.just_pagecount)
 	{
 		fprintf(stderr, "%s has %d page%s.\n",
 			fbc->filename,
@@ -352,10 +355,10 @@ int main(int argc, char *argv[])
 		goto out_nostatus;
 	}
 
-	if (grep_str)
+	if (prefs.grep_str)
 	{
 		if (fbc->ops->grep)
-			ret = fbc->ops->grep(fbc, grep_str);
+			ret = fbc->ops->grep(fbc, prefs.grep_str);
 		else
 			fprintf(stderr, "%s",
 				"Sorry, grepping is not implemented for this file type.\n");
@@ -384,7 +387,7 @@ int main(int argc, char *argv[])
 		close(fd);
 	}
 
-	if (! just_pagecount)
+	if (! prefs.just_pagecount)
 		main_loop (fbc);
 
 	fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n", argv[0],
