@@ -8,6 +8,7 @@
 #include <ncurses.h>
 #undef scroll
 #include <linux/vt.h>
+#include <setjmp.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -74,27 +75,26 @@ error_t parse_arguments (int key, char *arg, struct argp_state *state)
 
 extern void *lookup_key (int character);
 extern void set_key (int character, void *command);
+static jmp_buf exit_loop;
 
-typedef int (*command_t) (struct fbcanvas *, int command, int last);
-#define DEFUN(name) static int cmd_ ##name (struct fbcanvas *fbc, int command, int last)
+typedef void (*command_t) (struct fbcanvas *, int command, int last);
+#define DEFUN(name) static void cmd_ ##name (struct fbcanvas *fbc, int command, int last)
 #define SET(key,command) set_key (key, (void *) cmd_ ##command)
 
 DEFUN (unbound)
 {
 	printf ("\a"); /* bell */
 	fflush (stdout);
-	return 0;
 }
 
 DEFUN (quit)
 {
-	return 1;		/* exit */
+	longjmp (exit_loop, 1);
 }
 
 DEFUN (redraw)
 {
 	/* Nothing to do */
-	return 0;
 }
 
 DEFUN (next_page)
@@ -104,7 +104,6 @@ DEFUN (next_page)
 		fbc->pagenum++;
 		fbc->ops->update(fbc);
 	}
-	return 0;
 }
 
 DEFUN (prev_page)
@@ -114,31 +113,26 @@ DEFUN (prev_page)
 		fbc->pagenum--;
 		fbc->ops->update(fbc);
 	}
-	return 0;
 }
 
 DEFUN (down)
 {
 	fbc->scroll(fbc, 0, fbc->height / 20);
-	return 0;
 }
 
 DEFUN (up)
 {
 	fbc->scroll(fbc, 0, -(fbc->height / 20));
-	return 0;
 }
 
 DEFUN (left)
 {
 	fbc->scroll(fbc, -(fbc->width / 20), 0);
-	return 0;
 }
 
 DEFUN (right)
 {
 	fbc->scroll(fbc, fbc->width / 20, 0);
-	return 0;
 }
 
 DEFUN (set_zoom)
@@ -146,14 +140,12 @@ DEFUN (set_zoom)
 	double scale = 1.0 + 0.1 * (command - '0');
 	fbc->scale = scale;
 	fbc->ops->update (fbc);
-	return 0;
 }
 
 DEFUN (zoom_in)
 {
 	fbc->scale += 0.1;
 	fbc->ops->update(fbc);
-	return 0;
 }
 
 DEFUN (zoom_out)
@@ -163,7 +155,6 @@ DEFUN (zoom_out)
 		fbc->scale -= 0.1;
 		fbc->ops->update(fbc);
 	}
-	return 0;
 }
 
 DEFUN (save)
@@ -174,7 +165,6 @@ DEFUN (save)
 	sprintf(savename, "%s-pg-%d.png", basename(fbc->filename), fbc->pagenum + 1);
 	if (!gdk_pixbuf_save(fbc->gdkpixbuf, savename, "png", &err, NULL))
 		fprintf (stderr, "%s", err->message);
-	return 0;
 }
 
 DEFUN (dump_text)
@@ -184,7 +174,7 @@ DEFUN (dump_text)
 
 	/* fbc->page is currently only used with PDF-files. */
 	if (!fbc->page)
-		return 0;
+		return;
 
 	str = poppler_page_get_text(fbc->page, POPPLER_SELECTION_LINE, &rec);
 	if (str)
@@ -199,8 +189,6 @@ DEFUN (dump_text)
 			fclose (fp);
 		}
 	}
-
-	return 0;
 }
 
 DEFUN (flip_x)
@@ -208,7 +196,6 @@ DEFUN (flip_x)
 	GdkPixbuf *tmp = gdk_pixbuf_flip(fbc->gdkpixbuf, TRUE);
 	g_object_unref(fbc->gdkpixbuf);
 	fbc->gdkpixbuf = tmp;
-	return 0;
 }
 
 DEFUN (flip_y)
@@ -216,7 +203,6 @@ DEFUN (flip_y)
 	GdkPixbuf *tmp = gdk_pixbuf_flip(fbc->gdkpixbuf, FALSE);
 	g_object_unref(fbc->gdkpixbuf);
 	fbc->gdkpixbuf = tmp;
-	return 0;
 }
 
 DEFUN (flip_z)
@@ -228,7 +214,6 @@ DEFUN (flip_z)
 	fbc->width = gdk_pixbuf_get_width(fbc->gdkpixbuf);
 	fbc->height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
 	fbc->scroll(fbc, 0, 0); /* Update offsets */
-	return 0;
 }
 
 DEFUN (goto_top)
@@ -243,7 +228,6 @@ DEFUN (goto_top)
 		last_y = fbc->yoffset;
 		fbc->yoffset = 0;
 	}
-	return 0;
 }
 
 DEFUN (goto_bottom)
@@ -258,7 +242,6 @@ DEFUN (goto_bottom)
 		last_y = fbc->yoffset;
 		fbc->yoffset = fbc->height - fbc->hwheight;
 	}
-	return 0;
 }
 
 static void setup_keys (void)
@@ -276,14 +259,6 @@ static void setup_keys (void)
 	SET ('6', set_zoom); SET ('7', set_zoom); SET ('8', set_zoom);
 	SET ('9', set_zoom); SET ('+', zoom_in); SET ('-', zoom_out);
 };
-
-static command_t get_command (int ch)
-{
-	void *command = lookup_key (ch);
-	if (command)
-		return (command_t) command;
-	return cmd_unbound;
-}
 
 static struct fbcanvas *ugly_hack;
 
@@ -310,7 +285,6 @@ static void handle_signal(int s)
 static void main_loop (struct fbcanvas *fbc)
 {
 	int ch, last = 0;
-	command_t cmd;
 	WINDOW *win = initscr();
 
 	signal(SIGUSR1, handle_signal);
@@ -325,16 +299,20 @@ static void main_loop (struct fbcanvas *fbc)
 
 	ugly_hack = fbc;
 
-	/* Main loop */
-	for (;;)
+	if (setjmp (exit_loop) == 0)
 	{
-		fbc->draw (fbc);
+		void *command;
+		for (;;)		/* Main loop */
+		{
+			fbc->draw (fbc);
 
-		ch = getch ();
-		cmd = get_command (ch);
-		if (cmd (fbc,ch, last))
-			break;
-		last = ch;
+			ch = getch ();
+			command = lookup_key (ch);
+			if (! command)
+				command = cmd_unbound;
+			((command_t) command) (fbc, ch, last);
+			last = ch;
+		}
 	}
 
 	endwin ();
