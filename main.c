@@ -72,8 +72,12 @@ error_t parse_arguments (int key, char *arg, struct argp_state *state)
 	return 0;
 }
 
+extern void *lookup_key (int character);
+extern void set_key (int character, void *command);
+
+typedef int (*command_t) (struct fbcanvas *, int command, int last);
 #define DEFUN(name) static int cmd_ ##name (struct fbcanvas *fbc, int command, int last)
-#define SET(key,command) [key] = cmd_ ##command
+#define SET(key,command) set_key (key, (void *) cmd_ ##command)
 
 DEFUN (unbound)
 {
@@ -257,26 +261,27 @@ DEFUN (goto_bottom)
 	return 0;
 }
 
-typedef int (*command_t) (struct fbcanvas *, int command, int last);
-command_t keymap[] = {
-	SET (12, redraw), /* CTRL-L */
-	SET (27, quit),	 /* ESC */
-	SET ('q', quit), SET ('s', save), SET ('t', dump_text), SET ('x', flip_x),
-	SET ('y', flip_y), SET ('z', flip_z), SET ('Z', flip_z),
-	SET (KEY_HOME, goto_top), SET (KEY_END, goto_bottom),
-	SET (KEY_NPAGE, next_page), SET (KEY_PPAGE, prev_page),
-	SET (KEY_DOWN, down), SET (KEY_UP, up),
-	SET (KEY_LEFT, left), SET (KEY_RIGHT, right),
-	SET ('0', set_zoom), SET ('1', set_zoom), SET ('2', set_zoom),
-	SET ('3', set_zoom), SET ('4', set_zoom), SET ('5', set_zoom),
-	SET ('6', set_zoom), SET ('7', set_zoom), SET ('8', set_zoom),
-	SET ('9', set_zoom), SET ('+', zoom_in), SET ('-', zoom_out),
+static void setup_keys (void)
+{
+	SET (12, redraw); /* CTRL-L */
+	SET (27, quit);	 /* ESC */
+	SET ('q', quit); SET ('s', save); SET ('t', dump_text); SET ('x', flip_x);
+	SET ('y', flip_y); SET ('z', flip_z); SET ('Z', flip_z);
+	SET (KEY_HOME, goto_top); SET (KEY_END, goto_bottom);
+	SET (KEY_NPAGE, next_page); SET (KEY_PPAGE, prev_page);
+	SET (KEY_DOWN, down); SET (KEY_UP, up);
+	SET (KEY_LEFT, left); SET (KEY_RIGHT, right);
+	SET ('0', set_zoom); SET ('1', set_zoom); SET ('2', set_zoom);
+	SET ('3', set_zoom); SET ('4', set_zoom); SET ('5', set_zoom);
+	SET ('6', set_zoom); SET ('7', set_zoom); SET ('8', set_zoom);
+	SET ('9', set_zoom); SET ('+', zoom_in); SET ('-', zoom_out);
 };
 
 static command_t get_command (int ch)
 {
-	if (ch < sizeof (keymap))
-		return keymap[ch] ?: cmd_unbound;
+	void *command = lookup_key (ch);
+	if (command)
+		return (command_t) command;
 	return cmd_unbound;
 }
 
@@ -315,6 +320,8 @@ static void main_loop (struct fbcanvas *fbc)
 	noecho();
 	cbreak();
 	keypad(win, 1); /* Handle KEY_xxx */
+
+	setup_keys ();
 
 	ugly_hack = fbc;
 
