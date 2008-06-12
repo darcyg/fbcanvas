@@ -87,7 +87,7 @@ DEFUN (next_page)
 	if (fbc->pagenum < fbc->pagecount - 1)
 	{
 		fbc->pagenum++;
-		fbc->update(fbc);
+		fbc->ops->update(fbc);
 	}
 	return 0;
 }
@@ -97,7 +97,7 @@ DEFUN (prev_page)
 	if (fbc->pagenum > 0)
 	{
 		fbc->pagenum--;
-		fbc->update(fbc);
+		fbc->ops->update(fbc);
 	}
 	return 0;
 }
@@ -130,14 +130,14 @@ DEFUN (set_zoom)
 {
 	double scale = 1.0 + 0.1 * (command - '0');
 	fbc->scale = scale;
-	fbc->update (fbc);
+	fbc->ops->update (fbc);
 	return 0;
 }
 
 DEFUN (zoom_in)
 {
 	fbc->scale += 0.1;
-	fbc->update(fbc);
+	fbc->ops->update(fbc);
 	return 0;
 }
 
@@ -146,7 +146,7 @@ DEFUN (zoom_out)
 	if (fbc->scale >= 0.2)
 	{
 		fbc->scale -= 0.1;
-		fbc->update(fbc);
+		fbc->ops->update(fbc);
 	}
 	return 0;
 }
@@ -349,8 +349,8 @@ int main(int argc, char *argv[])
 
 	if (grep_str)
 	{
-		if (fbc->grep)
-			ret = fbc->grep(fbc, grep_str);
+		if (fbc->ops->grep)
+			ret = fbc->ops->grep(fbc, grep_str);
 		else
 			fprintf(stderr, "%s",
 				"Sorry, grepping is not implemented for this file type.\n");
@@ -363,7 +363,7 @@ int main(int argc, char *argv[])
 	fbc->yoffset = prefs.y;
 	fbc->scale = prefs.scale;
 
-	fbc->update(fbc);
+	fbc->ops->update(fbc);
 
 	/* Asetetaan konsolinvaihto lähettämään signaaleja */
 	fd = open("/dev/tty", O_RDWR);

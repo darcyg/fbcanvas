@@ -219,11 +219,7 @@ struct fbcanvas *fbcanvas_create(char *filename)
 				if (!strncmp(type, file_ops[i]->type, strlen(file_ops[i]->type)))
 				{
 					magic_close(magic);
-					/* TODO: fbc->ops = file_ops[i]->ops */
-					fbc->open = file_ops[i]->open;
-					fbc->close = file_ops[i]->close;
-					fbc->update = file_ops[i]->update;
-					fbc->grep = file_ops[i]->grep;
+					fbc->ops = file_ops[i];
 					goto type_ok;
 				}
 			}
@@ -236,7 +232,7 @@ unknown:
 		}
 
 type_ok:
-		fbc->open(fbc, filename);
+		fbc->ops->open(fbc, filename);
 	}
 
 	return fbc;
@@ -245,8 +241,8 @@ type_ok:
 void fbcanvas_destroy(struct fbcanvas *fbc)
 {
 	/* Free file-type-specific fields */
-	if (fbc->close)
-		fbc->close(fbc);
+	if (fbc->ops->close)
+		fbc->ops->close(fbc);
 
 	/* Free common fields */
 	if (fbc->filename)
