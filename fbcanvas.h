@@ -40,7 +40,6 @@ struct fbcanvas
 
 struct file_info
 {
-	/*TODO: char *filename */
 	char *type;
 	struct file_ops *ops;
 };
