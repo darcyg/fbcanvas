@@ -14,8 +14,6 @@
 #include "fbcanvas.h"
 #include "file_info.h"
 
-static unsigned short empty_background_color = 0x0000;
-
 static void draw_16bpp(struct framebuffer *fb, GdkPixbuf *gdkpixbuf,
 	signed int xoffset, signed int yoffset);
 
@@ -156,6 +154,7 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 static void draw_16bpp(struct framebuffer *fb, GdkPixbuf *gdkpixbuf,
 	signed int xoffset, signed int yoffset)
 {
+	static unsigned short empty_background_color = 0x0000;
 	unsigned int x, y;
 	unsigned short *src, *dst;
 	unsigned short color;
