@@ -16,7 +16,8 @@
 
 static unsigned short empty_background_color = 0x0000;
 
-static void draw_16bpp(struct fbcanvas *fbc);
+static void draw_16bpp(struct framebuffer *fb, GdkPixbuf *gdkpixbuf,
+	signed int xoffset, signed int yoffset);
 
 static struct framebuffer *open_framebuffer(char *fbdev)
 {
@@ -64,8 +65,6 @@ static struct framebuffer *open_framebuffer(char *fbdev)
 
 	return fb;
 }
-
-static void draw_16bpp(struct fbcanvas *fbc);
 
 static void fbcanvas_scroll(struct fbcanvas *fbc, int dx, int dy)
 {
@@ -154,28 +153,28 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 	free(fbc);
 }
 
-static void draw_16bpp(struct fbcanvas *fbc)
+static void draw_16bpp(struct framebuffer *fb, GdkPixbuf *gdkpixbuf,
+	signed int xoffset, signed int yoffset)
 {
 	unsigned int x, y;
 	unsigned short *src, *dst;
 	unsigned short color;
-	unsigned char *data = gdk_pixbuf_get_pixels(fbc->gdkpixbuf);
-	struct framebuffer *fb = fbc->fb;
+	unsigned char *data = gdk_pixbuf_get_pixels(gdkpixbuf);
 
-	unsigned int width = gdk_pixbuf_get_width(fbc->gdkpixbuf);
-	unsigned int height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
+	unsigned int width = gdk_pixbuf_get_width(gdkpixbuf);
+	unsigned int height = gdk_pixbuf_get_height(gdkpixbuf);
 	int pb_xoffset = 0, pb_yoffset = 0;
 	int fb_xoffset = 0, fb_yoffset = 0;
 
-	if (fbc->xoffset >= 0)
-		pb_xoffset = fbc->xoffset;
+	if (xoffset >= 0)
+		pb_xoffset = xoffset;
 	else
-		fb_xoffset = -fbc->xoffset;
+		fb_xoffset = -xoffset;
 
-	if (fbc->yoffset >= 0)
-		pb_yoffset = fbc->yoffset;
+	if (yoffset >= 0)
+		pb_yoffset = yoffset;
 	else
-		fb_yoffset = -fbc->yoffset;
+		fb_yoffset = -yoffset;
 
 	for (y = 0;; y++)
 	{

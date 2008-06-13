@@ -77,6 +77,8 @@ static struct fbcanvas *ugly_hack;
 
 static void handle_signal(int s)
 {
+	struct framebuffer *fb = ugly_hack->fb;
+
 	int fd = open("/dev/tty", O_RDWR);
 	if (fd)
 	{
@@ -88,7 +90,9 @@ static void handle_signal(int s)
 			/* Acquire display */
 			ioctl(fd, VT_RELDISP, VT_ACKACQ);
 			// ungetch(12); /* Ctrl-L */
-			ugly_hack->fb->draw(ugly_hack);
+			fb->draw(fb,
+				ugly_hack->gdkpixbuf,
+				ugly_hack->xoffset, ugly_hack->yoffset);
 		}
 
 		close(fd);
@@ -117,7 +121,7 @@ static void main_loop (struct fbcanvas *fbc)
 		command_t command;
 		for (;;)		/* Main loop */
 		{
-			fbc->fb->draw(fbc);
+			fbc->fb->draw(fbc->fb, fbc->gdkpixbuf, fbc->xoffset, fbc->yoffset);
 
 			ch = getch ();
 			command = lookup_command (ch);

@@ -12,7 +12,8 @@ struct framebuffer
 	unsigned int height;	/* Hardware height		*/
 	unsigned int depth;	/* Hardware color depth		*/
 
-	void (*draw)(struct fbcanvas *fbc);
+	void (*draw)(struct framebuffer *fb, GdkPixbuf *gdkpixbuf,
+		signed int xoffset, signed int yoffset);
 };
 
 struct file_ops
