@@ -195,8 +195,8 @@ static void draw_16bpp(struct framebuffer *fb, GdkPixbuf *gdkpixbuf,
 			    (x - fb_xoffset < width - pb_xoffset))
 			{
 				unsigned char *tmp = data +
-					4*width * (pb_yoffset + y - fb_yoffset) +
-					4*(pb_xoffset + x - fb_xoffset);
+					4 * width * (pb_yoffset + y - fb_yoffset) +
+					4 * (pb_xoffset + x - fb_xoffset);
 
 				unsigned char red = *tmp++;
 				unsigned char green = *tmp++;
@@ -213,8 +213,7 @@ empty:
 				src = &empty_background_color;
 			}
 
-			dst = (unsigned short *)fb->mem +
-				y * fb->width + x;
+			dst = (unsigned short *)fb->mem + y * fb->width + x;
 			*dst = *src;
 		}
 	}
