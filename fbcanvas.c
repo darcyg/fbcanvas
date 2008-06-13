@@ -16,6 +16,8 @@
 
 static unsigned short empty_background_color = 0x0000;
 
+static void draw_16bpp(struct fbcanvas *fbc);
+
 void open_framebuffer(struct fbcanvas *fbc, char *fbdev)
 {
 	struct framebuffer *fb = fbc->fb;
@@ -37,6 +39,16 @@ void open_framebuffer(struct fbcanvas *fbc, char *fbdev)
 	fb->height = fbinfo.yres;
 	fb->depth = fbinfo.bits_per_pixel;
 
+	switch (fb->depth)
+	{
+		case 16:
+			fbc->draw = draw_16bpp;
+			break;
+		default:
+			fprintf(stderr, "Unsupported depth: %d\n", fb->depth);
+			exit(1);
+	}
+
 	fb->mem = mmap(NULL, fb->width * fb->height * (fb->depth / 8),
 			  PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	if (fb->mem == MAP_FAILED)
@@ -47,8 +59,6 @@ void open_framebuffer(struct fbcanvas *fbc, char *fbdev)
 
 	close(fd);
 }
-
-static void draw_16bpp(struct fbcanvas *fbc);
 
 extern struct file_info bmp_info;
 extern struct file_info djvu_info;
@@ -130,16 +140,6 @@ struct fbcanvas *fbcanvas_create(char *filename)
 
 		/* Asetetaan yleiset metodit. */
 		fbc->scroll = fbcanvas_scroll;
-
-		switch (fb->depth)
-		{
-			case 16:
-				fbc->draw = draw_16bpp;
-				break;
-			default:
-				fprintf(stderr, "Unsupported depth: %d\n", fb->depth);
-				exit(1);
-		}
 
 		/*
 		 * Tunnistetaan tiedostotyyppi ja asetetaan sille oikeat käsittelymetodit.
