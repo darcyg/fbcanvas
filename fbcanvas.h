@@ -30,9 +30,9 @@ struct fbcanvas
 	unsigned int pagenum;
 	unsigned int pagecount;
 
-	/* TODO: tee näistä tiedostokohtaisia. Nämä kuuluvat PDF:lle. */
-	PopplerDocument *document;
-	PopplerPage *page;
+	void *context;
+	void *document;
+	void *page;
 
 	GdkPixbuf *gdkpixbuf;
 

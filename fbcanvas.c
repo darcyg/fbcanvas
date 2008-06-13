@@ -111,14 +111,20 @@ struct fbcanvas *fbcanvas_create(char *filename)
 		/* TODO: tarkista onnistuminen */
 		open_framebuffer(fbc, "/dev/fb0");
 
-		/* Set common fields */
-		fbc->scroll = fbcanvas_scroll;
-		fbc->filename = strdup(filename);
+		/* Alustetaan yleiset kentät. */
+		fbc->context = NULL;
+		fbc->document = NULL;
+		fbc->page = NULL;
 		fbc->gdkpixbuf = NULL;
 		fbc->xoffset = 0;
 		fbc->yoffset = 0;
 		fbc->scale = 1.0;
 		fbc->pagenum = 0;
+		fbc->pagecount = 1;
+		fbc->filename = strdup(filename);
+
+		/* Asetetaan yleiset metodit. */
+		fbc->scroll = fbcanvas_scroll;
 
 		switch (fbc->hwdepth)
 		{
@@ -130,7 +136,9 @@ struct fbcanvas *fbcanvas_create(char *filename)
 				exit(1);
 		}
 
-		/* Determine file type */
+		/*
+		 * Tunnistetaan tiedostotyyppi ja asetetaan sille oikeat käsittelymetodit.
+		 */
 		{
 			magic_t magic = magic_open(MAGIC_NONE);
 			int i, ret = magic_load(magic, NULL);
@@ -175,6 +183,8 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 	/* Free common fields */
 	if (fbc->filename)
 		free(fbc->filename);
+	if (fbc->gdkpixbuf)
+		g_object_unref(fbc->gdkpixbuf);
 
 	/* Unmap framebuffer */
 	munmap(fbc->hwmem, fbc->hwwidth * fbc->hwheight * (fbc->hwdepth / 8));

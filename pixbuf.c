@@ -4,15 +4,12 @@
 
 static void open_pixbuf(struct fbcanvas *fbc, char *filename)
 {
-	fbc->page = NULL; // TODO: tyhjennä tämä yleisessä koodissa
-	fbc->pagecount = 1;
+	/* pixbuf ei tarvitse open-metodia. */
 }
 
 static void close_pixbuf(struct fbcanvas *fbc)
 {
-	if (fbc->gdkpixbuf)
-		g_object_unref(fbc->gdkpixbuf);
-	fbc->gdkpixbuf = NULL;
+	/* pixbuf ei tarvitse close-metodia. */
 }
 
 static void update_pixbuf(struct fbcanvas *fbc)

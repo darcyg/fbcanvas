@@ -13,7 +13,6 @@ static void open_pdf(struct fbcanvas *fbc, char *filename)
 	/* PDF vaatii absoluuttisen "file:///tiedostonimen". */
 	sprintf(fullname, "file://%s", canon_name);
 
-	fbc->page = NULL; // TODO: tyhjennä tämä yleisessä koodissa
 	fbc->document = poppler_document_new_from_file(fullname, NULL, &err);
 	if (!fbc->document)
 	{
@@ -31,11 +30,8 @@ static void close_pdf(struct fbcanvas *fbc)
 		g_object_unref(fbc->page);
 	if (fbc->document)
 		g_object_unref(fbc->document);
-	if (fbc->gdkpixbuf)
-		g_object_unref(fbc->gdkpixbuf);
 	fbc->page = NULL;
 	fbc->document = NULL;
-	fbc->gdkpixbuf = NULL;
 }
 
 static int grep_pdf(struct fbcanvas *fbc, char *regexp)
