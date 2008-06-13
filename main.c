@@ -88,7 +88,7 @@ static void handle_signal(int s)
 			/* Acquire display */
 			ioctl(fd, VT_RELDISP, VT_ACKACQ);
 			// ungetch(12); /* Ctrl-L */
-			ugly_hack->draw(ugly_hack);
+			ugly_hack->fb->draw(ugly_hack);
 		}
 
 		close(fd);
@@ -117,7 +117,7 @@ static void main_loop (struct fbcanvas *fbc)
 		command_t command;
 		for (;;)		/* Main loop */
 		{
-			fbc->draw (fbc);
+			fbc->fb->draw(fbc);
 
 			ch = getch ();
 			command = lookup_command (ch);

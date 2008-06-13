@@ -18,7 +18,7 @@ static unsigned short empty_background_color = 0x0000;
 
 static void draw_16bpp(struct fbcanvas *fbc);
 
-static struct framebuffer *open_framebuffer(struct fbcanvas *fbc, char *fbdev)
+static struct framebuffer *open_framebuffer(char *fbdev)
 {
 	struct framebuffer *fb = malloc(sizeof(*fb));
 	if (fb)
@@ -44,7 +44,7 @@ static struct framebuffer *open_framebuffer(struct fbcanvas *fbc, char *fbdev)
 		switch (fb->depth)
 		{
 			case 16:
-				fbc->draw = draw_16bpp;
+				fb->draw = draw_16bpp;
 				break;
 			default:
 				fprintf(stderr, "Unsupported depth: %d\n", fb->depth);
@@ -103,7 +103,7 @@ struct fbcanvas *fbcanvas_create(char *filename)
 		g_type_init();
 
 		/* TODO: tarkista onnistuminen */
-		fbc->fb = open_framebuffer(fbc, "/dev/fb0");
+		fbc->fb = open_framebuffer("/dev/fb0");
 
 		/* Alustetaan yleiset kentät. */
 		fbc->context = NULL;
