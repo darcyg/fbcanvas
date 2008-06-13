@@ -47,9 +47,9 @@ static void update_djvu(struct fbcanvas *fbc)
 {
 	unsigned int rgb[] =
 	{
-		0b00000000000000001111100000000000, /* R */
-		0b00000000000000000000011111100000, /* G */
-		0b00000000000000000000000000011111, /* B */
+		0xFF << 0,	/* R */
+		0xFF << 8,	/* G */
+		0xFF << 16,	/* B */
 	};
 
 	int width = ddjvu_page_get_width(fbc->page);
