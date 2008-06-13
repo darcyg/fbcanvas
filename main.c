@@ -1,5 +1,5 @@
 /*
- * main.c - 17.5.2008 - 12.6.2008 Ari & Tero Roponen
+ * main.c - 17.5.2008 - 13.6.2008 Ari & Tero Roponen
  */
 
 #include <argp.h>
@@ -14,6 +14,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "fbcanvas.h"
+#include "keymap.h"
 
 struct prefs
 {
@@ -73,8 +74,6 @@ error_t parse_arguments (int key, char *arg, struct argp_state *state)
 	return 0;
 }
 
-extern void *lookup_key (int character);
-extern void set_key (int character, void *command);
 static jmp_buf exit_loop;
 
 typedef void (*command_t) (struct fbcanvas *, int command, int last);
