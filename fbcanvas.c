@@ -18,46 +18,51 @@ static unsigned short empty_background_color = 0x0000;
 
 static void draw_16bpp(struct fbcanvas *fbc);
 
-void open_framebuffer(struct fbcanvas *fbc, char *fbdev)
+static struct framebuffer *open_framebuffer(struct fbcanvas *fbc, char *fbdev)
 {
-	struct framebuffer *fb = fbc->fb;
-	struct fb_var_screeninfo fbinfo;
-	int fd = open("/dev/fb0", O_RDWR);
-	if (fd < 0)
+	struct framebuffer *fb = malloc(sizeof(*fb));
+	if (fb)
 	{
-		/* TODO: käsittele virhe */
-		perror("open");
+		struct fb_var_screeninfo fbinfo;
+		int fd = open(fbdev, O_RDWR);
+		if (fd < 0)
+		{
+			/* TODO: käsittele virhe */
+			perror("open");
+		}
+
+		if (ioctl(fd, FBIOGET_VSCREENINFO, &fbinfo) < 0)
+		{
+			/* TODO: käsittele virhe */
+			perror("ioctl");
+		}
+
+		fb->width = fbinfo.xres;
+		fb->height = fbinfo.yres;
+		fb->depth = fbinfo.bits_per_pixel;
+
+		switch (fb->depth)
+		{
+			case 16:
+				fbc->draw = draw_16bpp;
+				break;
+			default:
+				fprintf(stderr, "Unsupported depth: %d\n", fb->depth);
+				exit(1);
+		}
+
+		fb->mem = mmap(NULL, fb->width * fb->height * (fb->depth / 8),
+			PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+		if (fb->mem == MAP_FAILED)
+		{
+			/* TODO: käsittele virhe */
+			perror("mmap");
+		}
+
+		close(fd);
 	}
 
-	if (ioctl(fd, FBIOGET_VSCREENINFO, &fbinfo) < 0)
-	{
-		/* TODO: käsittele virhe */
-		perror("ioctl");
-	}
-
-	fb->width = fbinfo.xres;
-	fb->height = fbinfo.yres;
-	fb->depth = fbinfo.bits_per_pixel;
-
-	switch (fb->depth)
-	{
-		case 16:
-			fbc->draw = draw_16bpp;
-			break;
-		default:
-			fprintf(stderr, "Unsupported depth: %d\n", fb->depth);
-			exit(1);
-	}
-
-	fb->mem = mmap(NULL, fb->width * fb->height * (fb->depth / 8),
-			  PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-	if (fb->mem == MAP_FAILED)
-	{
-		/* TODO: käsittele virhe */
-		perror("mmap");
-	}
-
-	close(fd);
+	return fb;
 }
 
 static void draw_16bpp(struct fbcanvas *fbc);
@@ -95,13 +100,10 @@ struct fbcanvas *fbcanvas_create(char *filename)
 	struct fbcanvas *fbc = malloc(sizeof(*fbc));
 	if (fbc)
 	{
-		struct framebuffer *fb = malloc(sizeof(*fb));
 		g_type_init();
 
-		fbc->fb = fb;
-
 		/* TODO: tarkista onnistuminen */
-		open_framebuffer(fbc, "/dev/fb0");
+		fbc->fb = open_framebuffer(fbc, "/dev/fb0");
 
 		/* Alustetaan yleiset kentät. */
 		fbc->context = NULL;
