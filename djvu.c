@@ -18,29 +18,56 @@ static void open_djvu(struct fbcanvas *fbc, char *filename)
 		if (!msg)
 			break;
 
-		if (msg->m_any.tag == DDJVU_DOCINFO)
+		switch (msg->m_any.tag)
 		{
+		case DDJVU_NEWSTREAM:
+			fprintf(stderr, "DDJVU_NEWSTREAM\n");
+			break;
+		case DDJVU_PAGEINFO:
+			fprintf(stderr, "DDJVU_PAGEINFO\n");
+			break;
+		case DDJVU_ERROR:
+			fprintf(stderr, "DDJVU_ERROR\n");
+			break;
+		case DDJVU_INFO:
+			fprintf(stderr, "DDJVU_INFO\n");
+			break;
+		case DDJVU_CHUNK:
+			fprintf(stderr, "DDJVU_CHUNK\n");
+			break;
+		case DDJVU_THUMBNAIL:
+			fprintf(stderr, "DDJVU_THUMBNAIL\n");
+			break;
+		case DDJVU_PROGRESS:
+			fprintf(stderr, "DDJVU_PROGRESS\n");
+			break;
+		case DDJVU_RELAYOUT:
+			fprintf(stderr, "DDJVU_RELAYOUT\n");
+			break;
+		case DDJVU_REDISPLAY:
+			fprintf(stderr, "DDJVU_REDISPLAY\n");
+			break;
+		case DDJVU_DOCINFO:
+			fprintf(stderr, "DDJVU_DOCINFO\n");
 			if (ddjvu_document_decoding_status(fbc->document) == DDJVU_JOB_OK)
 			{
 				fbc->pagecount = ddjvu_document_get_pagenum(fbc->document);
 				fbc->page = ddjvu_page_create_by_pageno(fbc->document,
 					fbc->pagenum);
-				break;
 			}
+			break;
 		}
 
 		ddjvu_message_pop(fbc->context);
 	}
-
-	while (!ddjvu_page_decoding_done(fbc->page))
-		sleep(1);
-
-	fprintf(stderr, "Decoding stopped\n");
 }
 
 static void close_djvu(struct fbcanvas *fbc)
 {
-	/* TODO: toteuta */
+	if (fbc->document)
+		ddjvu_document_release(fbc->document);
+	if (fbc->context)
+		ddjvu_context_release(fbc->context);
 }
 
 static void update_djvu(struct fbcanvas *fbc)
