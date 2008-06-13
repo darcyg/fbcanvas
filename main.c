@@ -4,7 +4,6 @@
 
 #include <argp.h>
 #include <fcntl.h>
-#include <magic.h>
 #include <ncurses.h>
 #undef scroll
 #include <linux/vt.h>

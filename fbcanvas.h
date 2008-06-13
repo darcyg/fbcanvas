@@ -41,12 +41,6 @@ struct fbcanvas
 	void (*scroll)(struct fbcanvas *fbc, int dx, int dy);
 };
 
-struct file_info
-{
-	char *type;
-	struct file_ops *ops;
-};
-
 struct fbcanvas *fbcanvas_create(char *filename);
 void fbcanvas_destroy(struct fbcanvas *fbc);
 

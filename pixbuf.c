@@ -1,6 +1,7 @@
-#include "fbcanvas.h"
 #include <math.h>
 #include <stdlib.h>
+#include "fbcanvas.h"
+#include "file_info.h"
 
 static void open_pixbuf(struct fbcanvas *fbc, char *filename)
 {

@@ -7,12 +7,12 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <fcntl.h>
-#include <magic.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "fbcanvas.h"
+#include "file_info.h"
 
 static unsigned short empty_background_color = 0x0000;
 
@@ -49,32 +49,6 @@ void open_framebuffer(struct fbcanvas *fbc, char *fbdev)
 
 static void draw_16bpp(struct fbcanvas *fbc);
 
-extern struct file_info bmp_info;
-extern struct file_info djvu_info;
-extern struct file_info gif_info;
-extern struct file_info jpg_info;
-extern struct file_info pcx_info;
-extern struct file_info pdf_info;
-extern struct file_info png_info;
-extern struct file_info ppm_info;
-extern struct file_info tiff_info;
-extern struct file_info xpm_info;
-
-static struct file_info *file_info[] =
-{
-	&bmp_info,
-	&djvu_info,
-	&gif_info,
-	&jpg_info,
-	&pcx_info,
-	&pdf_info,
-	&png_info,
-	&ppm_info,
-	&tiff_info,
-	&xpm_info,
-	NULL
-};
-
 static void fbcanvas_scroll(struct fbcanvas *fbc, int dx, int dy)
 {
 	/* TODO: tarkista ettei mennä reunusten ohi */
@@ -102,6 +76,7 @@ static void fbcanvas_scroll(struct fbcanvas *fbc, int dx, int dy)
 
 struct fbcanvas *fbcanvas_create(char *filename)
 {
+	struct file_info *fi;
 	GError *err = NULL;
 	struct fbcanvas *fbc = malloc(sizeof(*fbc));
 	if (fbc)
@@ -139,35 +114,10 @@ struct fbcanvas *fbcanvas_create(char *filename)
 		/*
 		 * Tunnistetaan tiedostotyyppi ja asetetaan sille oikeat käsittelymetodit.
 		 */
-		{
-			magic_t magic = magic_open(MAGIC_NONE);
-			int i, ret = magic_load(magic, NULL);
-			const char *type = magic_file(magic, filename);
-			if (!type)
-			{
-				fprintf(stderr, "Could not determine file type: %s\n", filename);
-				goto unknown;
-			}
-
-			/* Try to identify file by its header */
-			for (i = 0; file_info[i]; i++)
-			{
-				if (!strncmp(type, file_info[i]->type, strlen(file_info[i]->type)))
-				{
-					magic_close(magic);
-					fbc->ops = file_info[i]->ops;
-					goto type_ok;
-				}
-			}
-
-			/* TODO: Try to identify file by its extension */
-			fprintf(stderr, "Unsupported file type: %s\n", type);
-unknown:
-			magic_close(magic);
-			exit(1);
-		}
-
-type_ok:
+		fi = get_file_info (filename);
+		if (! fi)
+			exit (1);
+		fbc->ops = fi->ops;
 		fbc->ops->open(fbc, filename);
 	}
 

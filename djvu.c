@@ -1,5 +1,6 @@
 #include <libdjvu/ddjvuapi.h>
 #include "fbcanvas.h"
+#include "file_info.h"
 
 static void open_djvu(struct fbcanvas *fbc, char *filename)
 {

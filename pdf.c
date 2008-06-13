@@ -1,8 +1,9 @@
 #include <poppler/glib/poppler.h>
-#include "fbcanvas.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include "fbcanvas.h"
+#include "file_info.h"
 
 static void open_pdf(struct fbcanvas *fbc, char *filename)
 {
