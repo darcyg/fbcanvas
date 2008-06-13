@@ -50,6 +50,9 @@ static void update_djvu(struct fbcanvas *fbc)
 
 	const ddjvu_message_t *msg;
 
+	if (fbc->page)
+		ddjvu_page_release(fbc->page);
+
 	fbc->page = ddjvu_page_create_by_pageno(fbc->document, fbc->pagenum);
 
 	for (;;)
