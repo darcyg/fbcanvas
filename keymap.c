@@ -1,5 +1,6 @@
-/* keymap.c - 12.6.2008 - 12.6.2008 Ari & Tero Roponen */
+/* keymap.c - 12.6.2008 - 13.6.2008 Ari & Tero Roponen */
 #include <stdlib.h>
+#include "keymap.h"
 
 struct keymap
 {
