@@ -64,34 +64,34 @@ static void update_djvu(struct fbcanvas *fbc)
 		switch (msg->m_any.tag)
 		{
 		case DDJVU_NEWSTREAM:
-			fprintf(stderr, "DDJVU_NEWSTREAM\n");
+			//fprintf(stderr, "DDJVU_NEWSTREAM\n");
 			break;
 		case DDJVU_PAGEINFO:
-			fprintf(stderr, "DDJVU_PAGEINFO\n");
+			//fprintf(stderr, "DDJVU_PAGEINFO\n");
 			break;
 		case DDJVU_ERROR:
-			fprintf(stderr, "DDJVU_ERROR\n");
+			//fprintf(stderr, "DDJVU_ERROR\n");
 			break;
 		case DDJVU_INFO:
-			fprintf(stderr, "DDJVU_INFO\n");
+			//fprintf(stderr, "DDJVU_INFO\n");
 			break;
 		case DDJVU_CHUNK:
-			fprintf(stderr, "DDJVU_CHUNK\n");
+			//fprintf(stderr, "DDJVU_CHUNK\n");
 			break;
 		case DDJVU_THUMBNAIL:
-			fprintf(stderr, "DDJVU_THUMBNAIL\n");
+			//fprintf(stderr, "DDJVU_THUMBNAIL\n");
 			break;
 		case DDJVU_PROGRESS:
-			fprintf(stderr, "DDJVU_PROGRESS\n");
+			//fprintf(stderr, "DDJVU_PROGRESS\n");
 			break;
 		case DDJVU_RELAYOUT:
-			fprintf(stderr, "DDJVU_RELAYOUT\n");
+			//fprintf(stderr, "DDJVU_RELAYOUT\n");
 			break;
 		case DDJVU_REDISPLAY:
-			fprintf(stderr, "DDJVU_REDISPLAY\n");
+			//fprintf(stderr, "DDJVU_REDISPLAY\n");
 			break;
 		case DDJVU_DOCINFO:
-			fprintf(stderr, "DDJVU_DOCINFO\n");
+			//fprintf(stderr, "DDJVU_DOCINFO\n");
 			break;
 		}
 
@@ -100,6 +100,11 @@ static void update_djvu(struct fbcanvas *fbc)
 
 	int width = ddjvu_page_get_width(fbc->page);
 	int height = ddjvu_page_get_height(fbc->page);
+
+	if (width > fbc->hwwidth)
+		width = fbc->hwwidth;
+	if (height > fbc->hwheight)
+		height = fbc->hwheight;
 
 	ddjvu_rect_t pagerec = {0, 0, width*fbc->scale, height*fbc->scale};
 	ddjvu_rect_t renderrec = pagerec;
