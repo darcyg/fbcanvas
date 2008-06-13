@@ -5,6 +5,14 @@
 
 struct fbcanvas;
 
+struct framebuffer
+{
+	unsigned char *mem;	/* mmap()ed framebuffer memory	*/
+	unsigned int width;	/* Hardware width		*/
+	unsigned int height;	/* Hardware height		*/
+	unsigned int depth;	/* Hardware color depth		*/
+};
+
 struct file_ops
 {
 	char *type;
@@ -17,13 +25,10 @@ struct file_ops
 
 struct fbcanvas
 {
+	struct framebuffer *fb;
 	char *filename;
-	unsigned char *hwmem;	/* mmap()ed framebuffer memory	*/
 	unsigned int width;	/* Virtual width		*/
 	unsigned int height;	/* Virtual height		*/
-	unsigned int hwwidth;	/* Hardware width		*/
-	unsigned int hwheight;	/* Hardware height		*/
-	unsigned int hwdepth;	/* Hardware color depth		*/
 	signed int xoffset;
 	signed int yoffset;
 	double scale;

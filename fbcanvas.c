@@ -16,8 +16,11 @@
 
 static unsigned short empty_background_color = 0x0000;
 
+static void draw_16bpp(struct fbcanvas *fbc);
+
 void open_framebuffer(struct fbcanvas *fbc, char *fbdev)
 {
+	struct framebuffer *fb = fbc->fb;
 	struct fb_var_screeninfo fbinfo;
 	int fd = open("/dev/fb0", O_RDWR);
 	if (fd < 0)
@@ -32,13 +35,23 @@ void open_framebuffer(struct fbcanvas *fbc, char *fbdev)
 		perror("ioctl");
 	}
 
-	fbc->hwwidth = fbinfo.xres;
-	fbc->hwheight = fbinfo.yres;
-	fbc->hwdepth = fbinfo.bits_per_pixel;
+	fb->width = fbinfo.xres;
+	fb->height = fbinfo.yres;
+	fb->depth = fbinfo.bits_per_pixel;
 
-	fbc->hwmem = mmap(NULL, fbc->hwwidth * fbc->hwheight * (fbc->hwdepth / 8),
+	switch (fb->depth)
+	{
+		case 16:
+			fbc->draw = draw_16bpp;
+			break;
+		default:
+			fprintf(stderr, "Unsupported depth: %d\n", fb->depth);
+			exit(1);
+	}
+
+	fb->mem = mmap(NULL, fb->width * fb->height * (fb->depth / 8),
 			  PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-	if (fbc->hwmem == MAP_FAILED)
+	if (fb->mem == MAP_FAILED)
 	{
 		/* TODO: käsittele virhe */
 		perror("mmap");
@@ -51,7 +64,8 @@ static void draw_16bpp(struct fbcanvas *fbc);
 
 static void fbcanvas_scroll(struct fbcanvas *fbc, int dx, int dy)
 {
-	/* TODO: tarkista ettei mennä reunusten ohi */
+	struct framebuffer *fb = fbc->fb;
+
 	fbc->xoffset += dx;
 	fbc->yoffset += dy;
 
@@ -60,8 +74,8 @@ static void fbcanvas_scroll(struct fbcanvas *fbc, int dx, int dy)
 		if (fbc->xoffset >= (int)fbc->width)
 			fbc->xoffset = fbc->width - 1;
 	} else {
-		if (-fbc->xoffset >= fbc->hwwidth)
-			fbc->xoffset = -(fbc->hwwidth - 1);
+		if (-fbc->xoffset >= fb->width)
+			fbc->xoffset = -(fb->width - 1);
 	}
 
 	if (fbc->yoffset >= 0)
@@ -69,8 +83,8 @@ static void fbcanvas_scroll(struct fbcanvas *fbc, int dx, int dy)
 		if (fbc->yoffset >= (int)fbc->height)
 			fbc->yoffset = fbc->height - 1;
 	} else {
-		if (-fbc->yoffset >= fbc->hwheight)
-			fbc->yoffset = -(fbc->hwheight - 1);
+		if (-fbc->yoffset >= fb->height)
+			fbc->yoffset = -(fb->height - 1);
 	}
 }
 
@@ -81,7 +95,10 @@ struct fbcanvas *fbcanvas_create(char *filename)
 	struct fbcanvas *fbc = malloc(sizeof(*fbc));
 	if (fbc)
 	{
+		struct framebuffer *fb = malloc(sizeof(*fb));
 		g_type_init();
+
+		fbc->fb = fb;
 
 		/* TODO: tarkista onnistuminen */
 		open_framebuffer(fbc, "/dev/fb0");
@@ -101,16 +118,6 @@ struct fbcanvas *fbcanvas_create(char *filename)
 		/* Asetetaan yleiset metodit. */
 		fbc->scroll = fbcanvas_scroll;
 
-		switch (fbc->hwdepth)
-		{
-			case 16:
-				fbc->draw = draw_16bpp;
-				break;
-			default:
-				fprintf(stderr, "Unsupported depth: %d\n", fbc->hwdepth);
-				exit(1);
-		}
-
 		/*
 		 * Tunnistetaan tiedostotyyppi ja asetetaan sille oikeat käsittelymetodit.
 		 */
@@ -126,6 +133,8 @@ struct fbcanvas *fbcanvas_create(char *filename)
 
 void fbcanvas_destroy(struct fbcanvas *fbc)
 {
+	struct framebuffer *fb = fbc->fb;
+
 	/* Free file-type-specific fields */
 	if (fbc->ops->close)
 		fbc->ops->close(fbc);
@@ -137,8 +146,9 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 		g_object_unref(fbc->gdkpixbuf);
 
 	/* Unmap framebuffer */
-	munmap(fbc->hwmem, fbc->hwwidth * fbc->hwheight * (fbc->hwdepth / 8));
+	munmap(fb->mem, fb->width * fb->height * (fb->depth / 8));
 
+	free(fbc->fb);
 	free(fbc);
 }
 
@@ -148,6 +158,7 @@ static void draw_16bpp(struct fbcanvas *fbc)
 	unsigned short *src, *dst;
 	unsigned short color;
 	unsigned char *data = gdk_pixbuf_get_pixels(fbc->gdkpixbuf);
+	struct framebuffer *fb = fbc->fb;
 
 	unsigned int width = gdk_pixbuf_get_width(fbc->gdkpixbuf);
 	unsigned int height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
@@ -167,13 +178,13 @@ static void draw_16bpp(struct fbcanvas *fbc)
 	for (y = 0;; y++)
 	{
 		/* Framebufferin reuna tuli vastaan - lopetetaan. */
-		if (y >= fbc->hwheight)
+		if (y >= fb->height)
 			break;
 
 		for (x = 0;; x++)
 		{
 			/* Framebufferin reuna tuli vastaan - lopetetaan. */
-			if (x >= fbc->hwwidth)
+			if (x >= fb->width)
 				break;
 
 			if (x < fb_xoffset || y < fb_yoffset)
@@ -201,8 +212,8 @@ empty:
 				src = &empty_background_color;
 			}
 
-			dst = (unsigned short *)fbc->hwmem +
-				y * fbc->hwwidth + x;
+			dst = (unsigned short *)fb->mem +
+				y * fb->width + x;
 			*dst = *src;
 		}
 	}
