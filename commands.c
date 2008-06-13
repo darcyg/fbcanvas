@@ -159,6 +159,7 @@ DEFUN (goto_top)
 
 DEFUN (goto_bottom)
 {
+	struct framebuffer *fb = fbc->fb;
 	static int last_y;
 	if (last == command)
 	{
@@ -167,7 +168,7 @@ DEFUN (goto_bottom)
 		last_y = tmp;
 	} else {
 		last_y = fbc->yoffset;
-		fbc->yoffset = fbc->height - fbc->hwheight;
+		fbc->yoffset = fbc->height - fb->height;
 	}
 }
 

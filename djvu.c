@@ -41,6 +41,7 @@ static void close_djvu(struct fbcanvas *fbc)
 
 static void update_djvu(struct fbcanvas *fbc)
 {
+	struct framebuffer *fb = fbc->fb;
 	unsigned int rgb[] =
 	{
 		0xFF << 0,	/* R */
@@ -104,10 +105,10 @@ static void update_djvu(struct fbcanvas *fbc)
 	int width = ddjvu_page_get_width(fbc->page);
 	int height = ddjvu_page_get_height(fbc->page);
 
-	if (width > fbc->hwwidth)
-		width = fbc->hwwidth;
-	if (height > fbc->hwheight)
-		height = fbc->hwheight;
+	if (width > fb->width)
+		width = fb->width;
+	if (height > fb->height)
+		height = fb->height;
 
 	ddjvu_rect_t pagerec = {0, 0, width*fbc->scale, height*fbc->scale};
 	ddjvu_rect_t renderrec = pagerec;
