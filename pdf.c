@@ -132,9 +132,6 @@ static void update_pdf(struct document *doc)
 		TRUE, 8, ceil(width * doc->scale), ceil(height * doc->scale));
 	poppler_page_render_to_pixbuf(data->page, 0, 0,
 		ceil(width), ceil(height), doc->scale, 0, doc->gdkpixbuf);
-
-	doc->width = gdk_pixbuf_get_width(doc->gdkpixbuf);
-	doc->height = gdk_pixbuf_get_height(doc->gdkpixbuf);
 }
 
 static struct document_ops pdf_ops =

@@ -36,9 +36,6 @@ static void update_pixbuf(struct document *doc)
 		g_object_unref(doc->gdkpixbuf);
 		doc->gdkpixbuf = tmp;
 	}
-
-	doc->width = gdk_pixbuf_get_width(doc->gdkpixbuf);
-	doc->height = gdk_pixbuf_get_height(doc->gdkpixbuf);
 }
 
 static struct document_ops pixbuf_ops =

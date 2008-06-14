@@ -150,9 +150,6 @@ static void update_djvu(struct document *doc)
 	if (!doc->gdkpixbuf)
 		exit(1);
 
-	doc->width = gdk_pixbuf_get_width(doc->gdkpixbuf);
-	doc->height = gdk_pixbuf_get_height(doc->gdkpixbuf);
-
 	ddjvu_page_render(data->page, DDJVU_RENDER_COLOR, &pagerec, &renderrec,
 		pixelformat, doc->scale * width * 4, gdk_pixbuf_get_pixels(doc->gdkpixbuf));
 
