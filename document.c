@@ -12,6 +12,28 @@ static void close_document(struct document *doc)
 	free(doc);
 }
 
+static void update_document(struct document *doc)
+{
+	if (doc->ops->update)
+		doc->ops->update(doc);
+}
+
+static int grep_document(struct document *doc, char *regexp)
+{
+	if (doc->ops->grep)
+		return doc->ops->grep(doc, regexp);
+
+	fprintf (stderr, "%s", "Sorry, grepping is not implemented for this file type.\n");
+	return 1;
+}
+
+static unsigned int document_page_count(struct document *doc)
+{
+	if (doc->ops->page_count)
+		return doc->ops->page_count(doc);
+	return 1;
+}
+
 struct document *open_document(char *filename)
 {
 	struct document *doc = malloc(sizeof(*doc));
@@ -45,6 +67,10 @@ struct document *open_document(char *filename)
 		}
 
 		doc->ops = fi->ops;
+		doc->update = update_document;
+		doc->grep = grep_document;
+		doc->page_count = document_page_count;
+
 		doc->data = doc->ops->open(doc);
 	}
 out:

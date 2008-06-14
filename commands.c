@@ -30,7 +30,7 @@ static void cmd_next_page (struct document *doc)
 	if (doc->pagenum < doc->pagecount - 1)
 	{
 		doc->pagenum++;
-		doc->ops->update(doc);
+		doc->update(doc);
 	}
 }
 
@@ -39,7 +39,7 @@ static void cmd_prev_page (struct document *doc)
 	if (doc->pagenum > 0)
 	{
 		doc->pagenum--;
-		doc->ops->update(doc);
+		doc->update(doc);
 	}
 }
 
@@ -67,13 +67,13 @@ static void cmd_set_zoom (struct document *doc)
 {
 	double scale = 1.0 + 0.1 * (this_command - '0');
 	doc->scale = scale;
-	doc->ops->update(doc);
+	doc->update(doc);
 }
 
 static void cmd_zoom_in (struct document *doc)
 {
 	doc->scale += 0.1;
-	doc->ops->update(doc);
+	doc->update(doc);
 }
 
 static void cmd_zoom_out (struct document *doc)
@@ -81,7 +81,7 @@ static void cmd_zoom_out (struct document *doc)
 	if (doc->scale >= 0.2)
 	{
 		doc->scale -= 0.1;
-		doc->ops->update(doc);
+		doc->update(doc);
 	}
 }
 

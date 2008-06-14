@@ -150,18 +150,14 @@ static int count_pages (char *filename)
 static int grep_text (char *filename, char *text)
 {
 	struct document *doc = open_document(filename);
-	int ret;
-
-	if (doc->ops->grep)
+	if (doc)
 	{
-		ret = doc->ops->grep(doc, text);
-	} else {
-		fprintf (stderr, "%s",
-			 "Sorry, grepping is not implemented for this file type.\n");
-		ret = 1;
+		int ret = doc->grep(doc, text);
+		doc->close(doc);
+		return ret;
 	}
-	doc->close(doc);
-	return ret;
+
+	return 1;
 }
 
 static int view_file (char *file, struct prefs *prefs)
@@ -175,7 +171,7 @@ static int view_file (char *file, struct prefs *prefs)
 		doc->yoffset = prefs->y;
 		doc->scale = prefs->scale;
 
-		doc->ops->update(doc);
+		doc->update(doc);
 
 		main_loop (doc);
 

@@ -32,8 +32,6 @@ struct document
 	unsigned int pagenum;
 	unsigned int pagecount;
 
-	void (*close)(struct document *doc);
-
 	struct document_ops *ops;
 
 	GdkPixbuf *gdkpixbuf;
@@ -43,6 +41,12 @@ struct document
 	unsigned int height;
 	signed int xoffset;
 	signed int yoffset;
+
+	/* Yleiset versiot tiedostokohtaisista metodeista. */
+	void (*close)(struct document *doc);
+	void (*update)(struct document *doc);
+	int (*grep)(struct document *doc, char *regexp);
+	unsigned int (*page_count)(struct document *doc);
 };
 
 struct document *open_document(char *filename);

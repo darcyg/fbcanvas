@@ -93,7 +93,7 @@ static int grep_pdf(struct document *doc, char *regexp)
 	char *str;
 
 	/* Set up methods & canvas size. */
-	doc->ops->update(doc);
+	doc->update(doc);
 
 	for (i = 0; i < doc->pagecount; i++)
 	{
