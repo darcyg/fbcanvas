@@ -1,47 +1,19 @@
-/* keymap.c - 12.6.2008 - 13.6.2008 Ari & Tero Roponen */
-#include <stdlib.h>
+/* keymap.c - 12.6.2008 - 14.6.2008 Ari & Tero Roponen */
+#include <glib.h>
 #include "keymap.h"
 
-struct keymap
-{
-	int character;
-	void *command;
-	struct keymap *next;
-};
-
-static struct keymap *global_map;
-
-static struct keymap *lookup_key_internal (struct keymap *map, int character)
-{
-	for (;map; map = map->next)
-		if (map->character == character)
-			return map;
-	return NULL;
-}
+static GHashTable *global_map;
 
 void *lookup_key (int character)
 {
-	struct keymap *map = lookup_key_internal (global_map, character);
-	if (map)
-		return map->command;
-	return NULL;
+	if (! global_map)
+		return NULL;
+	return g_hash_table_lookup (global_map, GINT_TO_POINTER (character));
 }
 
 void set_key (int character, void *command)
 {
-	struct keymap *map = lookup_key_internal (global_map, character);
-	if (map)
-	{
-		map->command = command;
-		return;
-	}
-
-	map = malloc (sizeof (*map));
-	if (! map)
-		abort ();
-
-	map->character = character;
-	map->command = command;
-	map->next = global_map;
-	global_map = map;
+	if (! global_map)
+		global_map = g_hash_table_new (NULL, NULL);
+	g_hash_table_replace (global_map, GINT_TO_POINTER (character), command);
 }
