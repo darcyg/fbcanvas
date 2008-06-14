@@ -2,12 +2,12 @@
 #ifndef FILE_INFO_H
 #define FILE_INFO_H
 
-#include "fbcanvas.h"
+#include "document.h"
 
 struct file_info
 {
 	char *type;
-	struct file_ops *ops;
+	struct document_ops *ops;
 };
 
 struct file_info *get_file_info (char *filename);

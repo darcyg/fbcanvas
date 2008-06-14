@@ -64,35 +64,34 @@ static struct framebuffer *open_framebuffer(char *fbdev)
 	return fb;
 }
 
-static void fbcanvas_scroll(struct fbcanvas *fbc, int dx, int dy)
+static void fbcanvas_scroll(struct document *doc, int dx, int dy)
 {
-	struct framebuffer *fb = fbc->fb;
+	struct framebuffer *fb = doc->fbcanvas->fb;
 
-	fbc->xoffset += dx;
-	fbc->yoffset += dy;
+	doc->xoffset += dx;
+	doc->yoffset += dy;
 
-	if (fbc->xoffset >= 0)
+	if (doc->xoffset >= 0)
 	{
-		if (fbc->xoffset >= (int)fbc->width)
-			fbc->xoffset = fbc->width - 1;
+		if (doc->xoffset >= (int)doc->width)
+			doc->xoffset = doc->width - 1;
 	} else {
-		if (-fbc->xoffset >= fb->width)
-			fbc->xoffset = -(fb->width - 1);
+		if (-doc->xoffset >= fb->width)
+			doc->xoffset = -(fb->width - 1);
 	}
 
-	if (fbc->yoffset >= 0)
+	if (doc->yoffset >= 0)
 	{
-		if (fbc->yoffset >= (int)fbc->height)
-			fbc->yoffset = fbc->height - 1;
+		if (doc->yoffset >= (int)doc->height)
+			doc->yoffset = doc->height - 1;
 	} else {
-		if (-fbc->yoffset >= fb->height)
-			fbc->yoffset = -(fb->height - 1);
+		if (-doc->yoffset >= fb->height)
+			doc->yoffset = -(fb->height - 1);
 	}
 }
 
 struct fbcanvas *fbcanvas_create(char *filename)
 {
-	struct file_info *fi;
 	GError *err = NULL;
 	struct fbcanvas *fbc = malloc(sizeof(*fbc));
 	if (fbc)
@@ -102,29 +101,8 @@ struct fbcanvas *fbcanvas_create(char *filename)
 		/* TODO: tarkista onnistuminen */
 		fbc->fb = open_framebuffer("/dev/fb0");
 
-		/* Alustetaan yleiset kentät. */
-		fbc->context = NULL;
-		fbc->document = NULL;
-		fbc->page = NULL;
-		fbc->gdkpixbuf = NULL;
-		fbc->xoffset = 0;
-		fbc->yoffset = 0;
-		fbc->scale = 1.0;
-		fbc->pagenum = 0;
-		fbc->pagecount = 1;
-		fbc->filename = strdup(filename);
-
 		/* Asetetaan yleiset metodit. */
 		fbc->scroll = fbcanvas_scroll;
-
-		/*
-		 * Tunnistetaan tiedostotyyppi ja asetetaan sille oikeat käsittelymetodit.
-		 */
-		fi = get_file_info (filename);
-		if (! fi)
-			exit (1);
-		fbc->ops = fi->ops;
-		fbc->ops->open(fbc, filename);
 	}
 
 	return fbc;
@@ -133,16 +111,6 @@ struct fbcanvas *fbcanvas_create(char *filename)
 void fbcanvas_destroy(struct fbcanvas *fbc)
 {
 	struct framebuffer *fb = fbc->fb;
-
-	/* Free file-type-specific fields */
-	if (fbc->ops->close)
-		fbc->ops->close(fbc);
-
-	/* Free common fields */
-	if (fbc->filename)
-		free(fbc->filename);
-	if (fbc->gdkpixbuf)
-		g_object_unref(fbc->gdkpixbuf);
 
 	/* Unmap framebuffer */
 	munmap(fb->mem, fb->width * fb->height * (fb->depth / 8));

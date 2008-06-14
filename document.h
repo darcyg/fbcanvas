@@ -1,0 +1,45 @@
+#ifndef DOCUMENT_H
+#define DOCUMENT_H
+
+#include "fbcanvas.h"
+
+struct document;
+
+struct document_ops
+{
+	void (*open)(struct document *doc);
+	void (*close)(struct document *doc);
+
+	void (*update)(struct document *doc);
+
+	int (*grep)(struct document *doc, char *regexp);
+
+	unsigned int (*page_count)(struct document *doc);
+};
+
+struct document
+{
+	struct fbcanvas *fbcanvas;
+	char *filename;
+	void *context;
+	void *document;
+	void *page;
+	unsigned int pagenum;
+	unsigned int pagecount;
+
+	void (*close)(struct document *doc);
+
+	struct document_ops *ops;
+
+	GdkPixbuf *gdkpixbuf;
+	double scale;
+
+	unsigned int width;
+	unsigned int height;
+	signed int xoffset;
+	signed int yoffset;
+};
+
+struct document *open_document(char *filename);
+
+#endif /* DOCUMENT_H */

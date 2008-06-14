@@ -3,9 +3,9 @@
 #define COMMANDS_H
 
 #include <setjmp.h>
-#include "fbcanvas.h"
+#include "document.h"
 
-typedef void (*command_t) (struct fbcanvas *, int command, int last);
+typedef void (*command_t) (struct document *, int command, int last);
 
 extern jmp_buf exit_loop;
 

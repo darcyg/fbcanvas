@@ -2,7 +2,9 @@
 #define FBCANVAS_H
 
 #include <poppler/glib/poppler.h>
+#include "document.h"
 
+struct document;
 struct fbcanvas;
 
 struct framebuffer
@@ -16,36 +18,10 @@ struct framebuffer
 		signed int xoffset, signed int yoffset);
 };
 
-struct file_ops
-{
-	char *type;
-	void (*open)(struct fbcanvas *fbc, char *filename);
-	void (*close)(struct fbcanvas *fbc);
-	void (*update)(struct fbcanvas *fbc);
-
-	int (*grep)(struct fbcanvas *fbc, char *regexp);
-};
-
 struct fbcanvas
 {
 	struct framebuffer *fb;
-	char *filename;
-	unsigned int width;	/* Virtual width		*/
-	unsigned int height;	/* Virtual height		*/
-	signed int xoffset;
-	signed int yoffset;
-	double scale;
-	unsigned int pagenum;
-	unsigned int pagecount;
-
-	void *context;
-	void *document;
-	void *page;
-
-	GdkPixbuf *gdkpixbuf;
-
-	struct file_ops *ops;
-	void (*scroll)(struct fbcanvas *fbc, int dx, int dy);
+	void (*scroll)(struct document *doc, int dx, int dy);
 };
 
 struct fbcanvas *fbcanvas_create(char *filename);

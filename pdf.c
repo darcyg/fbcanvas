@@ -2,53 +2,54 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include "document.h"
 #include "fbcanvas.h"
 #include "file_info.h"
 
-static void open_pdf(struct fbcanvas *fbc, char *filename)
+static void open_pdf(struct document *doc)
 {
 	GError *err = NULL;
 	char fullname[256];
-	char *canon_name = canonicalize_file_name(filename);
+	char *canon_name = canonicalize_file_name(doc->filename);
 
 	/* PDF vaatii absoluuttisen "file:///tiedostonimen". */
 	sprintf(fullname, "file://%s", canon_name);
 
-	fbc->document = poppler_document_new_from_file(fullname, NULL, &err);
-	if (!fbc->document)
+	doc->document = poppler_document_new_from_file(fullname, NULL, &err);
+	if (!doc->document)
 	{
 		fprintf(stderr, "open_pdf: %s\n", err->message);
 		exit(1);
 	}
 
 	free(canon_name);
-	fbc->pagecount = poppler_document_get_n_pages(fbc->document);
+	doc->pagecount = poppler_document_get_n_pages(doc->document);
 }
 
-static void close_pdf(struct fbcanvas *fbc)
+static void close_pdf(struct document *doc)
 {
-	if (fbc->page)
-		g_object_unref(fbc->page);
-	if (fbc->document)
-		g_object_unref(fbc->document);
-	fbc->page = NULL;
-	fbc->document = NULL;
+	if (doc->page)
+		g_object_unref(doc->page);
+	if (doc->document)
+		g_object_unref(doc->document);
+	doc->page = NULL;
+	doc->document = NULL;
 }
 
-static int grep_pdf(struct fbcanvas *fbc, char *regexp)
+static int grep_pdf(struct document *doc, char *regexp)
 {
 	/* TODO: use real regexps. */
 	int i, ret = 1, len = strlen (regexp);
 	char *str, *beg, *end;
 
 	/* Set up methods & canvas size. */
-	fbc->ops->update (fbc);
+	doc->ops->update(doc);
 
-	for (i = 0; i < fbc->pagecount; i++)
+	for (i = 0; i < doc->pagecount; i++)
 	{
-		PopplerRectangle rec = {0, 0, fbc->width, fbc->height};
-		fbc->page = poppler_document_get_page (fbc->document, i);
-		str = poppler_page_get_text (fbc->page, POPPLER_SELECTION_LINE, &rec);
+		PopplerRectangle rec = {0, 0, doc->width, doc->height};
+		doc->page = poppler_document_get_page (doc->document, i);
+		str = poppler_page_get_text (doc->page, POPPLER_SELECTION_LINE, &rec);
 
 		while (str)
 		{
@@ -65,7 +66,7 @@ static int grep_pdf(struct fbcanvas *fbc, char *regexp)
 				while (*end && *end != '\n')
 					end++;
 
-				printf ("%s:%d: %.*s\n", fbc->filename, i + 1, end - beg, beg);
+				printf ("%s:%d: %.*s\n", doc->filename, i + 1, end - beg, beg);
 				str = end;
 			} else str = NULL;
 		}
@@ -73,35 +74,35 @@ static int grep_pdf(struct fbcanvas *fbc, char *regexp)
 
 	return ret;
 }
-static void update_pdf(struct fbcanvas *fbc)
+static void update_pdf(struct document *doc)
 {
 	GError *err = NULL;
 	static double width, height;
 
-	if (fbc->page)
-		g_object_unref(fbc->page);
-	if (fbc->gdkpixbuf)
-		g_object_unref(fbc->gdkpixbuf);
+	if (doc->page)
+		g_object_unref(doc->page);
+	if (doc->gdkpixbuf)
+		g_object_unref(doc->gdkpixbuf);
 
-	fbc->page = poppler_document_get_page(fbc->document, fbc->pagenum);
-	if (!fbc->page)
+	doc->page = poppler_document_get_page(doc->document, doc->pagenum);
+	if (!doc->page)
 	{
 		/* TODO: käsittele virhe */
 	}
 
-	poppler_page_get_size(fbc->page, &width, &height);
+	poppler_page_get_size(doc->page, &width, &height);
 	//fprintf(stderr, "Size: %lfx%lf\n", width, height);
 
-	fbc->gdkpixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
-		TRUE, 8, ceil(width * fbc->scale), ceil(height * fbc->scale));
-	poppler_page_render_to_pixbuf(fbc->page, 0, 0,
-		ceil(width), ceil(height), fbc->scale, 0, fbc->gdkpixbuf);
+	doc->gdkpixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
+		TRUE, 8, ceil(width * doc->scale), ceil(height * doc->scale));
+	poppler_page_render_to_pixbuf(doc->page, 0, 0,
+		ceil(width), ceil(height), doc->scale, 0, doc->gdkpixbuf);
 
-	fbc->width = gdk_pixbuf_get_width(fbc->gdkpixbuf);
-	fbc->height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
+	doc->width = gdk_pixbuf_get_width(doc->gdkpixbuf);
+	doc->height = gdk_pixbuf_get_height(doc->gdkpixbuf);
 }
 
-static struct file_ops pdf_ops =
+static struct document_ops pdf_ops =
 {
 	.open = open_pdf,
 	.close = close_pdf,

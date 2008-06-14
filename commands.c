@@ -2,11 +2,12 @@
 #include <ncurses.h>
 #undef scroll
 #include "commands.h"
+#include "document.h"
 #include "keymap.h"
 
 jmp_buf exit_loop;
 
-#define DEFUN(name) static void cmd_ ##name (struct fbcanvas *fbc, int command, int last)
+#define DEFUN(name) static void cmd_ ##name (struct document *doc, int command, int last)
 
 DEFUN (unbound)
 {
@@ -26,61 +27,61 @@ DEFUN (redraw)
 
 DEFUN (next_page)
 {
-	if (fbc->pagenum < fbc->pagecount - 1)
+	if (doc->pagenum < doc->pagecount - 1)
 	{
-		fbc->pagenum++;
-		fbc->ops->update(fbc);
+		doc->pagenum++;
+		doc->ops->update(doc);
 	}
 }
 
 DEFUN (prev_page)
 {
-	if (fbc->pagenum > 0)
+	if (doc->pagenum > 0)
 	{
-		fbc->pagenum--;
-		fbc->ops->update(fbc);
+		doc->pagenum--;
+		doc->ops->update(doc);
 	}
 }
 
 DEFUN (down)
 {
-	fbc->scroll(fbc, 0, fbc->height / 20);
+	doc->fbcanvas->scroll(doc, 0, doc->height / 20);
 }
 
 DEFUN (up)
 {
-	fbc->scroll(fbc, 0, -(fbc->height / 20));
+	doc->fbcanvas->scroll(doc, 0, -(doc->height / 20));
 }
 
 DEFUN (left)
 {
-	fbc->scroll(fbc, -(fbc->width / 20), 0);
+	doc->fbcanvas->scroll(doc, -(doc->width / 20), 0);
 }
 
 DEFUN (right)
 {
-	fbc->scroll(fbc, fbc->width / 20, 0);
+	doc->fbcanvas->scroll(doc, doc->width / 20, 0);
 }
 
 DEFUN (set_zoom)
 {
 	double scale = 1.0 + 0.1 * (command - '0');
-	fbc->scale = scale;
-	fbc->ops->update (fbc);
+	doc->scale = scale;
+	doc->ops->update(doc);
 }
 
 DEFUN (zoom_in)
 {
-	fbc->scale += 0.1;
-	fbc->ops->update(fbc);
+	doc->scale += 0.1;
+	doc->ops->update(doc);
 }
 
 DEFUN (zoom_out)
 {
-	if (fbc->scale >= 0.2)
+	if (doc->scale >= 0.2)
 	{
-		fbc->scale -= 0.1;
-		fbc->ops->update(fbc);
+		doc->scale -= 0.1;
+		doc->ops->update(doc);
 	}
 }
 
@@ -89,26 +90,26 @@ DEFUN (save)
 	GError *err = NULL;
 	char savename[256];
 
-	sprintf(savename, "%s-pg-%d.png", basename(fbc->filename), fbc->pagenum + 1);
-	if (!gdk_pixbuf_save(fbc->gdkpixbuf, savename, "png", &err, NULL))
+	sprintf(savename, "%s-pg-%d.png", basename(doc->filename), doc->pagenum + 1);
+	if (!gdk_pixbuf_save(doc->gdkpixbuf, savename, "png", &err, NULL))
 		fprintf (stderr, "%s", err->message);
 }
 
 DEFUN (dump_text)
 {
-	PopplerRectangle rec = {0, 0, fbc->width, fbc->height};
+	PopplerRectangle rec = {0, 0, doc->width, doc->height};
 	char *str;
 
 	/* fbc->page is currently only used with PDF-files. */
-	if (!fbc->page)
+	if (!doc->page)
 		return;
 
-	str = poppler_page_get_text(fbc->page, POPPLER_SELECTION_LINE, &rec);
+	str = poppler_page_get_text(doc->page, POPPLER_SELECTION_LINE, &rec);
 	if (str)
 	{
 		FILE *fp;
 		char savename[256];
-		sprintf(savename, "%s-pg-%d.txt", basename(fbc->filename), fbc->pagenum + 1);
+		sprintf(savename, "%s-pg-%d.txt", basename(doc->filename), doc->pagenum + 1);
 		fp = fopen(savename, "w+");
 		if (fp)
 		{
@@ -120,27 +121,27 @@ DEFUN (dump_text)
 
 DEFUN (flip_x)
 {
-	GdkPixbuf *tmp = gdk_pixbuf_flip(fbc->gdkpixbuf, TRUE);
-	g_object_unref(fbc->gdkpixbuf);
-	fbc->gdkpixbuf = tmp;
+	GdkPixbuf *tmp = gdk_pixbuf_flip(doc->gdkpixbuf, TRUE);
+	g_object_unref(doc->gdkpixbuf);
+	doc->gdkpixbuf = tmp;
 }
 
 DEFUN (flip_y)
 {
-	GdkPixbuf *tmp = gdk_pixbuf_flip(fbc->gdkpixbuf, FALSE);
-	g_object_unref(fbc->gdkpixbuf);
-	fbc->gdkpixbuf = tmp;
+	GdkPixbuf *tmp = gdk_pixbuf_flip(doc->gdkpixbuf, FALSE);
+	g_object_unref(doc->gdkpixbuf);
+	doc->gdkpixbuf = tmp;
 }
 
 DEFUN (flip_z)
 {
 	int angle = (command == 'z' ? 90 : 270);
-	GdkPixbuf *tmp = gdk_pixbuf_rotate_simple(fbc->gdkpixbuf, angle);
-	g_object_unref(fbc->gdkpixbuf);
-	fbc->gdkpixbuf = tmp;
-	fbc->width = gdk_pixbuf_get_width(fbc->gdkpixbuf);
-	fbc->height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
-	fbc->scroll(fbc, 0, 0); /* Update offsets */
+	GdkPixbuf *tmp = gdk_pixbuf_rotate_simple(doc->gdkpixbuf, angle);
+	g_object_unref(doc->gdkpixbuf);
+	doc->gdkpixbuf = tmp;
+	doc->width = gdk_pixbuf_get_width(doc->gdkpixbuf);
+	doc->height = gdk_pixbuf_get_height(doc->gdkpixbuf);
+	doc->fbcanvas->scroll(doc, 0, 0); /* Update offsets */
 }
 
 DEFUN (goto_top)
@@ -148,27 +149,27 @@ DEFUN (goto_top)
 	static int last_y;
 	if (last == command)
 	{
-		int tmp = fbc->yoffset;
-		fbc->yoffset = last_y;
+		int tmp = doc->yoffset;
+		doc->yoffset = last_y;
 		last_y = tmp;
 	} else {
-		last_y = fbc->yoffset;
-		fbc->yoffset = 0;
+		last_y = doc->yoffset;
+		doc->yoffset = 0;
 	}
 }
 
 DEFUN (goto_bottom)
 {
-	struct framebuffer *fb = fbc->fb;
+	struct framebuffer *fb = doc->fbcanvas->fb;
 	static int last_y;
 	if (last == command)
 	{
-		int tmp = fbc->yoffset;
-		fbc->yoffset = last_y;
+		int tmp = doc->yoffset;
+		doc->yoffset = last_y;
 		last_y = tmp;
 	} else {
-		last_y = fbc->yoffset;
-		fbc->yoffset = fbc->height - fb->height;
+		last_y = doc->yoffset;
+		doc->yoffset = doc->height - fb->height;
 	}
 }
 

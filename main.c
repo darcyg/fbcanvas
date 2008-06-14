@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "document.h"
 #include "fbcanvas.h"
 #include "commands.h"
 
@@ -73,11 +74,11 @@ error_t parse_arguments (int key, char *arg, struct argp_state *state)
 	return 0;
 }
 
-static struct fbcanvas *ugly_hack;
+static struct document *ugly_hack;
 
 static void handle_signal(int s)
 {
-	struct framebuffer *fb = ugly_hack->fb;
+	struct framebuffer *fb = ugly_hack->fbcanvas->fb;
 
 	int fd = open("/dev/tty", O_RDWR);
 	if (fd)
@@ -99,7 +100,7 @@ static void handle_signal(int s)
 	}
 }
 
-static void main_loop (struct fbcanvas *fbc)
+static void main_loop (struct document *doc)
 {
 	int ch, last = 0;
 	WINDOW *win = initscr();
@@ -114,18 +115,19 @@ static void main_loop (struct fbcanvas *fbc)
 
 	setup_keys ();
 
-	ugly_hack = fbc;
+	ugly_hack = doc;
 
 	if (setjmp (exit_loop) == 0)
 	{
 		command_t command;
 		for (;;)		/* Main loop */
 		{
-			fbc->fb->draw(fbc->fb, fbc->gdkpixbuf, fbc->xoffset, fbc->yoffset);
+			doc->fbcanvas->fb->draw(doc->fbcanvas->fb,
+				doc->gdkpixbuf, doc->xoffset, doc->yoffset);
 
 			ch = getch ();
 			command = lookup_command (ch);
-			command (fbc, ch, last);
+			command (doc, ch, last);
 			last = ch;
 		}
 	}
@@ -135,49 +137,54 @@ static void main_loop (struct fbcanvas *fbc)
 
 static int count_pages (char *filename)
 {
-	struct fbcanvas *fbc = fbcanvas_create (filename);
-	fprintf (stderr, "%s has %d page%s.\n",
-		 fbc->filename, fbc->pagecount,
-		 fbc->pagecount > 1 ? "s":"");
-	fbcanvas_destroy (fbc);
+	struct document *doc = open_document(filename);
+	if (doc)
+	{
+		fprintf (stderr, "%s has %d page%s.\n",
+			 doc->filename, doc->pagecount,
+			 doc->pagecount > 1 ? "s":"");
+		doc->close(doc);
+	}
 	return 0;
 }
 
 static int grep_text (char *filename, char *text)
 {
-	struct fbcanvas *fbc = fbcanvas_create (filename);
+	struct document *doc = open_document(filename);
 	int ret;
 
-	if (fbc->ops->grep)
+	if (doc->ops->grep)
 	{
-		ret = fbc->ops->grep (fbc, text);
+		ret = doc->ops->grep(doc, text);
 	} else {
 		fprintf (stderr, "%s",
 			 "Sorry, grepping is not implemented for this file type.\n");
 		ret = 1;
 	}
-	fbcanvas_destroy (fbc);
+	doc->close(doc);
 	return ret;
 }
 
 static int view_file (char *file, struct prefs *prefs)
 {
-	struct fbcanvas *fbc = fbcanvas_create (file);
+	struct document *doc = open_document(file);
+	if (doc)
+	{
+		if (prefs->page < doc->pagecount)
+			doc->pagenum = prefs->page;
+		doc->xoffset = prefs->x;
+		doc->yoffset = prefs->y;
+		doc->scale = prefs->scale;
 
-	if (prefs->page < fbc->pagecount)
-		fbc->pagenum = prefs->page;
-	fbc->xoffset = prefs->x;
-	fbc->yoffset = prefs->y;
-	fbc->scale = prefs->scale;
+		doc->ops->update(doc);
 
-	fbc->ops->update (fbc);
+		main_loop (doc);
 
-	main_loop (fbc);
-
-	fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n",
-		 program_invocation_short_name,
-		 file, fbc->pagenum + 1,
-		 fbc->scale, fbc->xoffset, fbc->yoffset);
+		fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n",
+			 program_invocation_short_name,
+			 file, doc->pagenum + 1,
+			 doc->scale, doc->xoffset, doc->yoffset);
+	}
 }
 
 int main(int argc, char *argv[])

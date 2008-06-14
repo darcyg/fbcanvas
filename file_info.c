@@ -1,5 +1,6 @@
 /* file_info.c - 13.6.2008 - 13.6.2008 Ari & Tero Roponen */
 #include <magic.h>
+#include <stdio.h>
 #include <string.h>
 #include "file_info.h"
 

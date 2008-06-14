@@ -1,45 +1,46 @@
 #include <math.h>
 #include <stdlib.h>
+#include "document.h"
 #include "fbcanvas.h"
 #include "file_info.h"
 
-static void open_pixbuf(struct fbcanvas *fbc, char *filename)
+static void open_pixbuf(struct document *doc)
 {
 	/* pixbuf ei tarvitse open-metodia. */
 }
 
-static void close_pixbuf(struct fbcanvas *fbc)
+static void close_pixbuf(struct document *doc)
 {
 	/* pixbuf ei tarvitse close-metodia. */
 }
 
-static void update_pixbuf(struct fbcanvas *fbc)
+static void update_pixbuf(struct document *doc)
 {
 	GError *err = NULL;
-	fbc->gdkpixbuf = gdk_pixbuf_new_from_file(fbc->filename, &err);
+	doc->gdkpixbuf = gdk_pixbuf_new_from_file(doc->filename, &err);
 	if (err)
 	{
 		fprintf (stderr, "%s", err->message);
 		exit(1);
 	}
 
-	fbc->gdkpixbuf = gdk_pixbuf_add_alpha(fbc->gdkpixbuf, FALSE, 0, 0, 0);
+	doc->gdkpixbuf = gdk_pixbuf_add_alpha(doc->gdkpixbuf, FALSE, 0, 0, 0);
 
-	if (fbc->scale != 1.0)
+	if (doc->scale != 1.0)
 	{
-		GdkPixbuf *tmp = gdk_pixbuf_scale_simple(fbc->gdkpixbuf,
-			ceil(fbc->scale * gdk_pixbuf_get_width(fbc->gdkpixbuf)),
-			ceil(fbc->scale * gdk_pixbuf_get_height(fbc->gdkpixbuf)),
+		GdkPixbuf *tmp = gdk_pixbuf_scale_simple(doc->gdkpixbuf,
+			ceil(doc->scale * gdk_pixbuf_get_width(doc->gdkpixbuf)),
+			ceil(doc->scale * gdk_pixbuf_get_height(doc->gdkpixbuf)),
 			GDK_INTERP_BILINEAR);
-		g_object_unref(fbc->gdkpixbuf);
-		fbc->gdkpixbuf = tmp;
+		g_object_unref(doc->gdkpixbuf);
+		doc->gdkpixbuf = tmp;
 	}
 
-	fbc->width = gdk_pixbuf_get_width(fbc->gdkpixbuf);
-	fbc->height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
+	doc->width = gdk_pixbuf_get_width(doc->gdkpixbuf);
+	doc->height = gdk_pixbuf_get_height(doc->gdkpixbuf);
 }
 
-static struct file_ops pixbuf_ops =
+static struct document_ops pixbuf_ops =
 {
 	.open = open_pixbuf,
 	.close = close_pixbuf,

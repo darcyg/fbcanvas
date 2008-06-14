@@ -1,48 +1,50 @@
 #include <libdjvu/ddjvuapi.h>
+#include "document.h"
 #include "fbcanvas.h"
 #include "file_info.h"
 
-static void open_djvu(struct fbcanvas *fbc, char *filename)
+static void open_djvu(struct document *doc)
 {
+	struct fbcanvas *fbc = doc->fbcanvas;
 	const ddjvu_message_t *msg;
 
-	fbc->context = ddjvu_context_create("fbcanvas");
-	fbc->document = ddjvu_document_create_by_filename(fbc->context, filename, 0);
+	doc->context = ddjvu_context_create("fbcanvas");
+	doc->document = ddjvu_document_create_by_filename(doc->context, doc->filename, 0);
 
 	/* open-metodin pitää asettaa oikea sivumäärä... */
 	for (;;)
 	{
-		if (!ddjvu_page_decoding_done(fbc->page))
-			ddjvu_message_wait(fbc->context);
+		if (!ddjvu_page_decoding_done(doc->page))
+			ddjvu_message_wait(doc->context);
 
-		msg = ddjvu_message_peek(fbc->context);
+		msg = ddjvu_message_peek(doc->context);
 		if (!msg)
 			break;
 
 		if (msg->m_any.tag == DDJVU_DOCINFO)
 		{
-			if (ddjvu_document_decoding_status(fbc->document) == DDJVU_JOB_OK)
+			if (ddjvu_document_decoding_status(doc->document) == DDJVU_JOB_OK)
 			{
-				fbc->pagecount = ddjvu_document_get_pagenum(fbc->document);
+				doc->pagecount = ddjvu_document_get_pagenum(doc->document);
 				break;
 			}
 		}
 
-		ddjvu_message_pop(fbc->context);
+		ddjvu_message_pop(doc->context);
 	}
 }
 
-static void close_djvu(struct fbcanvas *fbc)
+static void close_djvu(struct document *doc)
 {
-	if (fbc->document)
-		ddjvu_document_release(fbc->document);
-	if (fbc->context)
-		ddjvu_context_release(fbc->context);
+	if (doc->document)
+		ddjvu_document_release(doc->document);
+	if (doc->context)
+		ddjvu_context_release(doc->context);
 }
 
-static void update_djvu(struct fbcanvas *fbc)
+static void update_djvu(struct document *doc)
 {
-	struct framebuffer *fb = fbc->fb;
+	struct framebuffer *fb = doc->fbcanvas->fb;
 	unsigned int rgb[] =
 	{
 		0xFF << 0,	/* R */
@@ -52,17 +54,17 @@ static void update_djvu(struct fbcanvas *fbc)
 
 	const ddjvu_message_t *msg;
 
-	if (fbc->page)
-		ddjvu_page_release(fbc->page);
+	if (doc->page)
+		ddjvu_page_release(doc->page);
 
-	fbc->page = ddjvu_page_create_by_pageno(fbc->document, fbc->pagenum);
+	doc->page = ddjvu_page_create_by_pageno(doc->document, doc->pagenum);
 
 	for (;;)
 	{
-		if (!ddjvu_page_decoding_done(fbc->page))
-			ddjvu_message_wait(fbc->context);
+		if (!ddjvu_page_decoding_done(doc->page))
+			ddjvu_message_wait(doc->context);
 
-		msg = ddjvu_message_peek(fbc->context);
+		msg = ddjvu_message_peek(doc->context);
 		if (!msg)
 			break;
 
@@ -100,18 +102,18 @@ static void update_djvu(struct fbcanvas *fbc)
 			break;
 		}
 
-		ddjvu_message_pop(fbc->context);
+		ddjvu_message_pop(doc->context);
 	}
 
-	int width = ddjvu_page_get_width(fbc->page);
-	int height = ddjvu_page_get_height(fbc->page);
+	int width = ddjvu_page_get_width(doc->page);
+	int height = ddjvu_page_get_height(doc->page);
 
 	if (width > fb->width)
 		width = fb->width;
 	if (height > fb->height)
 		height = fb->height;
 
-	ddjvu_rect_t pagerec = {0, 0, width*fbc->scale, height*fbc->scale};
+	ddjvu_rect_t pagerec = {0, 0, width*doc->scale, height*doc->scale};
 	ddjvu_rect_t renderrec = pagerec;
 
 	ddjvu_format_t *pixelformat = ddjvu_format_create(DDJVU_FORMAT_RGBMASK32, 3, rgb);
@@ -119,24 +121,24 @@ static void update_djvu(struct fbcanvas *fbc)
 	ddjvu_format_set_y_direction(pixelformat, 1);
 	//ddjvu_format_set_ditherbits(pixelformat, 16);
 
-	if (fbc->gdkpixbuf)
-		g_object_unref(fbc->gdkpixbuf);
-	fbc->gdkpixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
-		TRUE, 8, width*fbc->scale, height*fbc->scale);
+	if (doc->gdkpixbuf)
+		g_object_unref(doc->gdkpixbuf);
+	doc->gdkpixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
+		TRUE, 8, width*doc->scale, height*doc->scale);
 
-	if (!fbc->gdkpixbuf)
+	if (!doc->gdkpixbuf)
 		exit(1);
 
-	fbc->width = gdk_pixbuf_get_width(fbc->gdkpixbuf);
-	fbc->height = gdk_pixbuf_get_height(fbc->gdkpixbuf);
+	doc->width = gdk_pixbuf_get_width(doc->gdkpixbuf);
+	doc->height = gdk_pixbuf_get_height(doc->gdkpixbuf);
 
-	ddjvu_page_render(fbc->page, DDJVU_RENDER_COLOR, &pagerec, &renderrec,
-		pixelformat, fbc->scale * width * 4, gdk_pixbuf_get_pixels(fbc->gdkpixbuf));
+	ddjvu_page_render(doc->page, DDJVU_RENDER_COLOR, &pagerec, &renderrec,
+		pixelformat, doc->scale * width * 4, gdk_pixbuf_get_pixels(doc->gdkpixbuf));
 
 	ddjvu_format_release (pixelformat);
 }
 
-static struct file_ops djvu_ops =
+static struct document_ops djvu_ops =
 {
 	.open = open_djvu,
 	.close = close_djvu,
