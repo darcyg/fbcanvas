@@ -74,29 +74,52 @@ error_t parse_arguments (int key, char *arg, struct argp_state *state)
 	return 0;
 }
 
-static struct document *ugly_hack;
-
-void handle_signal(int s)
+int read_key(int s)
 {
-	struct framebuffer *fb = ugly_hack->fbcanvas->fb;
+	static int repaint;
 
-	int fd = open("/dev/tty", O_RDWR);
-	if (fd)
+	if (s == 0)
 	{
-		if (s == SIGUSR1) /* */
-		{
-			/* Release display */
-			ioctl(fd, VT_RELDISP, 1);
-		} else if (s == SIGUSR2) {
-			/* Acquire display */
-			ioctl(fd, VT_RELDISP, VT_ACKACQ);
-			// ungetch(12); /* Ctrl-L */
-			fb->draw(fb,
-				ugly_hack->gdkpixbuf,
-				ugly_hack->xoffset, ugly_hack->yoffset);
-		}
+		fd_set rfds;
+		sigset_t sigs;
 
-		close(fd);
+		FD_ZERO(&rfds);
+		FD_SET(0, &rfds);
+
+		sigfillset(&sigs);
+		sigdelset(&sigs, SIGUSR1);
+		sigdelset(&sigs, SIGUSR2);
+
+		for (;;)
+		{
+			int ret = pselect(1, &rfds, NULL, NULL, NULL, &sigs);
+			if (ret == -1)
+			{
+				if (repaint)
+				{
+					repaint = 0;
+					return 12; /* CTRL-L */
+				}
+			} else if (ret) {
+				return getch();
+			}
+		}
+	} else {
+		int fd = open("/dev/tty", O_RDWR);
+		if (fd)
+		{
+			if (s == SIGUSR1) /* */
+			{
+				/* Release display */
+				ioctl(fd, VT_RELDISP, 1);
+			} else if (s == SIGUSR2) {
+				/* Acquire display */
+				ioctl(fd, VT_RELDISP, VT_ACKACQ);
+				repaint = 1;
+			}
+
+			close(fd);
+		}
 	}
 }
 
@@ -111,8 +134,6 @@ static void main_loop (struct document *doc)
 
 	setup_keys ();
 
-	ugly_hack = doc;
-
 	if (setjmp (exit_loop) == 0)
 	{
 		int ch;
@@ -122,7 +143,7 @@ static void main_loop (struct document *doc)
 			doc->fbcanvas->fb->draw(doc->fbcanvas->fb,
 				doc->gdkpixbuf, doc->xoffset, doc->yoffset);
 
-			ch = getch ();
+			ch = read_key(0);
 			command = lookup_command (ch);
 			command (doc);
 		}

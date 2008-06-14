@@ -76,10 +76,10 @@ static struct framebuffer *open_framebuffer(char *fbdev)
 			ioctl(fd, VT_SETMODE, &vt_mode);
 			close(fd);
 
-			extern void handle_signal(int s);
+			extern int read_key(int s);
 
-			signal(SIGUSR1, handle_signal);
-			signal(SIGUSR2, handle_signal);
+			signal(SIGUSR1, (void (*)(int))read_key);
+			signal(SIGUSR2, (void (*)(int))read_key);
 		}
 	}
 
