@@ -134,83 +134,67 @@ static void main_loop (struct document *doc)
 	endwin ();
 }
 
-static int count_pages (char *filename)
+static int view_file (struct document *doc, struct prefs *prefs)
 {
-	struct document *doc = open_document(filename);
-	if (doc)
-	{
-		fprintf (stderr, "%s has %d page%s.\n",
-			 doc->filename, doc->pagecount,
-			 doc->pagecount > 1 ? "s":"");
-		doc->close(doc);
-	}
-	return 0;
-}
+	if (prefs->page < doc->pagecount)
+		doc->pagenum = prefs->page;
+	doc->xoffset = prefs->x;
+	doc->yoffset = prefs->y;
+	doc->scale = prefs->scale;
 
-static int grep_text (char *filename, char *text)
-{
-	struct document *doc = open_document(filename);
-	if (doc)
-	{
-		int ret = doc->grep(doc, text);
-		doc->close(doc);
-		return ret;
-	}
+	doc->update(doc);
 
-	return 1;
-}
+	main_loop (doc);
 
-static int view_file (char *file, struct prefs *prefs)
-{
-	struct document *doc = open_document(file);
-	if (doc)
-	{
-		if (prefs->page < doc->pagecount)
-			doc->pagenum = prefs->page;
-		doc->xoffset = prefs->x;
-		doc->yoffset = prefs->y;
-		doc->scale = prefs->scale;
-
-		doc->update(doc);
-
-		main_loop (doc);
-
-		fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n",
-			 program_invocation_short_name,
-			 file, doc->pagenum + 1,
-			 doc->scale, doc->xoffset, doc->yoffset);
-	}
+	fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n",
+		 program_invocation_short_name,
+		 doc->filename, doc->pagenum + 1,
+		 doc->scale, doc->xoffset, doc->yoffset);
 }
 
 int main(int argc, char *argv[])
 {
-	int ind, fd;
-	int ret = 0;
-	char filename[256];
+	int ind;
+	int ret = 1;
 
 	struct prefs prefs = {0, 0, 0, 1.0, };
 	struct argp argp = {options, parse_arguments, "FILE", };
 
+	struct document *doc;
+
 	argp_parse (&argp, argc, argv, 0, &ind, &prefs);
 
-	if (prefs.just_pagecount)
-		return count_pages (argv[ind]);
-	else if (prefs.grep_str)
-		return grep_text (argv[ind], prefs.grep_str);
-
-	/* Asetetaan konsolinvaihto lähettämään signaaleja */
-	fd = open("/dev/tty", O_RDWR);
-	if (fd >= 0)
+	doc = open_document(argv[ind]);
+	if (doc)
 	{
-		struct vt_mode vt_mode;
-		ioctl(fd, VT_GETMODE, &vt_mode);
-		vt_mode.mode = VT_PROCESS; /* Tämä prosessi hoitaa vaihdot. */
-		vt_mode.waitv = 0;
-		vt_mode.relsig = SIGUSR1;
-		vt_mode.acqsig = SIGUSR2;
-		ioctl(fd, VT_SETMODE, &vt_mode);
-		close(fd);
+		if (prefs.just_pagecount)
+		{
+			fprintf (stderr, "%s has %d page%s.\n",
+				 doc->filename, doc->pagecount,
+				 doc->pagecount > 1 ? "s":"");
+			ret = 0;
+		} else if (prefs.grep_str) {
+			ret = doc->grep(doc, prefs.grep_str);
+		} else {
+			/* Asetetaan konsolinvaihto lähettämään signaaleja */
+			int fd = open("/dev/tty", O_RDWR);
+			if (fd >= 0)
+			{
+				struct vt_mode vt_mode;
+				ioctl(fd, VT_GETMODE, &vt_mode);
+				vt_mode.mode = VT_PROCESS; /* Tämä prosessi hoitaa vaihdot. */
+				vt_mode.waitv = 0;
+				vt_mode.relsig = SIGUSR1;
+				vt_mode.acqsig = SIGUSR2;
+				ioctl(fd, VT_SETMODE, &vt_mode);
+				close(fd);
+			}
+
+			ret = view_file (doc, &prefs);
+		}
+
+		doc->close(doc);
 	}
 
-	return view_file (argv[ind], &prefs);
+	return ret;
 }
