@@ -7,7 +7,7 @@
 #include "fbcanvas.h"
 #include "file_info.h"
 
-static void open_pdf(struct document *doc)
+static void *open_pdf(struct document *doc)
 {
 	GError *err = NULL;
 	char fullname[256];
@@ -25,6 +25,8 @@ static void open_pdf(struct document *doc)
 
 	free(canon_name);
 	doc->pagecount = poppler_document_get_n_pages(doc->document);
+
+	return NULL;
 }
 
 static void close_pdf(struct document *doc)

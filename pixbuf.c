@@ -4,9 +4,10 @@
 #include "fbcanvas.h"
 #include "file_info.h"
 
-static void open_pixbuf(struct document *doc)
+static void *open_pixbuf(struct document *doc)
 {
 	/* pixbuf ei tarvitse open-metodia. */
+	return NULL;
 }
 
 static void close_pixbuf(struct document *doc)

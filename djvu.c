@@ -3,47 +3,68 @@
 #include "fbcanvas.h"
 #include "file_info.h"
 
-static void open_djvu(struct document *doc)
+struct djvu_data
 {
-	struct fbcanvas *fbc = doc->fbcanvas;
-	const ddjvu_message_t *msg;
+	ddjvu_context_t *context;
+	ddjvu_document_t *document;
+	ddjvu_page_t *page;
+};
 
-	doc->context = ddjvu_context_create("fbcanvas");
-	doc->document = ddjvu_document_create_by_filename(doc->context, doc->filename, 0);
-
-	/* open-metodin pitää asettaa oikea sivumäärä... */
-	for (;;)
+static void *open_djvu(struct document *doc)
+{
+	struct djvu_data *data = malloc(sizeof(*data));
+	if (data)
 	{
-		if (!ddjvu_page_decoding_done(doc->page))
-			ddjvu_message_wait(doc->context);
+		struct fbcanvas *fbc = doc->fbcanvas;
+		const ddjvu_message_t *msg;
 
-		msg = ddjvu_message_peek(doc->context);
-		if (!msg)
-			break;
+		data->context = ddjvu_context_create("fbcanvas");
+		data->document = ddjvu_document_create_by_filename(data->context,
+			doc->filename, 0);
+		data->page = NULL;
 
-		if (msg->m_any.tag == DDJVU_DOCINFO)
+		/* open-metodin pitää asettaa oikea sivumäärä... */
+		for (;;)
 		{
-			if (ddjvu_document_decoding_status(doc->document) == DDJVU_JOB_OK)
-			{
-				doc->pagecount = ddjvu_document_get_pagenum(doc->document);
-				break;
-			}
-		}
+			if (!ddjvu_page_decoding_done(data->page))
+				ddjvu_message_wait(data->context);
 
-		ddjvu_message_pop(doc->context);
+			msg = ddjvu_message_peek(data->context);
+			if (!msg)
+				break;
+
+			if (msg->m_any.tag == DDJVU_DOCINFO)
+			{
+				if (ddjvu_document_decoding_status(data->document) == DDJVU_JOB_OK)
+				{
+					doc->pagecount = ddjvu_document_get_pagenum(data->document);
+					break;
+				}
+			}
+
+			ddjvu_message_pop(data->context);
+		}
 	}
+
+	return data;
 }
 
 static void close_djvu(struct document *doc)
 {
-	if (doc->document)
-		ddjvu_document_release(doc->document);
-	if (doc->context)
-		ddjvu_context_release(doc->context);
+	struct djvu_data *data = doc->data;
+	if (data)
+	{
+		if (data->document)
+			ddjvu_document_release(data->document);
+		if (data->context)
+			ddjvu_context_release(data->context);
+		free (data);
+	}
 }
 
 static void update_djvu(struct document *doc)
 {
+	struct djvu_data *data = doc->data;
 	struct framebuffer *fb = doc->fbcanvas->fb;
 	unsigned int rgb[] =
 	{
@@ -54,17 +75,17 @@ static void update_djvu(struct document *doc)
 
 	const ddjvu_message_t *msg;
 
-	if (doc->page)
-		ddjvu_page_release(doc->page);
+	if (data->page)
+		ddjvu_page_release(data->page);
 
-	doc->page = ddjvu_page_create_by_pageno(doc->document, doc->pagenum);
+	data->page = ddjvu_page_create_by_pageno(data->document, doc->pagenum);
 
 	for (;;)
 	{
-		if (!ddjvu_page_decoding_done(doc->page))
-			ddjvu_message_wait(doc->context);
+		if (!ddjvu_page_decoding_done(data->page))
+			ddjvu_message_wait(data->context);
 
-		msg = ddjvu_message_peek(doc->context);
+		msg = ddjvu_message_peek(data->context);
 		if (!msg)
 			break;
 
@@ -102,18 +123,18 @@ static void update_djvu(struct document *doc)
 			break;
 		}
 
-		ddjvu_message_pop(doc->context);
+		ddjvu_message_pop(data->context);
 	}
 
-	int width = ddjvu_page_get_width(doc->page);
-	int height = ddjvu_page_get_height(doc->page);
+	int width = ddjvu_page_get_width(data->page);
+	int height = ddjvu_page_get_height(data->page);
 
 	if (width > fb->width)
 		width = fb->width;
 	if (height > fb->height)
 		height = fb->height;
 
-	ddjvu_rect_t pagerec = {0, 0, width*doc->scale, height*doc->scale};
+	ddjvu_rect_t pagerec = {0, 0, width * doc->scale, height * doc->scale};
 	ddjvu_rect_t renderrec = pagerec;
 
 	ddjvu_format_t *pixelformat = ddjvu_format_create(DDJVU_FORMAT_RGBMASK32, 3, rgb);
@@ -124,7 +145,7 @@ static void update_djvu(struct document *doc)
 	if (doc->gdkpixbuf)
 		g_object_unref(doc->gdkpixbuf);
 	doc->gdkpixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
-		TRUE, 8, width*doc->scale, height*doc->scale);
+		TRUE, 8, width * doc->scale, height * doc->scale);
 
 	if (!doc->gdkpixbuf)
 		exit(1);
@@ -132,7 +153,7 @@ static void update_djvu(struct document *doc)
 	doc->width = gdk_pixbuf_get_width(doc->gdkpixbuf);
 	doc->height = gdk_pixbuf_get_height(doc->gdkpixbuf);
 
-	ddjvu_page_render(doc->page, DDJVU_RENDER_COLOR, &pagerec, &renderrec,
+	ddjvu_page_render(data->page, DDJVU_RENDER_COLOR, &pagerec, &renderrec,
 		pixelformat, doc->scale * width * 4, gdk_pixbuf_get_pixels(doc->gdkpixbuf));
 
 	ddjvu_format_release (pixelformat);

@@ -48,7 +48,7 @@ struct document *open_document(char *filename)
 		}
 
 		doc->ops = fi->ops;
-		doc->ops->open(doc);
+		doc->data = doc->ops->open(doc);
 	}
 out:
 	return doc;

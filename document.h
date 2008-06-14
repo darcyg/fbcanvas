@@ -7,7 +7,7 @@ struct document;
 
 struct document_ops
 {
-	void (*open)(struct document *doc);
+	void *(*open)(struct document *doc);
 	void (*close)(struct document *doc);
 
 	void (*update)(struct document *doc);
@@ -21,6 +21,8 @@ struct document
 {
 	struct fbcanvas *fbcanvas;
 	char *filename;
+	void *data;
+
 	void *context;
 	void *document;
 	void *page;
