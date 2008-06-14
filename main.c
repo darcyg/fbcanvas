@@ -160,7 +160,6 @@ int main(int argc, char *argv[])
 {
 	int ind;
 	int ret = 1;
-	char filename[256];
 
 	struct prefs prefs = {0, 0, 0, 1.0, };
 	struct argp argp = {options, parse_arguments, "FILE", };
