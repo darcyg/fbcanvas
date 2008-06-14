@@ -35,11 +35,43 @@ static void close_pdf(struct fbcanvas *fbc)
 	fbc->document = NULL;
 }
 
+/* Print lines from STR that match REGEXP.
+   WHERE and PAGE specify the current filename and page number.
+   Return 0 if some matches were found, else 1. */
+static int grep_from_str (char *regexp, char *str, char *where, unsigned int page)
+{
+	/* TODO: use real regexps. */
+	int ret = 1, len = strlen (regexp);
+	char *beg, *end;
+
+	while (str)
+	{
+		beg = strstr (str, regexp);
+		end = beg + len;
+
+		if (beg)
+		{
+			ret = 0; /* found match */
+
+			/* try to find line beginning and end. */
+			while (beg > str && beg[-1] != '\n')
+				beg--;
+			while (*end && *end != '\n')
+				end++;
+
+			printf ("%s:%d: %.*s\n", where, page, end - beg, beg);
+			str = end;
+		} else str = NULL;
+	}
+
+	return ret;
+}
+
 static int grep_pdf(struct fbcanvas *fbc, char *regexp)
 {
 	/* TODO: use real regexps. */
-	int i, ret = 1, len = strlen (regexp);
-	char *str, *beg, *end;
+	int i, ret = 1;
+	char *str;
 
 	/* Set up methods & canvas size. */
 	fbc->ops->update (fbc);
@@ -50,29 +82,13 @@ static int grep_pdf(struct fbcanvas *fbc, char *regexp)
 		fbc->page = poppler_document_get_page (fbc->document, i);
 		str = poppler_page_get_text (fbc->page, POPPLER_SELECTION_LINE, &rec);
 
-		while (str)
-		{
-			beg = strstr (str, regexp);
-			end = beg + len;
-
-			if (beg)
-			{
-				ret = 0; /* found match */
-
-				/* try to find line beginning and end. */
-				while (beg > str && beg[-1] != '\n')
-					beg--;
-				while (*end && *end != '\n')
-					end++;
-
-				printf ("%s:%d: %.*s\n", fbc->filename, i + 1, end - beg, beg);
-				str = end;
-			} else str = NULL;
-		}
+		if (grep_from_str (regexp, str, fbc->filename, i + 1) == 0)
+			ret = 0;
 	}
 
 	return ret;
 }
+
 static void update_pdf(struct fbcanvas *fbc)
 {
 	GError *err = NULL;
