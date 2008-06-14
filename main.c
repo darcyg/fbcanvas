@@ -134,26 +134,22 @@ static void main_loop (struct document *doc)
 	endwin ();
 }
 
-static int view_file (char *file, struct prefs *prefs)
+static int view_file (struct document *doc, struct prefs *prefs)
 {
-	struct document *doc = open_document(file);
-	if (doc)
-	{
-		if (prefs->page < doc->pagecount)
-			doc->pagenum = prefs->page;
-		doc->xoffset = prefs->x;
-		doc->yoffset = prefs->y;
-		doc->scale = prefs->scale;
+	if (prefs->page < doc->pagecount)
+		doc->pagenum = prefs->page;
+	doc->xoffset = prefs->x;
+	doc->yoffset = prefs->y;
+	doc->scale = prefs->scale;
 
-		doc->update(doc);
+	doc->update(doc);
 
-		main_loop (doc);
+	main_loop (doc);
 
-		fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n",
-			 program_invocation_short_name,
-			 file, doc->pagenum + 1,
-			 doc->scale, doc->xoffset, doc->yoffset);
-	}
+	fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n",
+		 program_invocation_short_name,
+		 doc->filename, doc->pagenum + 1,
+		 doc->scale, doc->xoffset, doc->yoffset);
 }
 
 int main(int argc, char *argv[])
@@ -194,7 +190,7 @@ int main(int argc, char *argv[])
 				close(fd);
 			}
 
-			ret = view_file (argv[ind], &prefs);
+			ret = view_file (doc, &prefs);
 		}
 
 		doc->close(doc);
