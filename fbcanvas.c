@@ -4,10 +4,12 @@
 #include <poppler/glib/poppler.h>
 #include <sys/types.h>
 #include <linux/fb.h>
+#include <linux/vt.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <math.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,6 +61,26 @@ static struct framebuffer *open_framebuffer(char *fbdev)
 		}
 
 		close(fd);
+
+		/* Asetetaan konsolinvaihto lähettämään signaaleja */
+		fd = open("/dev/tty", O_RDWR);
+		if (fd >= 0)
+		{
+			struct vt_mode vt_mode;
+			ioctl(fd, VT_GETMODE, &vt_mode);
+
+			vt_mode.mode = VT_PROCESS; /* Tämä prosessi hoitaa vaihdot. */
+			vt_mode.waitv = 0;
+			vt_mode.relsig = SIGUSR1;
+			vt_mode.acqsig = SIGUSR2;
+			ioctl(fd, VT_SETMODE, &vt_mode);
+			close(fd);
+
+			extern void handle_signal(int s);
+
+			signal(SIGUSR1, handle_signal);
+			signal(SIGUSR2, handle_signal);
+		}
 	}
 
 	return fb;

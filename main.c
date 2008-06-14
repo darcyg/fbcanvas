@@ -2,11 +2,11 @@
  * main.c - 17.5.2008 - 14.6.2008 Ari & Tero Roponen
  */
 
+#include <linux/vt.h>
 #include <argp.h>
 #include <fcntl.h>
 #include <ncurses.h>
 #undef scroll
-#include <linux/vt.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -76,7 +76,7 @@ error_t parse_arguments (int key, char *arg, struct argp_state *state)
 
 static struct document *ugly_hack;
 
-static void handle_signal(int s)
+void handle_signal(int s)
 {
 	struct framebuffer *fb = ugly_hack->fbcanvas->fb;
 
@@ -103,9 +103,6 @@ static void handle_signal(int s)
 static void main_loop (struct document *doc)
 {
 	WINDOW *win = initscr();
-
-	signal(SIGUSR1, handle_signal);
-	signal(SIGUSR2, handle_signal);
 
 	refresh();
 	noecho();
@@ -176,20 +173,6 @@ int main(int argc, char *argv[])
 		} else if (prefs.grep_str) {
 			ret = doc->grep(doc, prefs.grep_str);
 		} else {
-			/* Asetetaan konsolinvaihto lähettämään signaaleja */
-			int fd = open("/dev/tty", O_RDWR);
-			if (fd >= 0)
-			{
-				struct vt_mode vt_mode;
-				ioctl(fd, VT_GETMODE, &vt_mode);
-				vt_mode.mode = VT_PROCESS; /* Tämä prosessi hoitaa vaihdot. */
-				vt_mode.waitv = 0;
-				vt_mode.relsig = SIGUSR1;
-				vt_mode.acqsig = SIGUSR2;
-				ioctl(fd, VT_SETMODE, &vt_mode);
-				close(fd);
-			}
-
 			ret = view_file (doc, &prefs);
 		}
 
