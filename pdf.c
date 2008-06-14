@@ -116,8 +116,6 @@ static void update_pdf(struct document *doc)
 
 	if (data->page)
 		g_object_unref(data->page);
-	if (doc->gdkpixbuf)
-		g_object_unref(doc->gdkpixbuf);
 
 	data->page = poppler_document_get_page(data->document, doc->pagenum);
 	if (!data->page)

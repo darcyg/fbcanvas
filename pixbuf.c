@@ -18,18 +18,19 @@ static void close_pixbuf(struct document *doc)
 static void update_pixbuf(struct document *doc)
 {
 	GError *err = NULL;
-	doc->gdkpixbuf = gdk_pixbuf_new_from_file(doc->filename, &err);
+	GdkPixbuf *tmp = gdk_pixbuf_new_from_file(doc->filename, &err);
 	if (err)
 	{
 		fprintf (stderr, "%s", err->message);
 		exit(1);
 	}
 
-	doc->gdkpixbuf = gdk_pixbuf_add_alpha(doc->gdkpixbuf, FALSE, 0, 0, 0);
+	doc->gdkpixbuf = gdk_pixbuf_add_alpha(tmp, FALSE, 0, 0, 0);
+	g_object_unref(tmp);
 
 	if (doc->scale != 1.0)
 	{
-		GdkPixbuf *tmp = gdk_pixbuf_scale_simple(doc->gdkpixbuf,
+		tmp = gdk_pixbuf_scale_simple(doc->gdkpixbuf,
 			ceil(doc->scale * gdk_pixbuf_get_width(doc->gdkpixbuf)),
 			ceil(doc->scale * gdk_pixbuf_get_height(doc->gdkpixbuf)),
 			GDK_INTERP_BILINEAR);

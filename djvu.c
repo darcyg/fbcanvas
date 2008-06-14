@@ -142,8 +142,6 @@ static void update_djvu(struct document *doc)
 	ddjvu_format_set_y_direction(pixelformat, 1);
 	//ddjvu_format_set_ditherbits(pixelformat, 16);
 
-	if (doc->gdkpixbuf)
-		g_object_unref(doc->gdkpixbuf);
 	doc->gdkpixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
 		TRUE, 8, width * doc->scale, height * doc->scale);
 

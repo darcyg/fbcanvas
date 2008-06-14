@@ -16,6 +16,9 @@ static void update_document(struct document *doc)
 {
 	if (doc->ops->update)
 	{
+		if (doc->gdkpixbuf)
+			g_object_unref(doc->gdkpixbuf);
+
 		doc->ops->update(doc);
 
 		doc->width = gdk_pixbuf_get_width(doc->gdkpixbuf);
