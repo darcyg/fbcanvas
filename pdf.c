@@ -1,5 +1,6 @@
 #include <poppler/glib/poppler.h>
 #include <math.h>
+#include <regex.h>
 #include <stdlib.h>
 #include <string.h>
 #include "document.h"
@@ -36,11 +37,48 @@ static void close_pdf(struct document *doc)
 	doc->document = NULL;
 }
 
+/* Print lines from STR that match REGEXP.
+   WHERE and PAGE specify the current filename and page number.
+   Return 0 if some matches were found, else 1. */
+static int grep_from_str (char *regexp, char *str, char *where, unsigned int page)
+{
+	regex_t re;
+	regmatch_t match;
+	int ret = 1;
+	char *beg, *end;
+
+	if (regcomp (&re, regexp, REG_EXTENDED))
+	{
+		perror ("regcomp");
+		return 1;
+	}
+
+	while (! regexec (&re, str, 1, &match, 0))
+	{
+		ret = 0;	/* Found match. */
+
+		beg = str + match.rm_so;
+		end = str +  match.rm_eo;
+
+		/* try to find line beginning and end. */
+		while (beg > str && beg[-1] != '\n')
+			beg--;
+		while (*end && *end != '\n')
+			end++;
+
+		printf ("%s:%d: %.*s\n", where, page, end - beg, beg);
+		str = end;
+	}
+
+	regfree (&re);
+	return ret;
+}
+
 static int grep_pdf(struct document *doc, char *regexp)
 {
 	/* TODO: use real regexps. */
-	int i, ret = 1, len = strlen (regexp);
-	char *str, *beg, *end;
+	int i, ret = 1;
+	char *str;
 
 	/* Set up methods & canvas size. */
 	doc->ops->update(doc);
@@ -51,29 +89,13 @@ static int grep_pdf(struct document *doc, char *regexp)
 		doc->page = poppler_document_get_page (doc->document, i);
 		str = poppler_page_get_text (doc->page, POPPLER_SELECTION_LINE, &rec);
 
-		while (str)
-		{
-			beg = strstr (str, regexp);
-			end = beg + len;
-
-			if (beg)
-			{
-				ret = 0; /* found match */
-
-				/* try to find line beginning and end. */
-				while (beg > str && beg[-1] != '\n')
-					beg--;
-				while (*end && *end != '\n')
-					end++;
-
-				printf ("%s:%d: %.*s\n", doc->filename, i + 1, end - beg, beg);
-				str = end;
-			} else str = NULL;
-		}
+		if (grep_from_str (regexp, str, doc->filename, i + 1) == 0)
+			ret = 0;
 	}
 
 	return ret;
 }
+
 static void update_pdf(struct document *doc)
 {
 	GError *err = NULL;

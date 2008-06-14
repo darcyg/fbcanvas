@@ -1,5 +1,5 @@
 /*
- * main.c - 17.5.2008 - 13.6.2008 Ari & Tero Roponen
+ * main.c - 17.5.2008 - 14.6.2008 Ari & Tero Roponen
  */
 
 #include <argp.h>
@@ -102,7 +102,6 @@ static void handle_signal(int s)
 
 static void main_loop (struct document *doc)
 {
-	int ch, last = 0;
 	WINDOW *win = initscr();
 
 	signal(SIGUSR1, handle_signal);
@@ -119,6 +118,7 @@ static void main_loop (struct document *doc)
 
 	if (setjmp (exit_loop) == 0)
 	{
+		int ch;
 		command_t command;
 		for (;;)		/* Main loop */
 		{
@@ -127,8 +127,7 @@ static void main_loop (struct document *doc)
 
 			ch = getch ();
 			command = lookup_command (ch);
-			command (doc, ch, last);
-			last = ch;
+			command (doc);
 		}
 	}
 

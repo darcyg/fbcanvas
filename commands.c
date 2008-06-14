@@ -1,4 +1,4 @@
-/* commands.c - 13.6.2008 - 13.6.2008 Ari & Tero Roponen */
+/* commands.c - 13.6.2008 - 14.6.2008 Ari & Tero Roponen */
 #include <ncurses.h>
 #undef scroll
 #include "commands.h"
@@ -6,26 +6,26 @@
 #include "keymap.h"
 
 jmp_buf exit_loop;
+int this_command;
+int last_command;
 
-#define DEFUN(name) static void cmd_ ##name (struct document *doc, int command, int last)
-
-DEFUN (unbound)
+static void cmd_unbound (struct document *doc)
 {
 	printf ("\a"); /* bell */
 	fflush (stdout);
 }
 
-DEFUN (quit)
+static void cmd_quit (struct document *doc)
 {
 	longjmp (exit_loop, 1);
 }
 
-DEFUN (redraw)
+static void cmd_redraw (struct document *doc)
 {
 	/* Nothing to do */
 }
 
-DEFUN (next_page)
+static void cmd_next_page (struct document *doc)
 {
 	if (doc->pagenum < doc->pagecount - 1)
 	{
@@ -34,7 +34,7 @@ DEFUN (next_page)
 	}
 }
 
-DEFUN (prev_page)
+static void cmd_prev_page (struct document *doc)
 {
 	if (doc->pagenum > 0)
 	{
@@ -43,40 +43,40 @@ DEFUN (prev_page)
 	}
 }
 
-DEFUN (down)
+static void cmd_down (struct document *doc)
 {
 	doc->fbcanvas->scroll(doc, 0, doc->height / 20);
 }
 
-DEFUN (up)
+static void cmd_up (struct document *doc)
 {
 	doc->fbcanvas->scroll(doc, 0, -(doc->height / 20));
 }
 
-DEFUN (left)
+static void cmd_left (struct document *doc)
 {
 	doc->fbcanvas->scroll(doc, -(doc->width / 20), 0);
 }
 
-DEFUN (right)
+static void cmd_right (struct document *doc)
 {
 	doc->fbcanvas->scroll(doc, doc->width / 20, 0);
 }
 
-DEFUN (set_zoom)
+static void cmd_set_zoom (struct document *doc)
 {
-	double scale = 1.0 + 0.1 * (command - '0');
+	double scale = 1.0 + 0.1 * (this_command - '0');
 	doc->scale = scale;
 	doc->ops->update(doc);
 }
 
-DEFUN (zoom_in)
+static void cmd_zoom_in (struct document *doc)
 {
 	doc->scale += 0.1;
 	doc->ops->update(doc);
 }
 
-DEFUN (zoom_out)
+static void cmd_zoom_out (struct document *doc)
 {
 	if (doc->scale >= 0.2)
 	{
@@ -85,7 +85,7 @@ DEFUN (zoom_out)
 	}
 }
 
-DEFUN (save)
+static void cmd_save (struct document *doc)
 {
 	GError *err = NULL;
 	char savename[256];
@@ -95,7 +95,7 @@ DEFUN (save)
 		fprintf (stderr, "%s", err->message);
 }
 
-DEFUN (dump_text)
+static void cmd_dump_text (struct document *doc)
 {
 	PopplerRectangle rec = {0, 0, doc->width, doc->height};
 	char *str;
@@ -119,23 +119,23 @@ DEFUN (dump_text)
 	}
 }
 
-DEFUN (flip_x)
+static void cmd_flip_x (struct document *doc)
 {
 	GdkPixbuf *tmp = gdk_pixbuf_flip(doc->gdkpixbuf, TRUE);
 	g_object_unref(doc->gdkpixbuf);
 	doc->gdkpixbuf = tmp;
 }
 
-DEFUN (flip_y)
+static void cmd_flip_y (struct document *doc)
 {
 	GdkPixbuf *tmp = gdk_pixbuf_flip(doc->gdkpixbuf, FALSE);
 	g_object_unref(doc->gdkpixbuf);
 	doc->gdkpixbuf = tmp;
 }
 
-DEFUN (flip_z)
+static void cmd_flip_z (struct document *doc)
 {
-	int angle = (command == 'z' ? 90 : 270);
+	int angle = (this_command == 'z' ? 90 : 270);
 	GdkPixbuf *tmp = gdk_pixbuf_rotate_simple(doc->gdkpixbuf, angle);
 	g_object_unref(doc->gdkpixbuf);
 	doc->gdkpixbuf = tmp;
@@ -144,10 +144,10 @@ DEFUN (flip_z)
 	doc->fbcanvas->scroll(doc, 0, 0); /* Update offsets */
 }
 
-DEFUN (goto_top)
+static void cmd_goto_top (struct document *doc)
 {
 	static int last_y;
-	if (last == command)
+	if (last_command == this_command)
 	{
 		int tmp = doc->yoffset;
 		doc->yoffset = last_y;
@@ -158,11 +158,11 @@ DEFUN (goto_top)
 	}
 }
 
-DEFUN (goto_bottom)
+static void cmd_goto_bottom (struct document *doc)
 {
 	struct framebuffer *fb = doc->fbcanvas->fb;
 	static int last_y;
-	if (last == command)
+	if (last_command == this_command)
 	{
 		int tmp = doc->yoffset;
 		doc->yoffset = last_y;
@@ -173,10 +173,10 @@ DEFUN (goto_bottom)
 	}
 }
 
-#define SET(key,command) set_key (key, (void *) cmd_ ##command)
-
 void setup_keys (void)
 {
+#define SET(key,command) set_key (key, (void *) cmd_ ##command)
+
 	SET (12, redraw); /* CTRL-L */
 	SET (27, quit);	 /* ESC */
 	SET ('q', quit); SET ('s', save); SET ('t', dump_text); SET ('x', flip_x);
@@ -189,12 +189,18 @@ void setup_keys (void)
 	SET ('3', set_zoom); SET ('4', set_zoom); SET ('5', set_zoom);
 	SET ('6', set_zoom); SET ('7', set_zoom); SET ('8', set_zoom);
 	SET ('9', set_zoom); SET ('+', zoom_in); SET ('-', zoom_out);
-};
+
+#undef SET
+}
 
 command_t lookup_command (int character)
 {
 	void *cmd = lookup_key (character);
 	if (! cmd)
 		cmd = cmd_unbound;
+
+	last_command = this_command;
+	this_command = character;
+
 	return (command_t) cmd;
 }
