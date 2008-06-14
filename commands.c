@@ -1,12 +1,15 @@
-/* commands.c - 13.6.2008 - 13.6.2008 Ari & Tero Roponen */
+/* commands.c - 13.6.2008 - 14.6.2008 Ari & Tero Roponen */
 #include <ncurses.h>
 #undef scroll
 #include "commands.h"
+#include "fbcanvas.h"
 #include "keymap.h"
 
 jmp_buf exit_loop;
+int this_command;
+int last_command;
 
-#define DEFUN(name) static void cmd_ ##name (struct fbcanvas *fbc, int command, int last)
+#define DEFUN(name) static void cmd_ ##name (struct fbcanvas *fbc)
 
 DEFUN (unbound)
 {
@@ -64,7 +67,7 @@ DEFUN (right)
 
 DEFUN (set_zoom)
 {
-	double scale = 1.0 + 0.1 * (command - '0');
+	double scale = 1.0 + 0.1 * (this_command - '0');
 	fbc->scale = scale;
 	fbc->ops->update (fbc);
 }
@@ -134,7 +137,7 @@ DEFUN (flip_y)
 
 DEFUN (flip_z)
 {
-	int angle = (command == 'z' ? 90 : 270);
+	int angle = (this_command == 'z' ? 90 : 270);
 	GdkPixbuf *tmp = gdk_pixbuf_rotate_simple(fbc->gdkpixbuf, angle);
 	g_object_unref(fbc->gdkpixbuf);
 	fbc->gdkpixbuf = tmp;
@@ -146,7 +149,7 @@ DEFUN (flip_z)
 DEFUN (goto_top)
 {
 	static int last_y;
-	if (last == command)
+	if (last_command == this_command)
 	{
 		int tmp = fbc->yoffset;
 		fbc->yoffset = last_y;
@@ -161,7 +164,7 @@ DEFUN (goto_bottom)
 {
 	struct framebuffer *fb = fbc->fb;
 	static int last_y;
-	if (last == command)
+	if (last_command == this_command)
 	{
 		int tmp = fbc->yoffset;
 		fbc->yoffset = last_y;
@@ -195,5 +198,9 @@ command_t lookup_command (int character)
 	void *cmd = lookup_key (character);
 	if (! cmd)
 		cmd = cmd_unbound;
+
+	last_command = this_command;
+	this_command = character;
+
 	return (command_t) cmd;
 }
