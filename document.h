@@ -5,6 +5,12 @@
 
 struct document;
 
+struct pdf_data
+{
+	PopplerDocument *document;
+	PopplerPage *page;
+};
+
 struct document_ops
 {
 	void *(*open)(struct document *doc);
@@ -23,9 +29,6 @@ struct document
 	char *filename;
 	void *data;
 
-	void *context;
-	void *document;
-	void *page;
 	unsigned int pagenum;
 	unsigned int pagecount;
 

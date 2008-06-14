@@ -95,16 +95,19 @@ static void cmd_save (struct document *doc)
 		fprintf (stderr, "%s", err->message);
 }
 
+struct pdf_data;
+
 static void cmd_dump_text (struct document *doc)
 {
+	struct pdf_data *data = doc->data;
 	PopplerRectangle rec = {0, 0, doc->width, doc->height};
 	char *str;
 
 	/* fbc->page is currently only used with PDF-files. */
-	if (!doc->page)
-		return;
+//	if (!doc->page)
+//		return;
 
-	str = poppler_page_get_text(doc->page, POPPLER_SELECTION_LINE, &rec);
+	str = poppler_page_get_text(data->page, POPPLER_SELECTION_LINE, &rec);
 	if (str)
 	{
 		FILE *fp;

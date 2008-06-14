@@ -21,9 +21,6 @@ struct document *open_document(char *filename)
 
 		doc->fbcanvas = fbcanvas_create(filename);
 
-		doc->context = NULL;
-		doc->document = NULL;
-		doc->page = NULL;
 		doc->gdkpixbuf = NULL;
 		doc->xoffset = 0;
 		doc->yoffset = 0;
