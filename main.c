@@ -1,5 +1,5 @@
 /*
- * main.c - 17.5.2008 - 14.6.2008 Ari & Tero Roponen
+ * main.c - 17.5.2008 - 15.6.2008 Ari & Tero Roponen
  */
 
 #include <linux/vt.h>
@@ -181,6 +181,9 @@ int main(int argc, char *argv[])
 	struct document *doc;
 
 	argp_parse (&argp, argc, argv, 0, &ind, &prefs);
+
+	extern void register_plugins (void);
+	register_plugins ();
 
 	doc = open_document(argv[ind]);
 	if (doc)
