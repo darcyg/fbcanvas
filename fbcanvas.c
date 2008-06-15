@@ -1,7 +1,6 @@
 /*
  * fbcanvas.c - 17.5.2008 - 20.5.2008 Ari & Tero Roponen
  */
-#include <poppler/glib/poppler.h>
 #include <sys/types.h>
 #include <linux/fb.h>
 #include <linux/vt.h>
