@@ -5,12 +5,6 @@
 
 struct document;
 
-struct pdf_data
-{
-	PopplerDocument *document;
-	PopplerPage *page;
-};
-
 struct document_ops
 {
 	void *(*open)(struct document *doc);
@@ -19,6 +13,7 @@ struct document_ops
 	void (*update)(struct document *doc);
 
 	int (*grep)(struct document *doc, char *regexp);
+	void (*dump_text)(struct document *doc, char *filename);
 
 	unsigned int (*page_count)(struct document *doc);
 };
@@ -47,6 +42,7 @@ struct document
 	void (*update)(struct document *doc);
 	int (*grep)(struct document *doc, char *regexp);
 	unsigned int (*page_count)(struct document *doc);
+	void (*dump_text)(struct document *doc, char *filename);
 };
 
 struct document *open_document(char *filename);

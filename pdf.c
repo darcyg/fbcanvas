@@ -7,6 +7,12 @@
 #include "fbcanvas.h"
 #include "file_info.h"
 
+struct pdf_data
+{
+	PopplerDocument *document;
+	PopplerPage *page;
+};
+
 static void *open_pdf(struct document *doc)
 {
 	struct pdf_data *data = malloc(sizeof(*data));
@@ -132,12 +138,29 @@ static void update_pdf(struct document *doc)
 		ceil(width), ceil(height), doc->scale, 0, doc->gdkpixbuf);
 }
 
+static void dump_text_pdf(struct document *doc, char *filename)
+{
+	struct pdf_data *data = doc->data;
+	PopplerRectangle rec = {0, 0, doc->width, doc->height};
+	char *str = poppler_page_get_text(data->page, POPPLER_SELECTION_LINE, &rec);
+	if (str)
+	{
+		FILE *fp = fopen(filename, "w+");
+		if (fp)
+		{
+			fprintf(fp, "%s", str);
+			fclose (fp);
+		}
+	}
+}
+
 static struct document_ops pdf_ops =
 {
 	.open = open_pdf,
 	.close = close_pdf,
 	.update = update_pdf,
 	.grep = grep_pdf,
+	.dump_text = dump_text_pdf,
 };
 
 struct file_info pdf_info = {"PDF", &pdf_ops};

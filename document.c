@@ -42,6 +42,12 @@ static unsigned int document_page_count(struct document *doc)
 	return 1;
 }
 
+static void document_dump_text(struct document *doc, char *filename)
+{
+	if (doc->ops->dump_text)
+		doc->ops->dump_text(doc, filename);
+}
+
 struct document *open_document(char *filename)
 {
 	struct document *doc = malloc(sizeof(*doc));
@@ -78,6 +84,7 @@ struct document *open_document(char *filename)
 		doc->update = update_document;
 		doc->grep = grep_document;
 		doc->page_count = document_page_count;
+		doc->dump_text = document_dump_text;
 
 		doc->data = doc->ops->open(doc);
 	}
