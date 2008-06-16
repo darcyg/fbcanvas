@@ -1,5 +1,5 @@
 /*
- * main.c - 17.5.2008 - 15.6.2008 Ari & Tero Roponen
+ * main.c - 17.5.2008 - 16.6.2008 Ari & Tero Roponen
  */
 
 #include <linux/vt.h>
@@ -67,9 +67,10 @@ error_t parse_arguments (int key, char *arg, struct argp_state *state)
 	case 'y':
 		prefs->y = atoi (arg);
 		break;
-	case ARGP_KEY_END:
-		if (state->arg_num != 1)
+	case ARGP_KEY_SUCCESS:
+		if (state->argc - state->next != 1)
 			argp_usage (state);
+		break;
 	}
 	return 0;
 }
