@@ -159,17 +159,19 @@ static void cmd_goto_bottom (struct document *doc)
 
 static void cmd_message (struct document *doc)
 {
-	if (! doc->cairo)
-		return;
+	cairo_t *cr = cairo_create(doc->cairo);
+	if (cr)
+	{
+		cairo_select_font_face(cr, "monospace",
+			CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+		cairo_set_font_size(cr, 14);
 
-	cairo_t *cr = cairo_create (doc->cairo);
+		cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
+		cairo_move_to (cr, 10, 14);
 
-	cairo_set_source_rgb (cr, 0.0, 1.0, 1.0);
-
-	cairo_move_to (cr, 10, 10);
-	cairo_show_text (cr, "message");
-
-	cairo_destroy (cr);
+		cairo_show_text (cr, "Unregistered fb");
+		cairo_destroy (cr);
+	}
 }
 
 void setup_keys (void)
