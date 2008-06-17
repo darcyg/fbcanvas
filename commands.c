@@ -105,40 +105,67 @@ static void cmd_dump_text (struct document *doc)
 
 static void cmd_flip_x (struct document *doc)
 {
-	cairo_format_t fmt = cairo_image_surface_get_format (doc->cairo);
-	int width = cairo_image_surface_get_width (doc->cairo);
-	int height = cairo_image_surface_get_height (doc->cairo);
-	int stride = cairo_image_surface_get_stride (doc->cairo);
-	unsigned char *data = cairo_image_surface_get_data (doc->cairo);
+	if (doc->gdkpixbuf)
+	{
+		GdkPixbuf *tmp = gdk_pixbuf_flip(doc->gdkpixbuf, TRUE);
+		g_object_unref(doc->gdkpixbuf);
+		doc->gdkpixbuf = tmp;
+	} else if (doc->cairo) {
+		cairo_format_t fmt = cairo_image_surface_get_format (doc->cairo);
+		int width = cairo_image_surface_get_width (doc->cairo);
+		int height = cairo_image_surface_get_height (doc->cairo);
+		int stride = cairo_image_surface_get_stride (doc->cairo);
+		unsigned char *data = cairo_image_surface_get_data (doc->cairo);
 
-	GdkPixbuf *tmp, *tmp2 = gdk_pixbuf_new_from_data (data, GDK_COLORSPACE_RGB, TRUE,
-						   8, width, height, stride,
-						   NULL, NULL);
-	tmp = gdk_pixbuf_flip (tmp2, TRUE);
-	g_object_unref (tmp2);
+		GdkPixbuf *tmp, *tmp2 = gdk_pixbuf_new_from_data (data,
+			GDK_COLORSPACE_RGB, TRUE,
+			8, width, height, stride,
+			NULL, NULL);
 
-	cairo_surface_destroy (doc->cairo);
-	doc->cairo = cairo_image_surface_create_for_data (gdk_pixbuf_get_pixels (tmp),
-							  fmt, width, height, stride);
-//	g_object_unref(tmp); /* FIXME: memory leak */
+		tmp = gdk_pixbuf_flip (tmp2, TRUE);
+		g_object_unref (tmp2);
+
+		cairo_surface_destroy (doc->cairo);
+		doc->cairo = cairo_image_surface_create_for_data (gdk_pixbuf_get_pixels (tmp),
+			fmt, width, height, stride);
+		//	g_object_unref(tmp); /* FIXME: memory leak */
+	}
 }
 
 static void cmd_flip_y (struct document *doc)
 {
-	GdkPixbuf *tmp = gdk_pixbuf_flip(doc->gdkpixbuf, FALSE);
-	g_object_unref(doc->gdkpixbuf);
-	doc->gdkpixbuf = tmp;
+	if (doc->gdkpixbuf)
+	{
+		GdkPixbuf *tmp = gdk_pixbuf_flip(doc->gdkpixbuf, FALSE);
+		g_object_unref(doc->gdkpixbuf);
+		doc->gdkpixbuf = tmp;
+	}
 }
 
 static void cmd_flip_z (struct document *doc)
 {
 	int angle = (this_command == 'z' ? 90 : 270);
-	GdkPixbuf *tmp = gdk_pixbuf_rotate_simple(doc->gdkpixbuf, angle);
-	g_object_unref(doc->gdkpixbuf);
-	doc->gdkpixbuf = tmp;
-	doc->width = gdk_pixbuf_get_width(doc->gdkpixbuf);
-	doc->height = gdk_pixbuf_get_height(doc->gdkpixbuf);
-	doc->fbcanvas->scroll(doc, 0, 0); /* Update offsets */
+
+	if (doc->gdkpixbuf)
+	{
+		GdkPixbuf *tmp = gdk_pixbuf_rotate_simple(doc->gdkpixbuf, angle);
+		g_object_unref(doc->gdkpixbuf);
+		doc->gdkpixbuf = tmp;
+		doc->width = gdk_pixbuf_get_width(doc->gdkpixbuf);
+		doc->height = gdk_pixbuf_get_height(doc->gdkpixbuf);
+		doc->fbcanvas->scroll(doc, 0, 0); /* Update offsets */
+	} else if (doc->cairo) {
+		double angle2 = (double)angle;
+
+		cairo_t *cr = cairo_create(doc->cairo);
+		if (cr)
+		{
+			cairo_rotate(cr, angle2);
+			cairo_stroke(cr);
+			cairo_destroy(cr);
+			doc->fbcanvas->scroll(doc, 0, 0); /* Update offsets */
+		}
+	}
 }
 
 static void cmd_goto_top (struct document *doc)

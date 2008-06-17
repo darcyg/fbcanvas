@@ -132,10 +132,21 @@ static void update_pdf(struct document *doc)
 	poppler_page_get_size(data->page, &width, &height);
 	//fprintf(stderr, "Size: %lfx%lf\n", width, height);
 
+#if 1
 	doc->gdkpixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
 		TRUE, 8, ceil(width * doc->scale), ceil(height * doc->scale));
 	poppler_page_render_to_pixbuf(data->page, 0, 0,
 		ceil(width), ceil(height), doc->scale, 0, doc->gdkpixbuf);
+#else
+	{
+		cairo_t *cr;
+		doc->cairo = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
+			ceil(width), ceil(height));
+		cr = cairo_create(doc->cairo);
+		poppler_page_render(data->page, cr);
+		cairo_destroy(cr);
+	}
+#endif
 }
 
 static void dump_text_pdf(struct document *doc, char *filename)
