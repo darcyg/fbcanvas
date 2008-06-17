@@ -105,9 +105,21 @@ static void cmd_dump_text (struct document *doc)
 
 static void cmd_flip_x (struct document *doc)
 {
-	GdkPixbuf *tmp = gdk_pixbuf_flip(doc->gdkpixbuf, TRUE);
-	g_object_unref(doc->gdkpixbuf);
-	doc->gdkpixbuf = tmp;
+	cairo_format_t fmt = cairo_image_surface_get_format (doc->cairo);
+	int width = cairo_image_surface_get_width (doc->cairo);
+	int height = cairo_image_surface_get_height (doc->cairo);
+	int stride = cairo_image_surface_get_stride (doc->cairo);
+	unsigned char *data = cairo_image_surface_get_data (doc->cairo);
+
+	GdkPixbuf *tmp = gdk_pixbuf_new_from_data (data, GDK_COLORSPACE_RGB, TRUE,
+						   8, width, height, stride,
+						   NULL, NULL);
+	tmp = gdk_pixbuf_flip (tmp, TRUE);
+
+	doc->cairo = cairo_image_surface_create_for_data (gdk_pixbuf_get_pixels (tmp),
+							  fmt, width, height, stride);
+
+	/* TODO: memory leaks? */
 }
 
 static void cmd_flip_y (struct document *doc)
