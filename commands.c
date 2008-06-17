@@ -139,6 +139,19 @@ static void cmd_flip_y (struct document *doc)
 		GdkPixbuf *tmp = gdk_pixbuf_flip(doc->gdkpixbuf, FALSE);
 		g_object_unref(doc->gdkpixbuf);
 		doc->gdkpixbuf = tmp;
+	} else if (doc->cairo) {
+		cairo_t *cairo = cairo_create (doc->cairo);
+		cairo_pattern_t *pat = cairo_pattern_create_for_surface (doc->cairo);
+		cairo_matrix_t mat;
+
+		cairo_matrix_init_scale (&mat, 0.9, 0.9);
+		cairo_set_matrix (cairo, &mat);
+
+		cairo_set_source (cairo, pat);
+		cairo_paint (cairo);
+
+		cairo_pattern_destroy (pat);
+		cairo_destroy (cairo);
 	}
 }
 
