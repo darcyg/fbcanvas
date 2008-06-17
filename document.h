@@ -11,6 +11,7 @@ struct document_ops
 	void (*close)(struct document *doc);
 
 	void (*update)(struct document *doc);
+	void (*draw)(struct document *doc);
 
 	int (*grep)(struct document *doc, char *regexp);
 	void (*dump_text)(struct document *doc, char *filename);
@@ -30,6 +31,8 @@ struct document
 	struct document_ops *ops;
 
 	GdkPixbuf *gdkpixbuf;
+	cairo_surface_t *cairo;
+
 	double scale;
 
 	unsigned int width;
@@ -40,6 +43,7 @@ struct document
 	/* Yleiset versiot tiedostokohtaisista metodeista. */
 	void (*close)(struct document *doc);
 	void (*update)(struct document *doc);
+	void (*draw)(struct document *doc);
 	int (*grep)(struct document *doc, char *regexp);
 	unsigned int (*page_count)(struct document *doc);
 	void (*dump_text)(struct document *doc, char *filename);

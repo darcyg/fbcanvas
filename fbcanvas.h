@@ -1,6 +1,7 @@
 #ifndef FBCANVAS_H
 #define FBCANVAS_H
 
+#include <cairo/cairo.h>
 #include <poppler/glib/poppler.h>
 #include "document.h"
 
@@ -14,8 +15,12 @@ struct framebuffer
 	unsigned int height;	/* Hardware height		*/
 	unsigned int depth;	/* Hardware color depth		*/
 
-	void (*draw)(struct framebuffer *fb, GdkPixbuf *gdkpixbuf,
-		signed int xoffset, signed int yoffset);
+	void (*draw)(struct framebuffer *fb,
+		unsigned char *data,
+		unsigned int width,
+		unsigned int height,
+		signed int xoffset,
+		signed int yoffset);
 };
 
 struct fbcanvas

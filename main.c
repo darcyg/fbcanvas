@@ -141,8 +141,7 @@ static void main_loop (struct document *doc)
 		command_t command;
 		for (;;)		/* Main loop */
 		{
-			doc->fbcanvas->fb->draw(doc->fbcanvas->fb,
-				doc->gdkpixbuf, doc->xoffset, doc->yoffset);
+			doc->draw(doc);
 
 			ch = read_key(0);
 			command = lookup_command (ch);

@@ -15,8 +15,12 @@
 #include "fbcanvas.h"
 #include "file_info.h"
 
-static void draw_16bpp(struct framebuffer *fb, GdkPixbuf *gdkpixbuf,
-	signed int xoffset, signed int yoffset);
+static void draw_16bpp(struct framebuffer *fb,
+	unsigned char *data,
+	unsigned int width,
+	unsigned int height,
+	signed int xoffset,
+	signed int yoffset);
 
 static struct framebuffer *open_framebuffer(char *fbdev)
 {
@@ -140,17 +144,15 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 	free(fbc);
 }
 
-static void draw_16bpp(struct framebuffer *fb, GdkPixbuf *gdkpixbuf,
+static void draw_16bpp(struct framebuffer *fb, unsigned char *data,
+	unsigned int width, unsigned int height,
 	signed int xoffset, signed int yoffset)
 {
 	static unsigned short empty_background_color = 0x0000;
 	unsigned int x, y;
 	unsigned short *src, *dst;
 	unsigned short color;
-	unsigned char *data = gdk_pixbuf_get_pixels(gdkpixbuf);
 
-	unsigned int width = gdk_pixbuf_get_width(gdkpixbuf);
-	unsigned int height = gdk_pixbuf_get_height(gdkpixbuf);
 	int pb_xoffset = 0, pb_yoffset = 0;
 	int fb_xoffset = 0, fb_yoffset = 0;
 
