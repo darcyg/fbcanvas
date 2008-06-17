@@ -1,4 +1,4 @@
-/* commands.c - 13.6.2008 - 14.6.2008 Ari & Tero Roponen */
+/* commands.c - 13.6.2008 - 17.6.2008 Ari & Tero Roponen */
 #include <cairo/cairo.h>
 #include <ncurses.h>
 #undef scroll
@@ -157,6 +157,21 @@ static void cmd_goto_bottom (struct document *doc)
 	}
 }
 
+static void cmd_message (struct document *doc)
+{
+	if (! doc->cairo)
+		return;
+
+	cairo_t *cr = cairo_create (doc->cairo);
+
+	cairo_set_source_rgb (cr, 0.0, 1.0, 1.0);
+
+	cairo_move_to (cr, 10, 10);
+	cairo_show_text (cr, "message");
+
+	cairo_destroy (cr);
+}
+
 void setup_keys (void)
 {
 #define SET(key,command) set_key (key, (void *) cmd_ ##command)
@@ -173,6 +188,7 @@ void setup_keys (void)
 	SET ('3', set_zoom); SET ('4', set_zoom); SET ('5', set_zoom);
 	SET ('6', set_zoom); SET ('7', set_zoom); SET ('8', set_zoom);
 	SET ('9', set_zoom); SET ('+', zoom_in); SET ('-', zoom_out);
+	SET ('m', message);
 
 #undef SET
 }
