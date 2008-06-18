@@ -7,8 +7,8 @@
 #include "keymap.h"
 
 jmp_buf exit_loop;
-int this_command;
-int last_command;
+static int this_command;
+static int last_command;
 
 static void cmd_unbound (struct document *doc)
 {
