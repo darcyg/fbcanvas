@@ -64,6 +64,26 @@ static void cmd_right (struct document *doc)
 	doc->fbcanvas->scroll(doc, doc->width / 20, 0);
 }
 
+/*
+ * Update DOC to contain a new surface of size WIDTH * HEIGHT.
+ *
+ * X1,Y1 is a new value for X-axis
+ * X2,Y2 is a new value for Y-axis
+ *
+ * DX and DY are used to move the image so that the base point is at
+ * the bottom left corner.
+ *
+ * EXAMPLE:
+ * Dot (.) marks the base point. It doesn't move.
+ * To x-flip image, we change the axis like this:
+ *
+ *  y        y
+ *  │   ->   │
+ * .└─x    x─┘.
+ *
+ * As can be seen, the picture will be drawn to the left from base
+ * point, making it invisible. DX = doc->width solves the problem.
+ */
 static void transform_doc (struct document *doc,
 			   int width, int height,
 			   double x1, double y1,
@@ -158,14 +178,24 @@ static void cmd_dump_text (struct document *doc)
 
 static void cmd_flip_x (struct document *doc)
 {
-	if (doc->cairo)
-		transform_doc (doc, doc->width, doc->height, -1, 0, 0, 1, doc->width, 0);
+	/* See comment in transform_doc.
+	 *
+	 *  y        y
+	 *  │   ->   │
+	 * .└─x    x─┘.
+	 */
+	transform_doc (doc, doc->width, doc->height, -1, 0, 0, 1, doc->width, 0);
 }
 
 static void cmd_flip_y (struct document *doc)
 {
-	if (doc->cairo)
-		transform_doc (doc, doc->width, doc->height, 1, 0, 0, -1, 0, doc->height);
+	/* See comment in transform_doc.
+	 *
+	 *  y      .┌─x
+	 *  │   ->  │
+	 * .└─x     y
+	 */
+	transform_doc (doc, doc->width, doc->height, 1, 0, 0, -1, 0, doc->height);
 }
 
 static void cmd_flip_z (struct document *doc)
@@ -176,9 +206,21 @@ static void cmd_flip_z (struct document *doc)
 	{
 		if (dir == 1)
 		{
+			/* See comment in transform_doc.
+			 *
+			 *  y        x
+			 *  │   ->   │
+			 * .└─x    y─┘.
+			 */
 			transform_doc (doc, doc->height, doc->width,
 				       0, 1, -1, 0, doc->height, 0);
 		} else {
+			/* See comment in transform_doc.
+			 *
+			 *  y      .┌─y
+			 *  │   ->  │
+			 * .└─x     x
+			 */
 			transform_doc (doc, doc->height, doc->width,
 				       0, -1, 1, 0, 0, doc->width);
 		}
