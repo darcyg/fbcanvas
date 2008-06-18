@@ -219,7 +219,10 @@ static void cmd_display_current_page (struct document *doc)
 	static char buf[10];
 
 	if (last_command == this_command)
+	{
+		this_command = 12; /* CTRL-L */
 		return;
+	}
 
 	sprintf (buf, "%d/%d", doc->pagenum + 1, doc->pagecount);
 	display_message (doc, buf);
