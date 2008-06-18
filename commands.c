@@ -1,4 +1,4 @@
-/* commands.c - 13.6.2008 - 17.6.2008 Ari & Tero Roponen */
+/* commands.c - 13.6.2008 - 18.6.2008 Ari & Tero Roponen */
 #include <cairo/cairo.h>
 #include <ncurses.h>
 #undef scroll
@@ -103,6 +103,31 @@ static void cmd_dump_text (struct document *doc)
 	doc->dump_text(doc, filename);
 }
 
+static void transform_doc (struct document *doc,
+			   int width, int height,
+			   double x1, double y1,
+			   double x2, double y2,
+			   double dx, double dy)
+{
+	cairo_surface_t *surf = cairo_surface_create_similar (
+		doc->cairo, CAIRO_CONTENT_COLOR_ALPHA, width, height);
+	cairo_t *cairo = cairo_create (surf);
+	cairo_pattern_t *pat = cairo_pattern_create_for_surface (doc->cairo);
+	cairo_matrix_t mat;
+
+	cairo_matrix_init (&mat, x1, y1, x2, y2, dx, dy);
+	cairo_transform (cairo, &mat);
+	cairo_set_source (cairo, pat);
+	cairo_paint (cairo);
+	cairo_pattern_destroy (pat);
+	cairo_destroy (cairo);
+
+	cairo_surface_destroy (doc->cairo);
+	doc->cairo = surf;
+	doc->width = width;
+	doc->height = height;
+}
+
 static void cmd_flip_x (struct document *doc)
 {
 	if (doc->gdkpixbuf)
@@ -111,24 +136,8 @@ static void cmd_flip_x (struct document *doc)
 		g_object_unref(doc->gdkpixbuf);
 		doc->gdkpixbuf = tmp;
 	} else if (doc->cairo) {
-		cairo_format_t fmt = cairo_image_surface_get_format (doc->cairo);
-		int width = cairo_image_surface_get_width (doc->cairo);
-		int height = cairo_image_surface_get_height (doc->cairo);
-		int stride = cairo_image_surface_get_stride (doc->cairo);
-		unsigned char *data = cairo_image_surface_get_data (doc->cairo);
-
-		GdkPixbuf *tmp, *tmp2 = gdk_pixbuf_new_from_data (data,
-			GDK_COLORSPACE_RGB, TRUE,
-			8, width, height, stride,
-			NULL, NULL);
-
-		tmp = gdk_pixbuf_flip (tmp2, TRUE);
-		g_object_unref (tmp2);
-
-		cairo_surface_destroy (doc->cairo);
-		doc->cairo = cairo_image_surface_create_for_data (gdk_pixbuf_get_pixels (tmp),
-			fmt, width, height, stride);
-		//	g_object_unref(tmp); /* FIXME: memory leak */
+		transform_doc (doc, doc->width, doc->height,
+			       -1, 0, 0, 1, doc->width, 0);
 	}
 }
 
@@ -140,43 +149,31 @@ static void cmd_flip_y (struct document *doc)
 		g_object_unref(doc->gdkpixbuf);
 		doc->gdkpixbuf = tmp;
 	} else if (doc->cairo) {
-		cairo_t *cairo = cairo_create (doc->cairo);
-		cairo_pattern_t *pat = cairo_pattern_create_for_surface (doc->cairo);
-		cairo_matrix_t mat;
-
-		cairo_matrix_init_scale (&mat, 0.9, 0.9);
-		cairo_set_matrix (cairo, &mat);
-
-		cairo_set_source (cairo, pat);
-		cairo_paint (cairo);
-
-		cairo_pattern_destroy (pat);
-		cairo_destroy (cairo);
+		transform_doc (doc, doc->width, doc->height,
+			       1, 0, 0, -1, 0, doc->height);
 	}
 }
 
 static void cmd_flip_z (struct document *doc)
 {
-	int angle = (this_command == 'z' ? 90 : 270);
+	int dir = (this_command == 'z' ? 1 : -1);
 
 	if (doc->gdkpixbuf)
 	{
-		GdkPixbuf *tmp = gdk_pixbuf_rotate_simple(doc->gdkpixbuf, angle);
+		GdkPixbuf *tmp = gdk_pixbuf_rotate_simple(doc->gdkpixbuf, dir = 1?90:270);
 		g_object_unref(doc->gdkpixbuf);
 		doc->gdkpixbuf = tmp;
 		doc->width = gdk_pixbuf_get_width(doc->gdkpixbuf);
 		doc->height = gdk_pixbuf_get_height(doc->gdkpixbuf);
 		doc->fbcanvas->scroll(doc, 0, 0); /* Update offsets */
 	} else if (doc->cairo) {
-		double angle2 = (double)angle;
-
-		cairo_t *cr = cairo_create(doc->cairo);
-		if (cr)
+		if (dir == 1)
 		{
-			cairo_rotate(cr, angle2);
-			cairo_stroke(cr);
-			cairo_destroy(cr);
-			doc->fbcanvas->scroll(doc, 0, 0); /* Update offsets */
+			transform_doc (doc, doc->height, doc->width,
+				       0, 1, -1, 0, doc->height, 0);
+		} else {
+			transform_doc (doc, doc->height, doc->width,
+				       0, -1, 1, 0, 0, doc->width);
 		}
 	}
 }
