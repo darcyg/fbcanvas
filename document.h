@@ -31,6 +31,7 @@ struct document
 	struct document_ops *ops;
 
 	cairo_surface_t *cairo;
+	cairo_surface_t *message;
 
 	double scale;
 

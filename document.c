@@ -39,6 +39,19 @@ static void draw_document(struct document *doc)
 	unsigned int width;
 	unsigned int height;
 
+	if (doc->message)
+	{
+		data = cairo_image_surface_get_data (doc->message);
+		width = cairo_image_surface_get_width (doc->message);
+		height = cairo_image_surface_get_height (doc->message);
+		doc->fbcanvas->fb->draw (doc->fbcanvas->fb,
+					 data, width, height,
+					 doc->xoffset, doc->yoffset);
+		cairo_surface_destroy (doc->message);
+		doc->message = NULL;
+		return;
+	}
+
 	if (doc->cairo)
 	{
 		data = cairo_image_surface_get_data(doc->cairo);
@@ -82,6 +95,7 @@ struct document *open_document(char *filename)
 		doc->fbcanvas = fbcanvas_create(filename);
 
 		doc->cairo = NULL;
+		doc->message = NULL;
 		doc->xoffset = 0;
 		doc->yoffset = 0;
 		doc->scale = 1.0;
