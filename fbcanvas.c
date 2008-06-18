@@ -15,12 +15,7 @@
 #include "fbcanvas.h"
 #include "file_info.h"
 
-static void draw_16bpp(struct framebuffer *fb,
-	unsigned char *data,
-	unsigned int width,
-	unsigned int height,
-	signed int xoffset,
-	signed int yoffset);
+static void draw_16bpp(struct document *doc);
 
 static struct framebuffer *open_framebuffer(char *fbdev)
 {
@@ -144,11 +139,19 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 	free(fbc);
 }
 
-static void draw_16bpp(struct framebuffer *fb, unsigned char *data,
-	unsigned int width, unsigned int height,
-	signed int xoffset, signed int yoffset)
+static void draw_16bpp(struct document *doc)
 {
 	static unsigned short empty_background_color = 0x0000;
+	struct framebuffer *fb = doc->fbcanvas->fb;
+	signed int xoffset = doc->xoffset;
+	signed int yoffset = doc->yoffset;
+
+	unsigned int width = doc->message ? cairo_image_surface_get_width(doc->message) :
+					    cairo_image_surface_get_width(doc->cairo);
+	unsigned int height = doc->message ? cairo_image_surface_get_height(doc->message) :
+					     cairo_image_surface_get_height(doc->cairo);
+	unsigned char *data = doc->message ? cairo_image_surface_get_data(doc->message) :
+					     cairo_image_surface_get_data(doc->cairo);
 	unsigned int x, y;
 	unsigned short *src, *dst;
 	unsigned short color;

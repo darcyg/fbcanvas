@@ -35,32 +35,13 @@ static void update_document(struct document *doc)
 
 static void draw_document(struct document *doc)
 {
-	unsigned char *data;
-	unsigned int width;
-	unsigned int height;
+	doc->fbcanvas->fb->draw(doc);
 
 	if (doc->message)
 	{
-		data = cairo_image_surface_get_data (doc->message);
-		width = cairo_image_surface_get_width (doc->message);
-		height = cairo_image_surface_get_height (doc->message);
-		doc->fbcanvas->fb->draw (doc->fbcanvas->fb,
-					 data, width, height,
-					 doc->xoffset, doc->yoffset);
 		cairo_surface_destroy (doc->message);
 		doc->message = NULL;
-		return;
 	}
-
-	if (doc->cairo)
-	{
-		data = cairo_image_surface_get_data(doc->cairo);
-		width = cairo_image_surface_get_width(doc->cairo);
-		height = cairo_image_surface_get_height(doc->cairo);
-	}
-
-	doc->fbcanvas->fb->draw(doc->fbcanvas->fb,
-		data, width, height, doc->xoffset, doc->yoffset);
 }
 
 static int grep_document(struct document *doc, char *regexp)

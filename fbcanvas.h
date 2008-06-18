@@ -15,12 +15,7 @@ struct framebuffer
 	unsigned int height;	/* Hardware height		*/
 	unsigned int depth;	/* Hardware color depth		*/
 
-	void (*draw)(struct framebuffer *fb,
-		unsigned char *data,
-		unsigned int width,
-		unsigned int height,
-		signed int xoffset,
-		signed int yoffset);
+	void (*draw)(struct document *doc);
 };
 
 struct fbcanvas
