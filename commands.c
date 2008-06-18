@@ -217,6 +217,10 @@ static void cmd_goto_bottom (struct document *doc)
 static void cmd_display_current_page (struct document *doc)
 {
 	static char buf[10];
+
+	if (last_command == this_command)
+		return;
+
 	sprintf (buf, "%d/%d", doc->pagenum + 1, doc->pagecount);
 	display_message (doc, buf);
 }
