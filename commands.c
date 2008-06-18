@@ -89,6 +89,33 @@ static void transform_doc (struct document *doc,
 	doc->height = height;
 }
 
+static void display_message (struct document *doc, char *message)
+{
+	cairo_pattern_t *pat = cairo_pattern_create_for_surface (doc->cairo);
+	cairo_surface_t *surf = cairo_surface_create_similar (
+		doc->cairo, CAIRO_CONTENT_COLOR_ALPHA, doc->width, doc->height);
+	cairo_t *cr = cairo_create (surf);
+
+	/* Use current image as a background. */
+	cairo_set_source (cr, pat);
+	cairo_paint_with_alpha (cr, 0.5);
+	cairo_pattern_destroy (pat);
+
+	cairo_select_font_face (cr, "monospace",
+				CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+	cairo_set_font_size (cr, 14);
+
+	cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
+	cairo_move_to (cr, 10, 14);
+
+	cairo_show_text (cr, message);
+	cairo_destroy (cr);
+
+	if (doc->message)
+		cairo_surface_destroy (doc->message);
+	doc->message = surf;
+}
+
 static void cmd_set_zoom (struct document *doc)
 {
 	double scale = 1.0 + 0.1 * (this_command - '0');
@@ -187,31 +214,11 @@ static void cmd_goto_bottom (struct document *doc)
 	}
 }
 
-static void cmd_message (struct document *doc)
+static void cmd_display_current_page (struct document *doc)
 {
-	cairo_pattern_t *pat = cairo_pattern_create_for_surface (doc->cairo);
-	cairo_surface_t *surf = cairo_surface_create_similar (
-		doc->cairo, CAIRO_CONTENT_COLOR_ALPHA, doc->width, doc->height);
-	cairo_t *cr = cairo_create (surf);
-
-	/* Copy current image. */
-	cairo_set_source (cr, pat);
-	cairo_paint (cr);
-	cairo_pattern_destroy (pat);
-
-	cairo_select_font_face (cr, "monospace",
-				CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
-	cairo_set_font_size (cr, 14);
-
-	cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
-	cairo_move_to (cr, 10, 14);
-
-	cairo_show_text (cr, "Unregistered fb");
-	cairo_destroy (cr);
-
-	if (doc->message)
-		cairo_surface_destroy (doc->message);
-	doc->message = surf;
+	static char buf[10];
+	sprintf (buf, "%d/%d", doc->pagenum + 1, doc->pagecount);
+	display_message (doc, buf);
 }
 
 void setup_keys (void)
@@ -230,7 +237,7 @@ void setup_keys (void)
 	SET ('3', set_zoom); SET ('4', set_zoom); SET ('5', set_zoom);
 	SET ('6', set_zoom); SET ('7', set_zoom); SET ('8', set_zoom);
 	SET ('9', set_zoom); SET ('+', zoom_in); SET ('-', zoom_out);
-	SET ('m', message);
+	SET ('p', display_current_page);
 
 #undef SET
 }
