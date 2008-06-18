@@ -156,7 +156,7 @@ static void cmd_flip_y (struct document *doc)
 
 static void cmd_flip_z (struct document *doc)
 {
-	int dir = (this_command == 'z' ? 1 : -1);
+	int dir = (this_command == 'Z' ? 1 : -1);
 
 	if (doc->gdkpixbuf)
 	{
