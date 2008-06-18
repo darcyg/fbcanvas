@@ -11,6 +11,7 @@ struct pdf_data
 {
 	PopplerDocument *document;
 	PopplerPage *page;
+	GdkPixbuf *pixbuf;
 };
 
 static void *open_pdf(struct document *doc)
@@ -25,6 +26,7 @@ static void *open_pdf(struct document *doc)
 		/* PDF vaatii absoluuttisen "file:///tiedostonimen". */
 		sprintf(fullname, "file://%s", canon_name);
 
+		data->pixbuf = NULL;
 		data->page = NULL;
 		data->document = poppler_document_new_from_file(fullname, NULL, &err);
 		if (!data->document)
@@ -132,21 +134,16 @@ static void update_pdf(struct document *doc)
 	poppler_page_get_size(data->page, &width, &height);
 	//fprintf(stderr, "Size: %lfx%lf\n", width, height);
 
-#if 1
-	doc->gdkpixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
+	data->pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
 		TRUE, 8, ceil(width * doc->scale), ceil(height * doc->scale));
 	poppler_page_render_to_pixbuf(data->page, 0, 0,
-		ceil(width), ceil(height), doc->scale, 0, doc->gdkpixbuf);
-#else
-	{
-		cairo_t *cr;
-		doc->cairo = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
-			ceil(width), ceil(height));
-		cr = cairo_create(doc->cairo);
-		poppler_page_render(data->page, cr);
-		cairo_destroy(cr);
-	}
-#endif
+		ceil(width), ceil(height), doc->scale, 0, data->pixbuf);
+
+	doc->cairo = cairo_image_surface_create_for_data (gdk_pixbuf_get_pixels (data->pixbuf),
+		CAIRO_FORMAT_ARGB32,
+		gdk_pixbuf_get_width(data->pixbuf),
+		gdk_pixbuf_get_height(data->pixbuf),
+		gdk_pixbuf_get_rowstride(data->pixbuf));
 }
 
 static void dump_text_pdf(struct document *doc, char *filename)

@@ -88,12 +88,14 @@ static void cmd_zoom_out (struct document *doc)
 
 static void cmd_save (struct document *doc)
 {
+#if 0 //FIXME: toteuta
 	GError *err = NULL;
 	char savename[256];
 
 	sprintf(savename, "%s-pg-%d.png", basename(doc->filename), doc->pagenum + 1);
 	if (!gdk_pixbuf_save(doc->gdkpixbuf, savename, "png", &err, NULL))
 		fprintf (stderr, "%s", err->message);
+#endif
 }
 
 static void cmd_dump_text (struct document *doc)
@@ -130,43 +132,22 @@ static void transform_doc (struct document *doc,
 
 static void cmd_flip_x (struct document *doc)
 {
-	if (doc->gdkpixbuf)
-	{
-		GdkPixbuf *tmp = gdk_pixbuf_flip(doc->gdkpixbuf, TRUE);
-		g_object_unref(doc->gdkpixbuf);
-		doc->gdkpixbuf = tmp;
-	} else if (doc->cairo) {
-		transform_doc (doc, doc->width, doc->height,
-			       -1, 0, 0, 1, doc->width, 0);
-	}
+	if (doc->cairo)
+		transform_doc (doc, doc->width, doc->height, -1, 0, 0, 1, doc->width, 0);
 }
 
 static void cmd_flip_y (struct document *doc)
 {
-	if (doc->gdkpixbuf)
-	{
-		GdkPixbuf *tmp = gdk_pixbuf_flip(doc->gdkpixbuf, FALSE);
-		g_object_unref(doc->gdkpixbuf);
-		doc->gdkpixbuf = tmp;
-	} else if (doc->cairo) {
-		transform_doc (doc, doc->width, doc->height,
-			       1, 0, 0, -1, 0, doc->height);
-	}
+	if (doc->cairo)
+		transform_doc (doc, doc->width, doc->height, 1, 0, 0, -1, 0, doc->height);
 }
 
 static void cmd_flip_z (struct document *doc)
 {
 	int dir = (this_command == 'Z' ? 1 : -1);
 
-	if (doc->gdkpixbuf)
+	if (doc->cairo)
 	{
-		GdkPixbuf *tmp = gdk_pixbuf_rotate_simple(doc->gdkpixbuf, dir = 1?90:270);
-		g_object_unref(doc->gdkpixbuf);
-		doc->gdkpixbuf = tmp;
-		doc->width = gdk_pixbuf_get_width(doc->gdkpixbuf);
-		doc->height = gdk_pixbuf_get_height(doc->gdkpixbuf);
-		doc->fbcanvas->scroll(doc, 0, 0); /* Update offsets */
-	} else if (doc->cairo) {
 		if (dir == 1)
 		{
 			transform_doc (doc, doc->height, doc->width,

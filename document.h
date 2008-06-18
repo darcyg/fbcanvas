@@ -30,7 +30,6 @@ struct document
 
 	struct document_ops *ops;
 
-	GdkPixbuf *gdkpixbuf;
 	cairo_surface_t *cairo;
 
 	double scale;

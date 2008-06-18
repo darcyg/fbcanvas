@@ -8,6 +8,7 @@ struct djvu_data
 	ddjvu_context_t *context;
 	ddjvu_document_t *document;
 	ddjvu_page_t *page;
+	GdkPixbuf *pixbuf;
 };
 
 static void *open_djvu(struct document *doc)
@@ -142,16 +143,19 @@ static void update_djvu(struct document *doc)
 	ddjvu_format_set_y_direction(pixelformat, 1);
 	//ddjvu_format_set_ditherbits(pixelformat, 16);
 
-	doc->gdkpixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
+	data->pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
 		TRUE, 8, width * doc->scale, height * doc->scale);
 
-	if (!doc->gdkpixbuf)
-		exit(1);
-
 	ddjvu_page_render(data->page, DDJVU_RENDER_COLOR, &pagerec, &renderrec,
-		pixelformat, doc->scale * width * 4, gdk_pixbuf_get_pixels(doc->gdkpixbuf));
+		pixelformat, doc->scale * width * 4, gdk_pixbuf_get_pixels(data->pixbuf));
 
 	ddjvu_format_release (pixelformat);
+
+	doc->cairo = cairo_image_surface_create_for_data (gdk_pixbuf_get_pixels (data->pixbuf),
+		CAIRO_FORMAT_ARGB32,
+		gdk_pixbuf_get_width(data->pixbuf),
+		gdk_pixbuf_get_height(data->pixbuf),
+		gdk_pixbuf_get_rowstride(data->pixbuf));
 }
 
 static struct document_ops djvu_ops =

@@ -16,12 +16,6 @@ static void update_document(struct document *doc)
 {
 	if (doc->ops->update)
 	{
-		if (doc->gdkpixbuf)
-		{
-			g_object_unref(doc->gdkpixbuf);
-			doc->gdkpixbuf = NULL;
-		}
-
 		if (doc->cairo)
 		{
 			cairo_surface_destroy(doc->cairo);
@@ -31,11 +25,8 @@ static void update_document(struct document *doc)
 
 		doc->ops->update(doc);
 
-		if (doc->gdkpixbuf)
+		if (doc->cairo)
 		{
-			doc->width = gdk_pixbuf_get_width(doc->gdkpixbuf);
-			doc->height = gdk_pixbuf_get_height(doc->gdkpixbuf);
-		} else if (doc->cairo) {
 			doc->width = cairo_image_surface_get_width(doc->cairo);
 			doc->height = cairo_image_surface_get_height(doc->cairo);
 		}
@@ -48,12 +39,8 @@ static void draw_document(struct document *doc)
 	unsigned int width;
 	unsigned int height;
 
-	if (doc->gdkpixbuf)
+	if (doc->cairo)
 	{
-		data = gdk_pixbuf_get_pixels(doc->gdkpixbuf);
-		width = gdk_pixbuf_get_width(doc->gdkpixbuf);
-		height = gdk_pixbuf_get_height(doc->gdkpixbuf);
-	} else if (doc->cairo) {
 		data = cairo_image_surface_get_data(doc->cairo);
 		width = cairo_image_surface_get_width(doc->cairo);
 		height = cairo_image_surface_get_height(doc->cairo);
@@ -94,7 +81,6 @@ struct document *open_document(char *filename)
 
 		doc->fbcanvas = fbcanvas_create(filename);
 
-		doc->gdkpixbuf = NULL;
 		doc->cairo = NULL;
 		doc->xoffset = 0;
 		doc->yoffset = 0;
