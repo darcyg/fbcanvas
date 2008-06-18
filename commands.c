@@ -88,14 +88,13 @@ static void cmd_zoom_out (struct document *doc)
 
 static void cmd_save (struct document *doc)
 {
-#if 0 //FIXME: toteuta
-	GError *err = NULL;
+	int ret;
 	char savename[256];
 
 	sprintf(savename, "%s-pg-%d.png", basename(doc->filename), doc->pagenum + 1);
-	if (!gdk_pixbuf_save(doc->gdkpixbuf, savename, "png", &err, NULL))
-		fprintf (stderr, "%s", err->message);
-#endif
+	ret = cairo_surface_write_to_png(doc->cairo, savename);
+	if (ret)
+		fprintf (stderr, "%s", cairo_status_to_string(ret));
 }
 
 static void cmd_dump_text (struct document *doc)
