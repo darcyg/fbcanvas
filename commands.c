@@ -243,6 +243,17 @@ static void cmd_display_current_page (struct document *doc)
 	doc->set_message(doc, buf);
 }
 
+static void cmd_full_screen (struct document *doc)
+{
+	double w = doc->fbcanvas->fb->width;
+	double h = doc->fbcanvas->fb->height;
+
+	transform_doc (doc, w, h,
+		       w / (double) doc->width, 0.0,
+		       0.0, h / (double) doc->height,
+		       0.0, 0.0);
+}
+
 void setup_keys (void)
 {
 #define SET(key,command) set_key (key, (void *) cmd_ ##command)
@@ -259,7 +270,7 @@ void setup_keys (void)
 	SET ('3', set_zoom); SET ('4', set_zoom); SET ('5', set_zoom);
 	SET ('6', set_zoom); SET ('7', set_zoom); SET ('8', set_zoom);
 	SET ('9', set_zoom); SET ('+', zoom_in); SET ('-', zoom_out);
-	SET ('p', display_current_page);
+	SET ('p', display_current_page); SET ('f', full_screen);
 
 #undef SET
 }
