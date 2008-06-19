@@ -98,6 +98,32 @@ static void document_dump_text(struct document *doc, char *filename)
 		doc->ops->dump_text(doc, filename);
 }
 
+static void document_set_message(struct document *doc, char *msg)
+{
+	cairo_surface_t *surf = cairo_surface_create_similar (
+		doc->cairo, CAIRO_CONTENT_COLOR_ALPHA,
+		doc->fbcanvas->fb->width, 20);
+	cairo_t *cr = cairo_create (surf);
+
+	cairo_select_font_face (cr, "monospace",
+		CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+	cairo_set_font_size (cr, 14);
+
+	cairo_save (cr);
+	cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
+	cairo_paint_with_alpha (cr, 0.5);
+	cairo_restore(cr);
+	cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
+	cairo_move_to (cr, 10, 14);
+
+	cairo_show_text (cr, msg);
+	cairo_destroy (cr);
+
+	if (doc->message)
+		cairo_surface_destroy (doc->message);
+	doc->message = surf;
+}
+
 struct document *open_document(char *filename)
 {
 	struct document *doc = malloc(sizeof(*doc));
@@ -137,6 +163,7 @@ struct document *open_document(char *filename)
 		doc->grep = grep_document;
 		doc->page_count = document_page_count;
 		doc->dump_text = document_dump_text;
+		doc->set_message = document_set_message;
 
 		doc->data = doc->ops->open(doc);
 	}

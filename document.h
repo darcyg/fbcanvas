@@ -47,6 +47,9 @@ struct document
 	int (*grep)(struct document *doc, char *regexp);
 	unsigned int (*page_count)(struct document *doc);
 	void (*dump_text)(struct document *doc, char *filename);
+
+	/* Kaikille yhteiset metodit */
+	void (*set_message)(struct document *doc, char *msg);
 };
 
 struct document *open_document(char *filename);

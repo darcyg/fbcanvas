@@ -28,7 +28,7 @@ struct prefs
 };
 
 /* Can't be static. */
-const char *argp_program_version = "fb version 20080612";
+const char *argp_program_version = "fb version 20080619";
 
 static struct argp_option options[] = {
 	{"count", 'c', NULL, 0, "display page count"},
@@ -154,6 +154,8 @@ static void main_loop (struct document *doc)
 
 static int view_file (struct document *doc, struct prefs *prefs)
 {
+	char status[128];
+
 	if (prefs->page < doc->pagecount)
 		doc->pagenum = prefs->page;
 	doc->xoffset = prefs->x;
@@ -161,6 +163,9 @@ static int view_file (struct document *doc, struct prefs *prefs)
 	doc->scale = prefs->scale;
 
 	doc->update(doc);
+
+	sprintf(status, "%s - %s", argp_program_version, doc->filename);
+	doc->set_message(doc, status);
 
 	main_loop (doc);
 
