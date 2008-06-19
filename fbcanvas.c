@@ -1,5 +1,5 @@
 /*
- * fbcanvas.c - 17.5.2008 - 20.5.2008 Ari & Tero Roponen
+ * fbcanvas.c - 17.5.2008 - 19.6.2008 Ari & Tero Roponen
  */
 #include <sys/types.h>
 #include <linux/fb.h>
@@ -143,8 +143,8 @@ static void draw_16bpp(struct document *doc)
 {
 	static unsigned short empty_background_color = 0x0000;
 	struct framebuffer *fb = doc->fbcanvas->fb;
-	signed int xoffset = doc->xoffset;
-	signed int yoffset = doc->yoffset;
+	signed int xoffset = doc->message ? 0 : doc->xoffset;
+	signed int yoffset = doc->message ? 0 : doc->yoffset;
 
 	unsigned int width = doc->message ? cairo_image_surface_get_width(doc->message) :
 					    cairo_image_surface_get_width(doc->cairo);

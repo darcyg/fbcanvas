@@ -1,4 +1,4 @@
-/* commands.c - 13.6.2008 - 18.6.2008 Ari & Tero Roponen */
+/* commands.c - 13.6.2008 - 19.6.2008 Ari & Tero Roponen */
 #include <cairo/cairo.h>
 #include <ncurses.h>
 #undef scroll
@@ -111,15 +111,9 @@ static void transform_doc (struct document *doc,
 
 static void display_message (struct document *doc, char *message)
 {
-	cairo_pattern_t *pat = cairo_pattern_create_for_surface (doc->cairo);
 	cairo_surface_t *surf = cairo_surface_create_similar (
-		doc->cairo, CAIRO_CONTENT_COLOR_ALPHA, doc->width, doc->height);
+		doc->cairo, CAIRO_CONTENT_COLOR_ALPHA, 400, 20);
 	cairo_t *cr = cairo_create (surf);
-
-	/* Use current image as a background. */
-	cairo_set_source (cr, pat);
-	cairo_paint_with_alpha (cr, 0.5);
-	cairo_pattern_destroy (pat);
 
 	cairo_select_font_face (cr, "monospace",
 				CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
