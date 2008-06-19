@@ -23,6 +23,7 @@ static void *open_djvu(struct document *doc)
 		data->document = ddjvu_document_create_by_filename(data->context,
 			doc->filename, 0);
 		data->page = NULL;
+		data->pixbuf = NULL;
 
 		/* open-metodin pitää asettaa oikea sivumäärä... */
 		for (;;)
@@ -142,6 +143,9 @@ static void update_djvu(struct document *doc)
 	ddjvu_format_set_row_order(pixelformat, 1);
 	ddjvu_format_set_y_direction(pixelformat, 1);
 	//ddjvu_format_set_ditherbits(pixelformat, 16);
+
+	if (data->pixbuf)
+		g_object_unref(data->pixbuf);
 
 	data->pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
 		TRUE, 8, width * doc->scale, height * doc->scale);
