@@ -104,19 +104,25 @@ static void document_set_message(struct document *doc, char *msg)
 		doc->cairo, CAIRO_CONTENT_COLOR_ALPHA,
 		doc->fbcanvas->fb->width, 20);
 	cairo_t *cr = cairo_create (surf);
-
-	cairo_select_font_face (cr, "monospace",
-		CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
-	cairo_set_font_size (cr, 14);
+	PangoLayout *layout;
+	PangoFontDescription *desc;
 
 	cairo_save (cr);
 	cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
 	cairo_paint_with_alpha (cr, 0.5);
-	cairo_restore(cr);
-	cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
-	cairo_move_to (cr, 10, 14);
+	cairo_restore (cr);
 
-	cairo_show_text (cr, msg);
+	layout = (PangoLayout *) pango_cairo_create_layout (cr);
+	pango_layout_set_text (layout, msg, -1);
+	desc = pango_font_description_from_string ("Sans 14");
+	pango_layout_set_font_description (layout, desc);
+	pango_font_description_free (desc);
+
+	cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
+	cairo_move_to (cr, 8, 0); /* after the cursor */
+	pango_cairo_update_layout (cr, layout);
+	pango_cairo_show_layout (cr, layout);
+	g_object_unref (layout);
 	cairo_destroy (cr);
 
 	if (doc->message)
