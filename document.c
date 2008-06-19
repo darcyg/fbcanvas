@@ -48,7 +48,7 @@ static void merge_surfaces (struct document *doc)
 	cairo_save (cr);
 	cairo_translate (cr, -doc->xoffset, -doc->yoffset);
 	cairo_set_source (cr, img);
-	cairo_paint_with_alpha (cr, 0.7);
+	cairo_paint_with_alpha (cr, 0.8);
 	cairo_pattern_destroy (img);
 
 	cairo_restore (cr);

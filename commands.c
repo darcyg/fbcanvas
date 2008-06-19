@@ -112,13 +112,18 @@ static void transform_doc (struct document *doc,
 static void display_message (struct document *doc, char *message)
 {
 	cairo_surface_t *surf = cairo_surface_create_similar (
-		doc->cairo, CAIRO_CONTENT_COLOR_ALPHA, 400, 20);
+		doc->cairo, CAIRO_CONTENT_COLOR_ALPHA,
+		doc->fbcanvas->fb->width, 20);
 	cairo_t *cr = cairo_create (surf);
 
 	cairo_select_font_face (cr, "monospace",
 				CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
 	cairo_set_font_size (cr, 14);
 
+	cairo_save (cr);
+	cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
+	cairo_paint_with_alpha (cr, 0.5);
+	cairo_restore(cr);
 	cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
 	cairo_move_to (cr, 10, 14);
 
