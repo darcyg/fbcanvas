@@ -50,46 +50,34 @@ static cairo_surface_t *merge_surfaces (struct document *doc)
 	cairo_pattern_destroy (img);
 	cairo_restore (cr);
 
-	/* TODO: use rectangle mask instead of creating new surface+cairo... */
 	if (doc->message)
 	{
-		cairo_surface_t *msg = cairo_surface_create_similar (
-			doc->cairo, CAIRO_CONTENT_COLOR_ALPHA,
-			doc->fbcanvas->fb->width, 20);
-		cairo_t *msgcr = cairo_create (surf);
 		PangoLayout *layout;
 		PangoFontDescription *desc;
-		cairo_pattern_t *msgpat;
+
+		/* Restrict operations to message area. */
+		cairo_rectangle (cr, 0, 0, doc->fbcanvas->fb->width, 20);
+		cairo_clip (cr);
 
 		/* Black background. */
-		cairo_save (msgcr);
-		cairo_set_source_rgb (msgcr, 0.0, 0.0, 0.0);
-		cairo_paint_with_alpha (msgcr, 0.5);
-		cairo_restore (msgcr);
+		cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
+		cairo_paint_with_alpha (cr, 0.5);
 
-		layout = (PangoLayout *) pango_cairo_create_layout (msgcr);
+		layout = (PangoLayout *) pango_cairo_create_layout (cr);
 		pango_layout_set_text (layout, doc->message, -1);
 		desc = pango_font_description_from_string ("Sans 14");
 		pango_layout_set_font_description (layout, desc);
 		pango_font_description_free (desc);
 
 		/* White text. */
-		cairo_set_source_rgb (msgcr, 1.0, 1.0, 1.0);
-		cairo_move_to (msgcr, 8, 0); /* after the cursor */
-		pango_cairo_update_layout (msgcr, layout);
-		pango_cairo_show_layout (msgcr, layout);
+		cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
+		cairo_move_to (cr, 8, 0); /* after the cursor */
+		pango_cairo_update_layout (cr, layout);
+		pango_cairo_show_layout (cr, layout);
 		g_object_unref (layout);
-		cairo_destroy (msgcr);
 
 		free (doc->message);
 		doc->message = NULL;
-
-		/* Add message to final image. */
-		msgpat = cairo_pattern_create_for_surface (msg);
-		cairo_set_source (cr, msgpat);
-		cairo_paint (cr);
-		cairo_pattern_destroy (msgpat);
-		cairo_surface_destroy (msg);
 	}
 
 	cairo_destroy (cr);
