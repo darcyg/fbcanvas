@@ -145,11 +145,9 @@ static void draw_16bpp(struct document *doc, cairo_surface_t *surf)
 	struct framebuffer *fb = doc->fbcanvas->fb;
 	unsigned char *data = cairo_image_surface_get_data(surf);
 
-	unsigned int x, y;
-
-	for (y = 0; y < fb->height; y++)
+	for (int y = 0; y < fb->height; y++)
 	{
-		for (x = 0; x < fb->width; x++)
+		for (int x = 0; x < fb->width; x++)
 		{
 			unsigned char *tmp = data + 4 * (fb->width * y + x);
 
