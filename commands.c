@@ -237,30 +237,55 @@ static void cmd_full_screen (struct document *doc)
 	double h = doc->fbcanvas->fb->height;
 
 	transform_doc (doc, w, h,
-		       w / (double) doc->width, 0.0,
-		       0.0, h / (double) doc->height,
-		       0.0, 0.0);
+		       w / (double) doc->width, 0.0, 0.0,
+		       h / (double) doc->height, 0.0, 0.0);
 }
 
 void setup_keys (void)
 {
-#define SET(key,command) set_key (key, (void *) cmd_ ##command)
+	struct
+	{
+		unsigned int code;
+		void (*cmd)(struct document *doc);
+	} keys[] = {
+		{12, cmd_redraw},
+		{27, cmd_quit},
+		{'f', cmd_full_screen},
+		{'p', cmd_display_current_page},
+		{'q', cmd_quit},
+		{'s', cmd_save},
+		{'t', cmd_dump_text},
+		{'x', cmd_flip_x},
+		{'y', cmd_flip_y},
+		{'z', cmd_flip_z},
+		{'Z', cmd_flip_z},
 
-	SET (12, redraw); /* CTRL-L */
-	SET (27, quit);	 /* ESC */
-	SET ('q', quit); SET ('s', save); SET ('t', dump_text); SET ('x', flip_x);
-	SET ('y', flip_y); SET ('z', flip_z); SET ('Z', flip_z);
-	SET (KEY_HOME, goto_top); SET (KEY_END, goto_bottom);
-	SET (KEY_NPAGE, next_page); SET (KEY_PPAGE, prev_page);
-	SET (KEY_DOWN, down); SET (KEY_UP, up);
-	SET (KEY_LEFT, left); SET (KEY_RIGHT, right);
-	SET ('0', set_zoom); SET ('1', set_zoom); SET ('2', set_zoom);
-	SET ('3', set_zoom); SET ('4', set_zoom); SET ('5', set_zoom);
-	SET ('6', set_zoom); SET ('7', set_zoom); SET ('8', set_zoom);
-	SET ('9', set_zoom); SET ('+', zoom_in); SET ('-', zoom_out);
-	SET ('p', display_current_page); SET ('f', full_screen);
+		{KEY_HOME, cmd_goto_top},
+		{KEY_END, cmd_goto_bottom},
+		{KEY_NPAGE, cmd_next_page},
+		{KEY_PPAGE, cmd_prev_page},
+		{KEY_DOWN, cmd_down},
+		{KEY_UP, cmd_up},
+		{KEY_LEFT, cmd_left},
+		{KEY_RIGHT, cmd_right},
 
-#undef SET
+		{'0', cmd_set_zoom},
+		{'1', cmd_set_zoom},
+		{'2', cmd_set_zoom},
+		{'3', cmd_set_zoom},
+		{'4', cmd_set_zoom},
+		{'5', cmd_set_zoom},
+		{'6', cmd_set_zoom},
+		{'7', cmd_set_zoom},
+		{'8', cmd_set_zoom},
+		{'9', cmd_set_zoom},
+		{'+', cmd_zoom_in},
+		{'-', cmd_zoom_out},
+		{0, NULL}
+	};
+
+	for (int i = 0; keys[i].cmd; i++)
+		set_key(keys[i].code, keys[i].cmd);
 }
 
 command_t lookup_command (int character)
