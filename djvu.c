@@ -65,7 +65,7 @@ static void close_djvu(struct document *doc)
 	}
 }
 
-static void update_djvu(struct document *doc)
+static cairo_surface_t *update_djvu(struct document *doc)
 {
 	struct djvu_data *data = doc->data;
 	struct framebuffer *fb = doc->fbcanvas->fb;
@@ -151,11 +151,11 @@ static void update_djvu(struct document *doc)
 
 	ddjvu_format_release (pixelformat);
 
-	doc->cairo = cairo_image_surface_create_for_data (gdk_pixbuf_get_pixels (data->pixbuf),
-		CAIRO_FORMAT_ARGB32,
-		gdk_pixbuf_get_width(data->pixbuf),
-		gdk_pixbuf_get_height(data->pixbuf),
-		gdk_pixbuf_get_rowstride(data->pixbuf));
+	return cairo_image_surface_create_for_data (gdk_pixbuf_get_pixels (data->pixbuf),
+			CAIRO_FORMAT_ARGB32,
+			gdk_pixbuf_get_width(data->pixbuf),
+			gdk_pixbuf_get_height(data->pixbuf),
+			gdk_pixbuf_get_rowstride(data->pixbuf));
 }
 
 static struct document_ops djvu_ops =

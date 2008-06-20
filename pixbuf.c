@@ -28,7 +28,7 @@ static void close_pixbuf(struct document *doc)
 	}
 }
 
-static void update_pixbuf(struct document *doc)
+static cairo_surface_t *update_pixbuf(struct document *doc)
 {
 	struct pixbuf_data *data = doc->data;
 
@@ -56,11 +56,11 @@ static void update_pixbuf(struct document *doc)
 		data->pixbuf = tmp;
 	}
 
-	doc->cairo = cairo_image_surface_create_for_data (gdk_pixbuf_get_pixels(data->pixbuf),
-		CAIRO_FORMAT_ARGB32,
-		gdk_pixbuf_get_width(data->pixbuf),
-		gdk_pixbuf_get_height(data->pixbuf),
-		gdk_pixbuf_get_rowstride(data->pixbuf));
+	return cairo_image_surface_create_for_data (gdk_pixbuf_get_pixels(data->pixbuf),
+			CAIRO_FORMAT_ARGB32,
+			gdk_pixbuf_get_width(data->pixbuf),
+			gdk_pixbuf_get_height(data->pixbuf),
+			gdk_pixbuf_get_rowstride(data->pixbuf));
 }
 
 static struct document_ops pixbuf_ops =

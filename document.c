@@ -15,23 +15,10 @@ static void close_document(struct document *doc)
 
 static void update_document(struct document *doc)
 {
-	if (doc->ops->update)
-	{
-		if (doc->cairo)
-		{
-			cairo_surface_destroy(doc->cairo);
-			doc->cairo = NULL;
-		}
-
-
-		doc->ops->update(doc);
-
-		if (doc->cairo)
-		{
-			doc->width = cairo_image_surface_get_width(doc->cairo);
-			doc->height = cairo_image_surface_get_height(doc->cairo);
-		}
-	}
+	cairo_surface_destroy(doc->cairo);
+	doc->cairo = doc->ops->update(doc);
+	doc->width = cairo_image_surface_get_width(doc->cairo);
+	doc->height = cairo_image_surface_get_height(doc->cairo);
 }
 
 static cairo_surface_t *merge_surfaces (struct document *doc)

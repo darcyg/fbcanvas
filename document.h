@@ -10,7 +10,7 @@ struct document_ops
 	void *(*open)(struct document *doc);
 	void (*close)(struct document *doc);
 
-	void (*update)(struct document *doc);
+	cairo_surface_t *(*update)(struct document *doc);
 	void (*draw)(struct document *doc);
 
 	int (*grep)(struct document *doc, char *regexp);

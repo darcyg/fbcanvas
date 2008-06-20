@@ -116,7 +116,7 @@ static int grep_pdf(struct document *doc, char *regexp)
 	return ret;
 }
 
-static void update_pdf(struct document *doc)
+static cairo_surface_t *update_pdf(struct document *doc)
 {
 	struct pdf_data *data = doc->data;
 	GError *err = NULL;
@@ -141,11 +141,11 @@ static void update_pdf(struct document *doc)
 	poppler_page_render_to_pixbuf(data->page, 0, 0,
 		ceil(width), ceil(height), doc->scale, 0, data->pixbuf);
 
-	doc->cairo = cairo_image_surface_create_for_data (gdk_pixbuf_get_pixels (data->pixbuf),
-		CAIRO_FORMAT_ARGB32,
-		gdk_pixbuf_get_width(data->pixbuf),
-		gdk_pixbuf_get_height(data->pixbuf),
-		gdk_pixbuf_get_rowstride(data->pixbuf));
+	return cairo_image_surface_create_for_data (gdk_pixbuf_get_pixels (data->pixbuf),
+			CAIRO_FORMAT_ARGB32,
+			gdk_pixbuf_get_width(data->pixbuf),
+			gdk_pixbuf_get_height(data->pixbuf),
+			gdk_pixbuf_get_rowstride(data->pixbuf));
 }
 
 static void dump_text_pdf(struct document *doc, char *filename)
