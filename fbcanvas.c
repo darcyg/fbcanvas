@@ -140,6 +140,7 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 	free(fbc);
 }
 
+/* rgba 5/11, 6/5, 5/0, 0/0 */
 static void draw_16bpp(struct framebuffer *fb, unsigned char *data)
 {
 	for (int y = 0; y < fb->height; y++)
@@ -148,9 +149,9 @@ static void draw_16bpp(struct framebuffer *fb, unsigned char *data)
 		{
 			unsigned char *tmp = data + 4 * (fb->width * y + x);
 
-			unsigned short color =  ((32 * tmp[0] / 256) & 0b00011111) << 11 |
-						((64 * tmp[1] / 256) & 0b00111111) << 5 |
-						((32 * tmp[2] / 256) & 0b00011111) << 0;
+			unsigned short color =  (((1<<5) * tmp[0] / 256) & ((1<<5)-1)) << 11 |
+						(((1<<6) * tmp[1] / 256) & ((1<<6)-1)) << 5 |
+						(((1<<5) * tmp[2] / 256) & ((1<<5)-1)) << 0;
 
 			*((unsigned short *)fb->mem + y * fb->width + x) = color;
 		}
