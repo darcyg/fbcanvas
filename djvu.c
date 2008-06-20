@@ -1,4 +1,5 @@
 #include <libdjvu/ddjvuapi.h>
+#include <math.h>
 #include "document.h"
 #include "fbcanvas.h"
 #include "file_info.h"
@@ -137,7 +138,7 @@ static void update_djvu(struct document *doc)
 	if (height > fb->height)
 		height = fb->height;
 
-	ddjvu_rect_t pagerec = {0, 0, width * doc->scale, height * doc->scale};
+	ddjvu_rect_t pagerec = {0, 0, ceil(width * doc->scale), ceil(height * doc->scale)};
 	ddjvu_rect_t renderrec = pagerec;
 
 	ddjvu_format_t *pixelformat = ddjvu_format_create(DDJVU_FORMAT_RGBMASK32, 4, rgb);
@@ -149,10 +150,10 @@ static void update_djvu(struct document *doc)
 		g_object_unref(data->pixbuf);
 
 	data->pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
-		TRUE, 8, width * doc->scale, height * doc->scale);
+		TRUE, 8, ceil(width * doc->scale), ceil(height * doc->scale));
 
 	ddjvu_page_render(data->page, DDJVU_RENDER_COLOR, &pagerec, &renderrec,
-		pixelformat, doc->scale * width * 4, gdk_pixbuf_get_pixels(data->pixbuf));
+		pixelformat, ceil(doc->scale * width)* 4, gdk_pixbuf_get_pixels(data->pixbuf));
 
 	ddjvu_format_release (pixelformat);
 
