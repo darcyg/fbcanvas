@@ -176,28 +176,25 @@ static void cmd_flip_z (struct document *doc)
 {
 	int dir = (this_command == 'Z' ? 1 : -1);
 
-	if (doc->cairo)
+	if (dir == 1)
 	{
-		if (dir == 1)
-		{
-			/* See comment in transform_doc.
-			 *
-			 *  y        x
-			 *  │   ->   │
-			 * .└─x    y─┘.
-			 */
-			transform_doc (doc, doc->height, doc->width,
-				       0, 1, -1, 0, doc->height, 0);
-		} else {
-			/* See comment in transform_doc.
-			 *
-			 *  y      .┌─y
-			 *  │   ->  │
-			 * .└─x     x
-			 */
-			transform_doc (doc, doc->height, doc->width,
-				       0, -1, 1, 0, 0, doc->width);
-		}
+		/* See comment in transform_doc.
+		 *
+		 *  y        x
+		 *  │   ->   │
+		 * .└─x    y─┘.
+		 */
+		transform_doc (doc, doc->height, doc->width,
+			       0, 1, -1, 0, doc->height, 0);
+	} else {
+		/* See comment in transform_doc.
+		 *
+		 *  y      .┌─y
+		 *  │   ->  │
+		 * .└─x     x
+		 */
+		transform_doc (doc, doc->height, doc->width,
+			       0, -1, 1, 0, 0, doc->width);
 	}
 }
 
