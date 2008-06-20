@@ -15,7 +15,7 @@
 #include "fbcanvas.h"
 #include "file_info.h"
 
-static void draw_16bpp(struct document *doc);
+static void draw_16bpp(struct document *doc, cairo_surface_t *surf);
 
 static struct framebuffer *open_framebuffer(char *fbdev)
 {
@@ -139,26 +139,32 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 	free(fbc);
 }
 
-static void draw_16bpp(struct document *doc)
+static void draw_16bpp(struct document *doc, cairo_surface_t *surf)
 {
 	static unsigned short empty_background_color = 0x0000;
 	struct framebuffer *fb = doc->fbcanvas->fb;
 	signed int xoffset = doc->message ? 0 : doc->xoffset;
 	signed int yoffset = doc->message ? 0 : doc->yoffset;
 
+#if 0
 	unsigned int width = doc->message ? cairo_image_surface_get_width(doc->message) :
 					    cairo_image_surface_get_width(doc->cairo);
 	unsigned int height = doc->message ? cairo_image_surface_get_height(doc->message) :
 					     cairo_image_surface_get_height(doc->cairo);
 	unsigned char *data = doc->message ? cairo_image_surface_get_data(doc->message) :
 					     cairo_image_surface_get_data(doc->cairo);
+#else
+	unsigned int width = cairo_image_surface_get_width(surf);	// fb->width;
+	unsigned int height = cairo_image_surface_get_height(surf);	// fb->height;
+	unsigned char *data = cairo_image_surface_get_data(surf);
+#endif
 	unsigned int x, y;
 	unsigned short *src, *dst;
 	unsigned short color;
 
 	int pb_xoffset = 0, pb_yoffset = 0;
 	int fb_xoffset = 0, fb_yoffset = 0;
-
+#if 0
 	if (xoffset >= 0)
 		pb_xoffset = xoffset;
 	else
@@ -168,6 +174,7 @@ static void draw_16bpp(struct document *doc)
 		pb_yoffset = yoffset;
 	else
 		fb_yoffset = -yoffset;
+#endif
 
 	for (y = 0;; y++)
 	{

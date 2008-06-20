@@ -33,7 +33,7 @@ static void update_document(struct document *doc)
 	}
 }
 
-static void merge_surfaces (struct document *doc)
+static cairo_surface_t *merge_surfaces (struct document *doc)
 {
 	cairo_pattern_t *img = cairo_pattern_create_for_surface (doc->cairo);
 	cairo_pattern_t *msg = cairo_pattern_create_for_surface (doc->message);
@@ -48,32 +48,36 @@ static void merge_surfaces (struct document *doc)
 	cairo_save (cr);
 	cairo_translate (cr, -doc->xoffset, -doc->yoffset);
 	cairo_set_source (cr, img);
-	cairo_paint_with_alpha (cr, 0.8);
-	cairo_pattern_destroy (img);
 
+	if (doc->message)
+		cairo_paint_with_alpha (cr, 0.8);
+	else
+		cairo_paint (cr);
+
+	cairo_pattern_destroy (img);
 	cairo_restore (cr);
-	cairo_set_source (cr, msg);
-	cairo_paint (cr);
-	cairo_pattern_destroy (msg);
+
+	if (doc->message)
+	{
+		cairo_set_source (cr, msg);
+		cairo_paint (cr);
+		cairo_pattern_destroy (msg);
+
+		/* Replace doc->message with merged surface. */
+		cairo_surface_destroy (doc->message);
+		doc->message = NULL;
+	}
+
 	cairo_destroy (cr);
 
-	/* Replace doc->message with merged surface. */
-	cairo_surface_destroy (doc->message);
-	doc->message = surf;
+	return surf;
 }
 
 static void draw_document(struct document *doc)
 {
-	if (doc->message)
-		merge_surfaces (doc);
-
-	doc->fbcanvas->fb->draw(doc);
-
-	if (doc->message)
-	{
-		cairo_surface_destroy (doc->message);
-		doc->message = NULL;
-	}
+	cairo_surface_t *surf = merge_surfaces (doc);
+	doc->fbcanvas->fb->draw(doc, surf);
+	cairo_surface_destroy (surf);
 }
 
 static int grep_document(struct document *doc, char *regexp)
