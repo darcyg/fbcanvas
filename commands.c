@@ -174,28 +174,18 @@ static void cmd_flip_y (struct document *doc)
 
 static void cmd_flip_z (struct document *doc)
 {
-	int dir = (this_command == 'Z' ? 1 : -1);
+	int dir = (this_command == 'Z') ? 0 : 2;
 
-	if (dir == 1)
-	{
-		/* See comment in transform_doc.
-		 *
-		 *  y        x
-		 *  │   ->   │
-		 * .└─x    y─┘.
-		 */
-		transform_doc (doc, doc->height, doc->width,
-			       0, 1, -1, 0, doc->height, 0);
-	} else {
-		/* See comment in transform_doc.
-		 *
-		 *  y      .┌─y
-		 *  │   ->  │
-		 * .└─x     x
-		 */
-		transform_doc (doc, doc->height, doc->width,
-			       0, -1, 1, 0, 0, doc->width);
-	}
+	/* See comment in transform_doc.
+	 *   dir = 0          dir = 2
+	 *
+	 *  y        x	    y      .┌─y                 
+	 *  │   ->   │	    │   ->  │                   
+	 * .└─x    y─┘.	   .└─x     x                   
+	 */
+	transform_doc (doc, doc->height, doc->width, 0, 1-dir, dir-1, 0,
+		       (!dir) ? doc->height : 0,
+		       (dir >> 1) * doc->width);
 }
 
 static void cmd_goto_top (struct document *doc)
