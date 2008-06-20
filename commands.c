@@ -1,6 +1,7 @@
 /* commands.c - 13.6.2008 - 19.6.2008 Ari & Tero Roponen */
 #include <cairo/cairo.h>
 #include <ncurses.h>
+#include <string.h>
 #undef scroll
 #include "commands.h"
 #include "document.h"
