@@ -130,15 +130,10 @@ static void update_djvu(struct document *doc)
 		ddjvu_message_pop(data->context);
 	}
 
-	int width = ddjvu_page_get_width(data->page);
-	int height = ddjvu_page_get_height(data->page);
+	int width = ceil(ddjvu_page_get_width(data->page) * doc->scale);
+	int height = ceil(ddjvu_page_get_height(data->page) * doc->scale);
 
-	if (width > fb->width)
-		width = fb->width;
-	if (height > fb->height)
-		height = fb->height;
-
-	ddjvu_rect_t pagerec = {0, 0, ceil(width * doc->scale), ceil(height * doc->scale)};
+	ddjvu_rect_t pagerec = {0, 0, width, height};
 	ddjvu_rect_t renderrec = pagerec;
 
 	ddjvu_format_t *pixelformat = ddjvu_format_create(DDJVU_FORMAT_RGBMASK32, 4, rgb);
@@ -149,11 +144,10 @@ static void update_djvu(struct document *doc)
 	if (data->pixbuf)
 		g_object_unref(data->pixbuf);
 
-	data->pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
-		TRUE, 8, ceil(width * doc->scale), ceil(height * doc->scale));
+	data->pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, TRUE, 8, width, height);
 
 	ddjvu_page_render(data->page, DDJVU_RENDER_COLOR, &pagerec, &renderrec,
-		pixelformat, ceil(doc->scale * width)* 4, gdk_pixbuf_get_pixels(data->pixbuf));
+		pixelformat, width * 4, gdk_pixbuf_get_pixels(data->pixbuf));
 
 	ddjvu_format_release (pixelformat);
 
