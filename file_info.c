@@ -7,13 +7,6 @@
 
 static GArray *file_infos;
 
-void register_file_info (struct file_info *fi)
-{
-	if (! file_infos)
-		file_infos = g_array_new (TRUE, FALSE, sizeof (struct file_info *));
-	g_array_append_val (file_infos, fi);
-}
-
 void register_plugins (void)
 {
 	extern struct file_info bmp_info;
@@ -42,8 +35,11 @@ void register_plugins (void)
 		NULL
 	};
 
+	if (!file_infos)
+		file_infos = g_array_new (TRUE, FALSE, sizeof (struct file_info *));
+
 	for (int i = 0; fi[i]; i++)
-		register_file_info(fi[i]);
+		g_array_append_val (file_infos, fi[i]);
 }
 
 struct file_info *get_file_info (char *filename)
