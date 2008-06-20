@@ -142,32 +142,21 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 static void draw_16bpp(struct document *doc, cairo_surface_t *surf)
 {
 	struct framebuffer *fb = doc->fbcanvas->fb;
-	unsigned int width = cairo_image_surface_get_width(surf);	// fb->width;
-	unsigned int height = cairo_image_surface_get_height(surf);	// fb->height;
 	unsigned char *data = cairo_image_surface_get_data(surf);
+
 	unsigned int x, y;
-	unsigned short color;
-	const unsigned short *src = &color;
-	unsigned short *dst;
 
 	for (y = 0; y < fb->height; y++)
 	{
 		for (x = 0; x < fb->width; x++)
 		{
-			unsigned char *tmp = data + 4 * (width * y + x);
+			unsigned char *tmp = data + 4 * (fb->width * y + x);
 
-			unsigned char red = *tmp++;
-			unsigned char green = *tmp++;
-			unsigned char blue = *tmp++;
-			unsigned char alpha = *tmp++;
+			unsigned short color =  ((32 * tmp[0] / 256) & 0b00011111) << 11 |
+						((64 * tmp[1] / 256) & 0b00111111) << 5 |
+						((32 * tmp[2] / 256) & 0b00011111) << 0;
 
-			color = 0;
-			color |= ((32 * red / 256) & 0b00011111) << 11;
-			color |= ((64 * green / 256) & 0b00111111) << 5;
-			color |= ((32 * blue / 256) & 0b00011111) << 0;
-
-			dst = (unsigned short *)fb->mem + y * fb->width + x;
-			*dst = *src;
+			*((unsigned short *)fb->mem + y * fb->width + x) = color;
 		}
 	}
 }
