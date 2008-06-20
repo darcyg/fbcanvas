@@ -27,17 +27,23 @@ void register_plugins (void)
 	extern struct file_info tiff_info;
 	extern struct file_info xpm_info;
 
-	register_file_info (&bmp_info);
-	register_file_info (&bmp_info);
-	register_file_info (&djvu_info);
-	register_file_info (&gif_info);
-	register_file_info (&jpg_info);
-	register_file_info (&pcx_info);
-	register_file_info (&pdf_info);
-	register_file_info (&png_info);
-	register_file_info (&ppm_info);
-	register_file_info (&tiff_info);
-	register_file_info (&xpm_info);
+	struct file_info *fi[] =
+	{
+		&bmp_info,
+		&djvu_info,
+		&gif_info,
+		&jpg_info,
+		&pcx_info,
+		&pdf_info,
+		&png_info,
+		&ppm_info,
+		&tiff_info,
+		&xpm_info,
+		NULL
+	};
+
+	for (int i = 0; fi[i]; i++)
+		register_file_info(fi[i]);
 }
 
 struct file_info *get_file_info (char *filename)
