@@ -12,6 +12,8 @@ struct pixbuf_data
 static void *open_pixbuf(struct document *doc)
 {
 	struct pixbuf_data *data = malloc(sizeof(*data));
+	if (data)
+		data->pixbuf = NULL;
 	return data;
 }
 
@@ -37,6 +39,9 @@ static void update_pixbuf(struct document *doc)
 		fprintf (stderr, "%s", err->message);
 		exit(1);
 	}
+
+	if (data->pixbuf)
+		g_object_unref(data->pixbuf);
 
 	data->pixbuf = gdk_pixbuf_add_alpha(tmp, FALSE, 0, 0, 0);
 	g_object_unref(tmp);
