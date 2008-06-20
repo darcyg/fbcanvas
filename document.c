@@ -114,13 +114,6 @@ static int grep_document(struct document *doc, char *regexp)
 	return 1;
 }
 
-static unsigned int document_page_count(struct document *doc)
-{
-	if (doc->ops->page_count)
-		return doc->ops->page_count(doc);
-	return 1;
-}
-
 static void document_dump_text(struct document *doc, char *filename)
 {
 	if (doc->ops->dump_text)
@@ -170,7 +163,6 @@ struct document *open_document(char *filename)
 		doc->update = update_document;
 		doc->draw = draw_document;
 		doc->grep = grep_document;
-		doc->page_count = document_page_count;
 		doc->dump_text = document_dump_text;
 		doc->set_message = document_set_message;
 

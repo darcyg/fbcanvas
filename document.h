@@ -15,8 +15,6 @@ struct document_ops
 
 	int (*grep)(struct document *doc, char *regexp);
 	void (*dump_text)(struct document *doc, char *filename);
-
-	unsigned int (*page_count)(struct document *doc);
 };
 
 struct document
@@ -45,7 +43,6 @@ struct document
 	void (*update)(struct document *doc);
 	void (*draw)(struct document *doc);
 	int (*grep)(struct document *doc, char *regexp);
-	unsigned int (*page_count)(struct document *doc);
 	void (*dump_text)(struct document *doc, char *filename);
 
 	/* Kaikille yhteiset metodit */
