@@ -141,54 +141,30 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 
 static void draw_16bpp(struct document *doc, cairo_surface_t *surf)
 {
-	static unsigned short empty_background_color = 0x0000;
 	struct framebuffer *fb = doc->fbcanvas->fb;
 	unsigned int width = cairo_image_surface_get_width(surf);	// fb->width;
 	unsigned int height = cairo_image_surface_get_height(surf);	// fb->height;
 	unsigned char *data = cairo_image_surface_get_data(surf);
 	unsigned int x, y;
-	unsigned short *src, *dst;
 	unsigned short color;
+	const unsigned short *src = &color;
+	unsigned short *dst;
 
-	int pb_xoffset = 0, pb_yoffset = 0;
-	int fb_xoffset = 0, fb_yoffset = 0;
-
-	for (y = 0;; y++)
+	for (y = 0; y < fb->height; y++)
 	{
-		/* Framebufferin reuna tuli vastaan - lopetetaan. */
-		if (y >= fb->height)
-			break;
-
-		for (x = 0;; x++)
+		for (x = 0; x < fb->width; x++)
 		{
-			/* Framebufferin reuna tuli vastaan - lopetetaan. */
-			if (x >= fb->width)
-				break;
+			unsigned char *tmp = data + 4 * (width * y + x);
 
-			if (x < fb_xoffset || y < fb_yoffset)
-				goto empty;
+			unsigned char red = *tmp++;
+			unsigned char green = *tmp++;
+			unsigned char blue = *tmp++;
+			unsigned char alpha = *tmp++;
 
-			if ((y - fb_yoffset < height - pb_yoffset) &&
-			    (x - fb_xoffset < width - pb_xoffset))
-			{
-				unsigned char *tmp = data +
-					4 * width * (pb_yoffset + y - fb_yoffset) +
-					4 * (pb_xoffset + x - fb_xoffset);
-
-				unsigned char red = *tmp++;
-				unsigned char green = *tmp++;
-				unsigned char blue = *tmp++;
-				unsigned char alpha = *tmp++;
-				color = 0;
-
-				color |= ((32 * red / 256) & 0b00011111) << 11;
-				color |= ((64 * green / 256) & 0b00111111) << 5;
-				color |= ((32 * blue / 256) & 0b00011111) << 0;
-				src = &color;
-			} else {
-empty:
-				src = &empty_background_color;
-			}
+			color = 0;
+			color |= ((32 * red / 256) & 0b00011111) << 11;
+			color |= ((64 * green / 256) & 0b00111111) << 5;
+			color |= ((32 * blue / 256) & 0b00011111) << 0;
 
 			dst = (unsigned short *)fb->mem + y * fb->width + x;
 			*dst = *src;
