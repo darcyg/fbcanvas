@@ -3,6 +3,7 @@
  */
 
 #include <linux/vt.h>
+#include <sys/ioctl.h>
 #include <argp.h>
 #include <fcntl.h>
 #include <ncurses.h>
