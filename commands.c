@@ -179,9 +179,9 @@ static void cmd_flip_z (struct document *doc)
 	/* See comment in transform_doc.
 	 *   dir = 0          dir = 2
 	 *
-	 *  y        x	    y      .┌─y                 
-	 *  │   ->   │	    │   ->  │                   
-	 * .└─x    y─┘.	   .└─x     x                   
+	 *  y        x	    y      .┌─y
+	 *  │   ->   │	    │   ->  │
+	 * .└─x    y─┘.	   .└─x     x
 	 */
 	transform_doc (doc, doc->height, doc->width, 0, 1-dir, dir-1, 0,
 		       (!dir) ? doc->height : 0,
