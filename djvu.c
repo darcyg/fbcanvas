@@ -73,6 +73,7 @@ static void update_djvu(struct document *doc)
 		0xFF << 0,	/* R */
 		0xFF << 8,	/* G */
 		0xFF << 16,	/* B */
+		0xFF << 24,	/* A */
 	};
 
 	const ddjvu_message_t *msg;
@@ -139,7 +140,7 @@ static void update_djvu(struct document *doc)
 	ddjvu_rect_t pagerec = {0, 0, width * doc->scale, height * doc->scale};
 	ddjvu_rect_t renderrec = pagerec;
 
-	ddjvu_format_t *pixelformat = ddjvu_format_create(DDJVU_FORMAT_RGBMASK32, 3, rgb);
+	ddjvu_format_t *pixelformat = ddjvu_format_create(DDJVU_FORMAT_RGBMASK32, 4, rgb);
 	ddjvu_format_set_row_order(pixelformat, 1);
 	ddjvu_format_set_y_direction(pixelformat, 1);
 	//ddjvu_format_set_ditherbits(pixelformat, 16);
