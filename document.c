@@ -36,34 +36,27 @@ static void update_document(struct document *doc)
 static cairo_surface_t *merge_surfaces (struct document *doc)
 {
 	cairo_pattern_t *img = cairo_pattern_create_for_surface (doc->cairo);
-	cairo_pattern_t *msg = cairo_pattern_create_for_surface (doc->message);
-
 	cairo_surface_t *surf = cairo_surface_create_similar (
 		doc->cairo, CAIRO_CONTENT_COLOR_ALPHA,
 		doc->fbcanvas->fb->width, doc->fbcanvas->fb->height);
 
 	cairo_t *cr = cairo_create (surf);
 
-	/* Use current image as a background. */
+	/* Insert current image. */
 	cairo_save (cr);
 	cairo_translate (cr, -doc->xoffset, -doc->yoffset);
 	cairo_set_source (cr, img);
-
-	if (doc->message)
-		cairo_paint_with_alpha (cr, 0.8);
-	else
-		cairo_paint (cr);
-
+	cairo_paint_with_alpha (cr, doc->message ? 0.8: 1.0);
 	cairo_pattern_destroy (img);
 	cairo_restore (cr);
 
 	if (doc->message)
 	{
+		cairo_pattern_t *msg = cairo_pattern_create_for_surface (doc->message);
 		cairo_set_source (cr, msg);
 		cairo_paint (cr);
 		cairo_pattern_destroy (msg);
 
-		/* Replace doc->message with merged surface. */
 		cairo_surface_destroy (doc->message);
 		doc->message = NULL;
 	}
