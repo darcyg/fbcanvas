@@ -50,15 +50,46 @@ static cairo_surface_t *merge_surfaces (struct document *doc)
 	cairo_pattern_destroy (img);
 	cairo_restore (cr);
 
+	/* TODO: use rectangle mask instead of creating new surface+cairo... */
 	if (doc->message)
 	{
-		cairo_pattern_t *msg = cairo_pattern_create_for_surface (doc->message);
-		cairo_set_source (cr, msg);
-		cairo_paint (cr);
-		cairo_pattern_destroy (msg);
+		cairo_surface_t *msg = cairo_surface_create_similar (
+			doc->cairo, CAIRO_CONTENT_COLOR_ALPHA,
+			doc->fbcanvas->fb->width, 20);
+		cairo_t *msgcr = cairo_create (surf);
+		PangoLayout *layout;
+		PangoFontDescription *desc;
+		cairo_pattern_t *msgpat;
 
-		cairo_surface_destroy (doc->message);
+		/* Black background. */
+		cairo_save (msgcr);
+		cairo_set_source_rgb (msgcr, 0.0, 0.0, 0.0);
+		cairo_paint_with_alpha (msgcr, 0.5);
+		cairo_restore (msgcr);
+
+		layout = (PangoLayout *) pango_cairo_create_layout (msgcr);
+		pango_layout_set_text (layout, doc->message, -1);
+		desc = pango_font_description_from_string ("Sans 14");
+		pango_layout_set_font_description (layout, desc);
+		pango_font_description_free (desc);
+
+		/* White text. */
+		cairo_set_source_rgb (msgcr, 1.0, 1.0, 1.0);
+		cairo_move_to (msgcr, 8, 0); /* after the cursor */
+		pango_cairo_update_layout (msgcr, layout);
+		pango_cairo_show_layout (msgcr, layout);
+		g_object_unref (layout);
+		cairo_destroy (msgcr);
+
+		free (doc->message);
 		doc->message = NULL;
+
+		/* Add message to final image. */
+		msgpat = cairo_pattern_create_for_surface (msg);
+		cairo_set_source (cr, msgpat);
+		cairo_paint (cr);
+		cairo_pattern_destroy (msgpat);
+		cairo_surface_destroy (msg);
 	}
 
 	cairo_destroy (cr);
@@ -97,34 +128,8 @@ static void document_dump_text(struct document *doc, char *filename)
 
 static void document_set_message(struct document *doc, char *msg)
 {
-	cairo_surface_t *surf = cairo_surface_create_similar (
-		doc->cairo, CAIRO_CONTENT_COLOR_ALPHA,
-		doc->fbcanvas->fb->width, 20);
-	cairo_t *cr = cairo_create (surf);
-	PangoLayout *layout;
-	PangoFontDescription *desc;
-
-	cairo_save (cr);
-	cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
-	cairo_paint_with_alpha (cr, 0.5);
-	cairo_restore (cr);
-
-	layout = (PangoLayout *) pango_cairo_create_layout (cr);
-	pango_layout_set_text (layout, msg, -1);
-	desc = pango_font_description_from_string ("Sans 14");
-	pango_layout_set_font_description (layout, desc);
-	pango_font_description_free (desc);
-
-	cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
-	cairo_move_to (cr, 8, 0); /* after the cursor */
-	pango_cairo_update_layout (cr, layout);
-	pango_cairo_show_layout (cr, layout);
-	g_object_unref (layout);
-	cairo_destroy (cr);
-
-	if (doc->message)
-		cairo_surface_destroy (doc->message);
-	doc->message = surf;
+	free (doc->message);
+	doc->message = strdup (msg);
 }
 
 struct document *open_document(char *filename)

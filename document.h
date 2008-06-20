@@ -24,6 +24,7 @@ struct document
 	struct fbcanvas *fbcanvas;
 	char *filename;
 	void *data;
+	char *message;
 
 	unsigned int pagenum;
 	unsigned int pagecount;
@@ -31,7 +32,6 @@ struct document
 	struct document_ops *ops;
 
 	cairo_surface_t *cairo;
-	cairo_surface_t *message;
 
 	double scale;
 
