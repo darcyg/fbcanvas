@@ -1,4 +1,4 @@
-/* commands.c - 13.6.2008 - 20.6.2008 Ari & Tero Roponen */
+/* commands.c - 13.6.2008 - 21.6.2008 Ari & Tero Roponen */
 #include <cairo/cairo.h>
 #include <ncurses.h>
 #include <string.h>
@@ -174,18 +174,19 @@ static void cmd_flip_y (struct document *doc)
 
 static void cmd_flip_z (struct document *doc)
 {
-	int dir = (this_command == 'Z') ? 0 : 2;
+	int dir = (this_command == 'Z') ? 1 : -1;
 
 	/* See comment in transform_doc.
-	 *   dir = 0          dir = 2
+	 *   dir = 1          dir = -1
 	 *
 	 *  y        x	    y      .┌─y
 	 *  │   ->   │	    │   ->  │
 	 * .└─x    y─┘.	   .└─x     x
 	 */
-	transform_doc (doc, doc->height, doc->width, 0, 1-dir, dir-1, 0,
-		       (!dir) ? doc->height : 0,
-		       (dir >> 1) * doc->width);
+	transform_doc (doc, doc->height, doc->width,
+		       0, dir, -dir, 0,
+		       (dir == 1) ? doc->height : 0,
+		       (dir == -1) ? doc->width : 0);
 }
 
 static void cmd_goto_top (struct document *doc)
