@@ -29,12 +29,13 @@ static cairo_surface_t *merge_surfaces (struct document *doc)
 		doc->fbcanvas->fb->width, doc->fbcanvas->fb->height);
 
 	cairo_t *cr = cairo_create (surf);
+	cairo_matrix_t mat = doc->transform;
 
 	/* Insert current image. */
 	cairo_save (cr);
 	cairo_translate (cr, -doc->xoffset, -doc->yoffset);
-	cairo_transform (cr, &doc->transform);
-	cairo_matrix_scale (cr, doc->scale, doc->scale);
+	cairo_matrix_scale (&mat, doc->scale, doc->scale);
+	cairo_transform (cr, &mat);
 	cairo_set_source (cr, img);
 	cairo_paint_with_alpha (cr, doc->message ? 0.8: 1.0);
 	cairo_pattern_destroy (img);
