@@ -30,6 +30,7 @@ struct document
 	struct document_ops *ops;
 
 	cairo_surface_t *cairo;
+	cairo_matrix_t transform;
 
 	double scale;
 

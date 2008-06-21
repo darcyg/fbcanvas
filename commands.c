@@ -65,51 +65,6 @@ static void cmd_right (struct document *doc)
 	doc->fbcanvas->scroll(doc, doc->width / 20, 0);
 }
 
-/*
- * Update DOC to contain a new surface of size WIDTH * HEIGHT.
- *
- * X1,Y1 is a new value for X-axis
- * X2,Y2 is a new value for Y-axis
- *
- * DX and DY are used to move the image so that the base point is at
- * the bottom left corner.
- *
- * EXAMPLE:
- * Dot (.) marks the base point. It doesn't move.
- * To x-flip image, we change the axis like this:
- *
- *  y        y
- *  │   ->   │
- * .└─x    x─┘.
- *
- * As can be seen, the picture will be drawn to the left from base
- * point, making it invisible. DX = doc->width solves the problem.
- */
-static void transform_doc (struct document *doc,
-			   int width, int height,
-			   double x1, double y1,
-			   double x2, double y2,
-			   double dx, double dy)
-{
-	cairo_surface_t *surf = cairo_surface_create_similar (
-		doc->cairo, CAIRO_CONTENT_COLOR_ALPHA, width, height);
-	cairo_t *cairo = cairo_create (surf);
-	cairo_pattern_t *pat = cairo_pattern_create_for_surface (doc->cairo);
-	cairo_matrix_t mat;
-
-	cairo_matrix_init (&mat, x1, y1, x2, y2, dx, dy);
-	cairo_transform (cairo, &mat);
-	cairo_set_source (cairo, pat);
-	cairo_paint (cairo);
-	cairo_pattern_destroy (pat);
-	cairo_destroy (cairo);
-
-	cairo_surface_destroy (doc->cairo);
-	doc->cairo = surf;
-	doc->width = width;
-	doc->height = height;
-}
-
 static void cmd_set_zoom (struct document *doc)
 {
 	double scale = 1.0 + 0.1 * (this_command - '0');
@@ -152,41 +107,50 @@ static void cmd_dump_text (struct document *doc)
 
 static void cmd_flip_x (struct document *doc)
 {
-	/* See comment in transform_doc.
-	 *
+	cairo_matrix_t flipx;
+	cairo_matrix_init (&flipx, -1, 0, 0, 1, doc->width, 0);
+
+	/*
 	 *  y        y
 	 *  │   ->   │
 	 * .└─x    x─┘.
 	 */
-	transform_doc (doc, doc->width, doc->height, -1, 0, 0, 1, doc->width, 0);
+	cairo_matrix_multiply (&doc->transform, &doc->transform, &flipx);
 }
 
 static void cmd_flip_y (struct document *doc)
 {
-	/* See comment in transform_doc.
-	 *
+	cairo_matrix_t flipy;
+	cairo_matrix_init (&flipy, 1, 0, 0, -1, 0, doc->height);
+
+	/*
 	 *  y      .┌─x
 	 *  │   ->  │
 	 * .└─x     y
 	 */
-	transform_doc (doc, doc->width, doc->height, 1, 0, 0, -1, 0, doc->height);
+	cairo_matrix_multiply (&doc->transform, &doc->transform, &flipy);
 }
 
 static void cmd_flip_z (struct document *doc)
 {
 	int dir = (this_command == 'Z') ? 1 : -1;
+	cairo_matrix_t flipz;
+	cairo_matrix_init (&flipz, 0, dir, -dir, 0,
+			   (dir == 1) ? doc->height : 0,
+			   (dir == -1) ? doc->width : 0);
 
-	/* See comment in transform_doc.
+	/*
 	 *   dir = 1          dir = -1
 	 *
 	 *  y        x	    y      .┌─y
 	 *  │   ->   │	    │   ->  │
 	 * .└─x    y─┘.	   .└─x     x
 	 */
-	transform_doc (doc, doc->height, doc->width,
-		       0, dir, -dir, 0,
-		       (dir == 1) ? doc->height : 0,
-		       (dir == -1) ? doc->width : 0);
+	cairo_matrix_multiply (&doc->transform, &doc->transform, &flipz);
+
+	int tmp = doc->height;
+	doc->height = doc->width;
+	doc->width = tmp;
 }
 
 static void cmd_goto_top (struct document *doc)
@@ -236,10 +200,13 @@ static void cmd_full_screen (struct document *doc)
 {
 	double w = doc->fbcanvas->fb->width;
 	double h = doc->fbcanvas->fb->height;
+	cairo_matrix_t full;
 
-	transform_doc (doc, w, h,
-		       w / (double) doc->width, 0.0, 0.0,
-		       h / (double) doc->height, 0.0, 0.0);
+	cairo_matrix_init (&full,
+			   w / (double) doc->width, 0.0,
+			   0.0, h / (double) doc->height,
+			   0.0, 0.0);
+	cairo_matrix_multiply (&doc->transform, &doc->transform, &full);
 }
 
 void setup_keys (void)
