@@ -1,5 +1,6 @@
 /* commands.c - 13.6.2008 - 21.6.2008 Ari & Tero Roponen */
 #include <cairo/cairo.h>
+#include <math.h>
 #include <ncurses.h>
 #include <string.h>
 #undef scroll
@@ -113,8 +114,10 @@ static void cmd_dump_text (struct document *doc)
 
 static void cmd_flip_x (struct document *doc)
 {
+	int width = (doc->flags & NO_GENERIC_SCALE) ?
+		doc->width : ceil(doc->scale * doc->width);
 	cairo_matrix_t flipx;
-	cairo_matrix_init (&flipx, -1, 0, 0, 1, doc->width, 0);
+	cairo_matrix_init (&flipx, -1, 0, 0, 1, width, 0);
 
 	/*
 	 *  y        y
@@ -126,8 +129,10 @@ static void cmd_flip_x (struct document *doc)
 
 static void cmd_flip_y (struct document *doc)
 {
+	int height = (doc->flags & NO_GENERIC_SCALE) ?
+		doc->height : ceil(doc->scale * doc->height);
 	cairo_matrix_t flipy;
-	cairo_matrix_init (&flipy, 1, 0, 0, -1, 0, doc->height);
+	cairo_matrix_init (&flipy, 1, 0, 0, -1, 0, height);
 
 	/*
 	 *  y      .┌─x
@@ -139,11 +144,16 @@ static void cmd_flip_y (struct document *doc)
 
 static void cmd_flip_z (struct document *doc)
 {
+	int width = (doc->flags & NO_GENERIC_SCALE) ?
+		doc->width : ceil(doc->scale * doc->width);
+	int height = (doc->flags & NO_GENERIC_SCALE) ?
+		doc->height : ceil(doc->scale * doc->height);
+
 	int dir = (this_command == 'Z') ? 1 : -1;
 	cairo_matrix_t flipz;
 	cairo_matrix_init (&flipz, 0, dir, -dir, 0,
-			   (dir == 1) ? doc->height : 0,
-			   (dir == -1) ? doc->width : 0);
+			   (dir == 1) ? height : 0,
+			   (dir == -1) ? width : 0);
 
 	/*
 	 *   dir = 1          dir = -1
