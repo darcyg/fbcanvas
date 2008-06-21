@@ -69,11 +69,17 @@ static void cmd_set_zoom (struct document *doc)
 {
 	double scale = 1.0 + 0.1 * (this_command - '0');
 	doc->scale = scale;
+
+	if (doc->flags & NO_GENERIC_SCALE)
+		doc->update(doc);
 }
 
 static void cmd_zoom_in (struct document *doc)
 {
 	doc->scale += 0.1;
+
+	if (doc->flags & NO_GENERIC_SCALE)
+		doc->update(doc);
 }
 
 static void cmd_zoom_out (struct document *doc)
@@ -81,6 +87,9 @@ static void cmd_zoom_out (struct document *doc)
 	if (doc->scale >= 0.2)
 	{
 		doc->scale -= 0.1;
+
+		if (doc->flags & NO_GENERIC_SCALE)
+			doc->update(doc);
 	}
 }
 

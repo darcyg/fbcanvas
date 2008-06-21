@@ -34,7 +34,11 @@ static cairo_surface_t *merge_surfaces (struct document *doc)
 	/* Insert current image. */
 	cairo_save (cr);
 	cairo_translate (cr, -doc->xoffset, -doc->yoffset);
-	cairo_matrix_scale (&mat, doc->scale, doc->scale);
+
+	/* Some files do their own scaling. */
+	if (!(doc->flags & NO_GENERIC_SCALE))
+		cairo_matrix_scale (&mat, doc->scale, doc->scale);
+
 	cairo_transform (cr, &mat);
 	cairo_set_source (cr, img);
 	cairo_paint_with_alpha (cr, doc->message ? 0.8: 1.0);
@@ -115,6 +119,7 @@ struct document *open_document(char *filename)
 		doc->fbcanvas = fbcanvas_create(filename);
 
 		cairo_matrix_init_identity (&doc->transform);
+		doc->flags = 0;
 		doc->cairo = NULL;
 		doc->message = NULL;
 		doc->xoffset = 0;

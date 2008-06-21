@@ -38,6 +38,7 @@ static void *open_pdf(struct document *doc)
 		free(canon_name);
 
 		doc->pagecount = poppler_document_get_n_pages(data->document);
+		doc->flags |= NO_GENERIC_SCALE;
 	}
 
 	return data;

@@ -32,6 +32,8 @@ struct document
 	cairo_surface_t *cairo;
 	cairo_matrix_t transform;
 
+	unsigned int flags;
+
 	double scale;
 
 	unsigned int width;
@@ -48,6 +50,11 @@ struct document
 
 	/* Kaikille yhteiset metodit */
 	void (*set_message)(struct document *doc, char *msg);
+};
+
+enum
+{
+	NO_GENERIC_SCALE = 1,
 };
 
 struct document *open_document(char *filename);
