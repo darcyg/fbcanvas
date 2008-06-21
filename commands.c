@@ -47,35 +47,33 @@ static void cmd_prev_page (struct document *doc)
 
 static void cmd_down (struct document *doc)
 {
-	doc->fbcanvas->scroll(doc, 0, doc->height / 20);
+	doc->fbcanvas->scroll(doc, 0, doc->fbcanvas->fb->height / 20);
 }
 
 static void cmd_up (struct document *doc)
 {
-	doc->fbcanvas->scroll(doc, 0, -(doc->height / 20));
+	doc->fbcanvas->scroll(doc, 0, -(doc->fbcanvas->fb->height / 20));
 }
 
 static void cmd_left (struct document *doc)
 {
-	doc->fbcanvas->scroll(doc, -(doc->width / 20), 0);
+	doc->fbcanvas->scroll(doc, -(doc->fbcanvas->fb->width / 20), 0);
 }
 
 static void cmd_right (struct document *doc)
 {
-	doc->fbcanvas->scroll(doc, doc->width / 20, 0);
+	doc->fbcanvas->scroll(doc, doc->fbcanvas->fb->width / 20, 0);
 }
 
 static void cmd_set_zoom (struct document *doc)
 {
 	double scale = 1.0 + 0.1 * (this_command - '0');
 	doc->scale = scale;
-	doc->update(doc);
 }
 
 static void cmd_zoom_in (struct document *doc)
 {
 	doc->scale += 0.1;
-	doc->update(doc);
 }
 
 static void cmd_zoom_out (struct document *doc)
@@ -83,7 +81,6 @@ static void cmd_zoom_out (struct document *doc)
 	if (doc->scale >= 0.2)
 	{
 		doc->scale -= 0.1;
-		doc->update(doc);
 	}
 }
 

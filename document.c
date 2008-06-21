@@ -34,6 +34,7 @@ static cairo_surface_t *merge_surfaces (struct document *doc)
 	cairo_save (cr);
 	cairo_translate (cr, -doc->xoffset, -doc->yoffset);
 	cairo_transform (cr, &doc->transform);
+	cairo_matrix_scale (cr, doc->scale, doc->scale);
 	cairo_set_source (cr, img);
 	cairo_paint_with_alpha (cr, doc->message ? 0.8: 1.0);
 	cairo_pattern_destroy (img);
