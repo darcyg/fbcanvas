@@ -10,6 +10,7 @@ static GArray *file_infos;
 void register_plugins (void)
 {
 	extern struct file_info bmp_info;
+	extern struct file_info chm_info;
 	extern struct file_info djvu_info;
 	extern struct file_info gif_info;
 	extern struct file_info jpg_info;
@@ -23,6 +24,7 @@ void register_plugins (void)
 	struct file_info *fi[] =
 	{
 		&bmp_info,
+		&chm_info,
 		&djvu_info,
 		&gif_info,
 		&jpg_info,
