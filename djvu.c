@@ -1,5 +1,4 @@
 #include <libdjvu/ddjvuapi.h>
-#include <math.h>
 #include "document.h"
 #include "fbcanvas.h"
 #include "file_info.h"
@@ -130,8 +129,8 @@ static cairo_surface_t *update_djvu(struct document *doc)
 		ddjvu_message_pop(data->context);
 	}
 
-	int width = ceil(ddjvu_page_get_width(data->page) * doc->scale);
-	int height = ceil(ddjvu_page_get_height(data->page) * doc->scale);
+	int width = ddjvu_page_get_width(data->page);
+	int height = ddjvu_page_get_height(data->page);
 
 	ddjvu_rect_t pagerec = {0, 0, width, height};
 	ddjvu_rect_t renderrec = pagerec;
