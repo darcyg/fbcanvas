@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <ncurses.h>
 #undef scroll
+#include <poll.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -82,11 +83,8 @@ int read_key(int s)
 
 	if (s == 0)
 	{
-		fd_set rfds;
+		struct pollfd pfd = {.fd = STDIN_FILENO, .events = POLLIN};
 		sigset_t sigs;
-
-		FD_ZERO(&rfds);
-		FD_SET(0, &rfds);
 
 		sigfillset(&sigs);
 		sigdelset(&sigs, SIGUSR1);
@@ -94,7 +92,7 @@ int read_key(int s)
 
 		for (;;)
 		{
-			int ret = pselect(1, &rfds, NULL, NULL, NULL, &sigs);
+			int ret = ppoll(&pfd, 1, NULL, &sigs);
 			if (ret == -1)
 			{
 				if (repaint)
