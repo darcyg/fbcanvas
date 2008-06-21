@@ -77,48 +77,48 @@ error_t parse_arguments (int key, char *arg, struct argp_state *state)
 	return 0;
 }
 
-int read_key(int s)
+bool need_repaint = false;
+
+void handle_signal(int s)
 {
-	static int repaint;
-
-	if (s == 0)
+	int fd = open("/dev/tty", O_RDWR);
+	if (fd)
 	{
-		struct pollfd pfd = {.fd = STDIN_FILENO, .events = POLLIN};
-		sigset_t sigs;
-
-		sigfillset(&sigs);
-		sigdelset(&sigs, SIGUSR1);
-		sigdelset(&sigs, SIGUSR2);
-
-		for (;;)
+		if (s == SIGUSR1)
 		{
-			int ret = ppoll(&pfd, 1, NULL, &sigs);
-			if (ret == -1)
-			{
-				if (repaint)
-				{
-					repaint = 0;
-					return 12; /* CTRL-L */
-				}
-			} else if (ret) {
-				return getch();
-			}
+			/* Release display */
+			ioctl(fd, VT_RELDISP, 1);
+		} else if (s == SIGUSR2) {
+			/* Acquire display */
+			ioctl(fd, VT_RELDISP, VT_ACKACQ);
+			need_repaint = true;
 		}
-	} else {
-		int fd = open("/dev/tty", O_RDWR);
-		if (fd)
-		{
-			if (s == SIGUSR1) /* */
-			{
-				/* Release display */
-				ioctl(fd, VT_RELDISP, 1);
-			} else if (s == SIGUSR2) {
-				/* Acquire display */
-				ioctl(fd, VT_RELDISP, VT_ACKACQ);
-				repaint = 1;
-			}
 
-			close(fd);
+		close(fd);
+	}
+}
+
+static int read_key(void)
+{
+	struct pollfd pfd = {.fd = STDIN_FILENO, .events = POLLIN};
+	sigset_t sigs;
+
+	sigfillset(&sigs);
+	sigdelset(&sigs, SIGUSR1);
+	sigdelset(&sigs, SIGUSR2);
+
+	for (;;)
+	{
+		int ret = ppoll(&pfd, 1, NULL, &sigs);
+		if (ret == -1)
+		{
+			if (need_repaint)
+			{
+				need_repaint = false;
+				return 12; /* CTRL-L */
+			}
+		} else if (ret) {
+			return getch();
 		}
 	}
 }
@@ -142,7 +142,7 @@ static void main_loop (struct document *doc)
 		{
 			doc->draw(doc);
 
-			ch = read_key(0);
+			ch = read_key();
 			command = lookup_command (ch);
 			command (doc);
 		}
