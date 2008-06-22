@@ -46,16 +46,6 @@ static cairo_surface_t *update_pixbuf(struct document *doc)
 	data->pixbuf = gdk_pixbuf_add_alpha(tmp, FALSE, 0, 0, 0);
 	g_object_unref(tmp);
 
-	if (doc->scale != 1.0)
-	{
-		tmp = gdk_pixbuf_scale_simple(data->pixbuf,
-			ceil(doc->scale * gdk_pixbuf_get_width(data->pixbuf)),
-			ceil(doc->scale * gdk_pixbuf_get_height(data->pixbuf)),
-			GDK_INTERP_BILINEAR);
-		g_object_unref(data->pixbuf);
-		data->pixbuf = tmp;
-	}
-
 	return cairo_image_surface_create_for_data (gdk_pixbuf_get_pixels(data->pixbuf),
 			CAIRO_FORMAT_ARGB32,
 			gdk_pixbuf_get_width(data->pixbuf),
