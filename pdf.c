@@ -38,7 +38,6 @@ static void *open_pdf(struct document *doc)
 		free(canon_name);
 
 		doc->pagecount = poppler_document_get_n_pages(data->document);
-		doc->flags |= NO_GENERIC_SCALE;
 	}
 
 	return data;
@@ -119,6 +118,7 @@ static int grep_pdf(struct document *doc, char *regexp)
 
 static cairo_surface_t *update_pdf(struct document *doc)
 {
+	cairo_surface_t *ret;
 	struct pdf_data *data = doc->data;
 	GError *err = NULL;
 	static double width, height;
@@ -137,16 +137,27 @@ static cairo_surface_t *update_pdf(struct document *doc)
 	poppler_page_get_size(data->page, &width, &height);
 	//fprintf(stderr, "Size: %lfx%lf\n", width, height);
 
+#if 1
+	doc->flags |= NO_GENERIC_SCALE;
+
 	data->pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
 		TRUE, 8, ceil(width * doc->scale), ceil(height * doc->scale));
 	poppler_page_render_to_pixbuf(data->page, 0, 0,
 		ceil(width), ceil(height), doc->scale, 0, data->pixbuf);
 
-	return cairo_image_surface_create_for_data (gdk_pixbuf_get_pixels (data->pixbuf),
+	ret = cairo_image_surface_create_for_data (gdk_pixbuf_get_pixels (data->pixbuf),
 			CAIRO_FORMAT_ARGB32,
 			gdk_pixbuf_get_width(data->pixbuf),
 			gdk_pixbuf_get_height(data->pixbuf),
 			gdk_pixbuf_get_rowstride(data->pixbuf));
+#else
+	ret = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, ceil(width), ceil(height));
+	cairo_t *cr = cairo_create(ret);
+	poppler_page_render(data->page, cr);
+	cairo_destroy(cr);
+#endif
+
+	return ret;
 }
 
 static void dump_text_pdf(struct document *doc, char *filename)
