@@ -248,6 +248,10 @@ static void cmd_reset (struct document *doc)
 	doc->xoffset = 0;
 	doc->yoffset = 0;
 	cairo_matrix_init_identity (&doc->transform);
+
+	/* Update is needed to reset to the original image. */
+	if (doc->flags & NO_GENERIC_SCALE)
+		doc->update(doc);
 }
 
 static void cmd_full_screen (struct document *doc)
@@ -259,13 +263,27 @@ static void cmd_full_screen (struct document *doc)
 static void cmd_full_width (struct document *doc)
 {
 	cmd_reset (doc);
-	scale_doc_full (doc, doc->width, doc->width);
+
+	if (doc->flags & NO_GENERIC_SCALE)
+	{
+		doc->scale = (double)doc->fbcanvas->fb->width / (double)doc->width;
+		doc->update(doc);
+	} else {
+		scale_doc_full (doc, doc->width, doc->width);
+	}
 }
 
 static void cmd_full_height (struct document *doc)
 {
 	cmd_reset (doc);
-	scale_doc_full (doc, doc->height, doc->height);
+
+	if (doc->flags & NO_GENERIC_SCALE)
+	{
+		doc->scale = (double)doc->fbcanvas->fb->height / (double)doc->height;
+		doc->update(doc);
+	} else {
+		scale_doc_full (doc, doc->height, doc->height);
+	}
 }
 
 void setup_keys (void)
