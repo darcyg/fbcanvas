@@ -1,4 +1,5 @@
 #include <pango/pangocairo.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include "document.h"
@@ -43,6 +44,12 @@ static cairo_surface_t *merge_surfaces (struct document *doc)
 	cairo_set_source (cr, img);
 	cairo_paint_with_alpha (cr, doc->message ? 0.8: 1.0);
 	cairo_pattern_destroy (img);
+#if 0
+	/* For debugging: draw circle to (0,0) */
+	cairo_set_source_rgb (cr, 1.0, 1.0, 0.0);
+	cairo_arc (cr, 0, 0, 10, 0, 2 * M_PI);
+	cairo_fill (cr);
+#endif
 	cairo_restore (cr);
 
 	if (doc->message)
