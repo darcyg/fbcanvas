@@ -161,13 +161,19 @@ static int read_key(void)
 				if (need_repaint)
 				{
 					need_repaint = false;
-					return 12;
+					return 'l' | CONTROL;
 				}
 			}
 
 			/* stdin input available */
 			if (pfd[0].revents)
-				return modifiers | tolower(getch());
+			{
+				int key = tolower(getch());
+
+				if (key == 12) /* CTRL-L */
+					key = 'l';
+				return modifiers | key;
+			}
 		}
 	}
 }

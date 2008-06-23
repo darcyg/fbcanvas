@@ -224,7 +224,7 @@ static void cmd_display_current_page (struct document *doc)
 
 	if (last_command == this_command)
 	{
-		this_command = 12; /* CTRL-L */
+		this_command = 'l' | CONTROL;
 		return;
 	}
 
@@ -275,11 +275,11 @@ void setup_keys (void)
 		unsigned int code;
 		void (*cmd)(struct document *doc);
 	} keys[] = {
-		{12, cmd_redraw},
 		{27, cmd_quit},
 		{'f', cmd_full_screen},
 		{'g', cmd_reset},
 		{'h', cmd_full_height},
+		{'l' | CONTROL, cmd_redraw},
 		{'p', cmd_display_current_page},
 		{'q', cmd_quit},
 		{'s', cmd_save},
