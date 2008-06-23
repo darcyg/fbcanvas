@@ -214,17 +214,40 @@ static void cmd_display_current_page (struct document *doc)
 	doc->set_message(doc, buf);
 }
 
-static void cmd_full_screen (struct document *doc)
+static void scale_doc_full (struct document *doc, double xs, double ys)
 {
 	double w = doc->fbcanvas->fb->width;
 	double h = doc->fbcanvas->fb->height;
-	cairo_matrix_t full;
+	cairo_matrix_t scale;
 
-	cairo_matrix_init (&full,
-			   w / (double) doc->width, 0.0,
-			   0.0, h / (double) doc->height,
-			   0.0, 0.0);
-	cairo_matrix_multiply (&doc->transform, &doc->transform, &full);
+	cairo_matrix_init (&scale, w / xs, 0.0, 0.0, h / ys, 0.0, 0.0);
+	cairo_matrix_multiply (&doc->transform, &doc->transform, &scale);
+}
+
+static void cmd_reset (struct document *doc)
+{
+	doc->scale = 1.0;
+	doc->xoffset = 0;
+	doc->yoffset = 0;
+	cairo_matrix_init_identity (&doc->transform);
+}
+
+static void cmd_full_screen (struct document *doc)
+{
+	cmd_reset (doc);
+	scale_doc_full (doc, doc->width, doc->height);
+}
+
+static void cmd_full_width (struct document *doc)
+{
+	cmd_reset (doc);
+	scale_doc_full (doc, doc->width, doc->width);
+}
+
+static void cmd_full_height (struct document *doc)
+{
+	cmd_reset (doc);
+	scale_doc_full (doc, doc->height, doc->height);
 }
 
 void setup_keys (void)
@@ -237,10 +260,13 @@ void setup_keys (void)
 		{12, cmd_redraw},
 		{27, cmd_quit},
 		{'f', cmd_full_screen},
+		{'g', cmd_reset},
+		{'h', cmd_full_height},
 		{'p', cmd_display_current_page},
 		{'q', cmd_quit},
 		{'s', cmd_save},
 		{'t', cmd_dump_text},
+		{'w', cmd_full_width},
 		{'x', cmd_flip_x},
 		{'y', cmd_flip_y},
 		{'z', cmd_flip_z},
