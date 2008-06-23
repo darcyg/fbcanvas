@@ -169,7 +169,7 @@ static void cmd_flip_z (struct document *doc)
 	int height = (doc->flags & NO_GENERIC_SCALE) ?
 		doc->height : ceil(doc->scale * doc->height);
 
-	int dir = (this_command == 'Z') ? 1 : -1;
+	int dir = (this_command == ('z' | SHIFT)) ? 1 : -1;
 	cairo_matrix_t flipz;
 	cairo_matrix_init (&flipz, 0, dir, -dir, 0,
 			   (dir == 1) ? height : 0,
@@ -288,7 +288,7 @@ void setup_keys (void)
 		{'x', cmd_flip_x},
 		{'y', cmd_flip_y},
 		{'z', cmd_flip_z},
-		{'Z', cmd_flip_z},
+		{'z' | SHIFT, cmd_flip_z},
 
 		{KEY_HOME, cmd_goto_top},
 		{KEY_HOME | CONTROL, cmd_first_page},

@@ -163,7 +163,7 @@ static int read_key(void)
 
 			/* stdin input available */
 			if (pfd[0].revents)
-				return modifiers | getch();
+				return modifiers | tolower(getch());
 		}
 	}
 }
