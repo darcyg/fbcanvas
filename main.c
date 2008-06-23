@@ -141,10 +141,11 @@ static int read_key(void)
 			/* Nothing to do */
 		} else {
 			/* evdev input available */
-			struct input_event ev;
-			read(fd, &ev, sizeof(ev));
 			if (pfd[1].revents)
 			{
+				struct input_event ev;
+				read(fd, &ev, sizeof(ev));
+
 				if (ev.type == EV_KEY)
 				{
 					unsigned int m = 0;
