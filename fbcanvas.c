@@ -2,6 +2,7 @@
  * fbcanvas.c - 17.5.2008 - 19.6.2008 Ari & Tero Roponen
  */
 #include <sys/types.h>
+#include <errno.h>
 #include <linux/fb.h>
 #include <linux/vt.h>
 #include <sys/ioctl.h>
@@ -28,7 +29,11 @@ static struct framebuffer *open_framebuffer(char *fbdev)
 		if (fd < 0)
 		{
 			/* TODO: käsittele virhe */
-			perror("open");
+			fprintf(stderr, "Could not open %s: %s\n",
+				fbdev, strerror(errno));
+			free(fb);
+			fb = NULL;
+			goto out;
 		}
 
 		if (ioctl(fd, FBIOGET_VSCREENINFO, &fbinfo) < 0)
@@ -80,7 +85,7 @@ static struct framebuffer *open_framebuffer(char *fbdev)
 			signal(SIGUSR2, handle_signal);
 		}
 	}
-
+out:
 	return fb;
 }
 
@@ -120,11 +125,18 @@ struct fbcanvas *fbcanvas_create(char *filename)
 
 		/* TODO: tarkista onnistuminen */
 		fbc->fb = open_framebuffer("/dev/fb0");
+		if (!fbc->fb)
+		{
+			free(fbc);
+			fbc = NULL;
+			goto out;
+		}
 
 		/* Asetetaan yleiset metodit. */
 		fbc->scroll = fbcanvas_scroll;
 	}
 
+out:
 	return fbc;
 }
 

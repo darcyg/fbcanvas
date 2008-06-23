@@ -124,6 +124,12 @@ struct document *open_document(char *filename)
 		struct file_info *fi;
 
 		doc->fbcanvas = fbcanvas_create(filename);
+		if (!doc->fbcanvas)
+		{
+			free (doc);
+			doc = NULL;
+			goto out;
+		}
 
 		cairo_matrix_init_identity (&doc->transform);
 		doc->flags = 0;
