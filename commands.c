@@ -1,4 +1,4 @@
-/* commands.c - 13.6.2008 - 21.6.2008 Ari & Tero Roponen */
+/* commands.c - 13.6.2008 - 23.6.2008 Ari & Tero Roponen */
 #include <cairo/cairo.h>
 #include <math.h>
 #include <ncurses.h>
@@ -120,9 +120,9 @@ static void cmd_flip_x (struct document *doc)
 	cairo_matrix_init (&flipx, -1, 0, 0, 1, width, 0);
 
 	/*
-	 *  y        y
+	 * .y        y.
 	 *  │   ->   │
-	 * .└─x    x─┘.
+	 *  └─x    x─┘
 	 */
 	cairo_matrix_multiply (&doc->transform, &doc->transform, &flipx);
 }
@@ -134,10 +134,12 @@ static void cmd_flip_y (struct document *doc)
 	cairo_matrix_t flipy;
 	cairo_matrix_init (&flipy, 1, 0, 0, -1, 0, height);
 
-	/*
-	 *  y      .┌─x
-	 *  │   ->  │
-	 * .└─x     y
+	/* .y      .
+	 *  │  
+	 *  └─x ->
+	 *          ┌─x
+	 *          │
+	 *          y
 	 */
 	cairo_matrix_multiply (&doc->transform, &doc->transform, &flipy);
 }
@@ -155,12 +157,12 @@ static void cmd_flip_z (struct document *doc)
 			   (dir == 1) ? height : 0,
 			   (dir == -1) ? width : 0);
 
-	/*
+	/* TODO: fix images
 	 *   dir = 1          dir = -1
 	 *
-	 *  y        x	    y      .┌─y
-	 *  │   ->   │	    │   ->  │
-	 * .└─x    y─┘.	   .└─x     x
+	 * .y         x	   .y      .┌─y
+	 *  │   ->    │	    │   ->  │
+	 *  └─x    .y─┘	    └─x     x
 	 */
 	cairo_matrix_multiply (&doc->transform, &doc->transform, &flipz);
 
