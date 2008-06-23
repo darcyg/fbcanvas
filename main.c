@@ -117,13 +117,14 @@ static int read_key(void)
 		if (fd < 0)
 		{
 			perror("Could not open /dev/input/event2");
-			return 'q';
+			return -1;
 		}
 
 		pfd[0].fd = STDIN_FILENO;
 		pfd[0].events = POLLIN;
 		pfd[1].fd = fd;
 		pfd[1].events = POLLIN;
+		return 0;
 	}
 
 	for (;;)
@@ -199,6 +200,10 @@ static void main_loop (struct document *doc)
 static int view_file (struct document *doc, struct prefs *prefs)
 {
 	char status[128];
+
+	/* First call tries to initialize the input devices */
+	if (read_key() < 0)
+		return 1;
 
 	if (prefs->page < doc->pagecount)
 		doc->pagenum = prefs->page;
