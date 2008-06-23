@@ -132,11 +132,7 @@ static int read_key(void)
 		int ret = ppoll(pfd, 2, NULL, &sigs);
 		if (ret == -1) /* error, most likely EINTR. */
 		{
-			if (need_repaint)
-			{
-				need_repaint = false;
-				return 12; /* CTRL-L */
-			}
+			/* This will be handled later */
 		} else if (ret == 0) { /* Timeout */
 			/* Nothing to do */
 		} else {
@@ -160,6 +156,12 @@ static int read_key(void)
 						modifiers |= m;
 					else if (ev.value == 0)
 						modifiers &= ~m;
+				}
+
+				if (need_repaint)
+				{
+					need_repaint = false;
+					return 12;
 				}
 			}
 
