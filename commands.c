@@ -28,6 +28,15 @@ static void cmd_redraw (struct document *doc)
 	/* Nothing to do */
 }
 
+static void cmd_first_page (struct document *doc)
+{
+	if (doc->pagenum > 0)
+	{
+		doc->pagenum = 0;
+		doc->update(doc);
+	}
+}
+
 static void cmd_next_page (struct document *doc)
 {
 	if (doc->pagenum < doc->pagecount - 1)
@@ -42,6 +51,15 @@ static void cmd_prev_page (struct document *doc)
 	if (doc->pagenum > 0)
 	{
 		doc->pagenum--;
+		doc->update(doc);
+	}
+}
+
+static void cmd_last_page (struct document *doc)
+{
+	if (doc->pagenum < doc->pagecount - 1)
+	{
+		doc->pagenum = doc->pagecount - 1;
 		doc->update(doc);
 	}
 }
@@ -273,7 +291,9 @@ void setup_keys (void)
 		{'Z', cmd_flip_z},
 
 		{KEY_HOME, cmd_goto_top},
+		{KEY_HOME | CONTROL, cmd_first_page},
 		{KEY_END, cmd_goto_bottom},
+		{KEY_END | CONTROL, cmd_last_page},
 		{KEY_NPAGE, cmd_next_page},
 		{KEY_PPAGE, cmd_prev_page},
 		{KEY_DOWN, cmd_down},

@@ -2,6 +2,7 @@
  * main.c - 17.5.2008 - 16.6.2008 Ari & Tero Roponen
  */
 
+#include <linux/input.h>
 #include <linux/vt.h>
 #include <sys/ioctl.h>
 #include <argp.h>
@@ -17,6 +18,7 @@
 #include "document.h"
 #include "fbcanvas.h"
 #include "commands.h"
+#include "keymap.h"
 
 struct prefs
 {
@@ -100,25 +102,68 @@ void handle_signal(int s)
 
 static int read_key(void)
 {
-	struct pollfd pfd = {.fd = STDIN_FILENO, .events = POLLIN};
-	sigset_t sigs;
+	static int fd = -1;
+	static struct pollfd pfd[2];
+	static sigset_t sigs;
+	static int modifiers = 0;
 
-	sigfillset(&sigs);
-	sigdelset(&sigs, SIGUSR1);
-	sigdelset(&sigs, SIGUSR2);
+	if (fd == -1)
+	{
+		sigfillset(&sigs);
+		sigdelset(&sigs, SIGUSR1);
+		sigdelset(&sigs, SIGUSR2);
+
+		fd = open("/dev/input/event2", O_RDONLY);
+		if (fd < 0)
+		{
+			perror("Could not open /dev/input/event2");
+			return 'q';
+		}
+
+		pfd[0].fd = STDIN_FILENO;
+		pfd[0].events = POLLIN;
+		pfd[1].fd = fd;
+		pfd[1].events = POLLIN;
+	}
 
 	for (;;)
 	{
-		int ret = ppoll(&pfd, 1, NULL, &sigs);
-		if (ret == -1)
+		int ret = ppoll(pfd, 2, NULL, &sigs);
+		if (ret == -1) /* error, most likely EINTR. */
 		{
 			if (need_repaint)
 			{
 				need_repaint = false;
 				return 12; /* CTRL-L */
 			}
-		} else if (ret) {
-			return getch();
+		} else if (ret == 0) { /* Timeout */
+			/* Nothing to do */
+		} else {
+			/* evdev input available */
+			struct input_event ev;
+			read(fd, &ev, sizeof(ev));
+			if (pfd[1].revents)
+			{
+				if (ev.type == EV_KEY)
+				{
+					unsigned int m = 0;
+					if (ev.code == KEY_LEFTSHIFT || ev.code == KEY_RIGHTSHIFT)
+						m = SHIFT;
+					if (ev.code == KEY_LEFTCTRL || ev.code == KEY_RIGHTCTRL)
+						m = CONTROL;
+					if (ev.code == KEY_LEFTALT || ev.code == KEY_RIGHTALT)
+						m = ALT;
+
+					if (ev.value == 1 || ev.value == 2)
+						modifiers |= m;
+					else if (ev.value == 0)
+						modifiers &= ~m;
+				}
+			}
+
+			/* stdin input available */
+			if (pfd[0].revents)
+				return modifiers | getch();
 		}
 	}
 }
