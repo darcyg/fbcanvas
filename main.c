@@ -72,8 +72,9 @@ error_t parse_arguments (int key, char *arg, struct argp_state *state)
 		prefs->y = atoi (arg);
 		break;
 	case ARGP_KEY_SUCCESS:
-		if (state->argc - state->next != 1
-		    && !prefs->just_pagecount)
+		if ((state->argc - state->next != 1)
+		    && !prefs->just_pagecount
+		    && !prefs->grep_str)
 			argp_usage (state);
 		break;
 	}
@@ -249,26 +250,25 @@ int main(int argc, char *argv[])
 	extern void register_plugins (void);
 	register_plugins ();
 
-	if (prefs.just_pagecount)
+	for (int i = ind; i < argc; i++)
 	{
-		for (int i = ind; i < argc; i++)
+		doc = open_document (argv[i]);
+		if (! doc)
+			continue;
+		if (prefs.just_pagecount)
 		{
-			doc = open_document (argv[i]);
 			fprintf (stderr, "%s has %d page%s.\n",
 				 doc->filename, doc->pagecount,
 				 doc->pagecount > 1 ? "s":"");
-			doc->close (doc);
-		}
-		ret = 0;
-	} else {
-		doc = open_document(argv[ind]);
-		if (! doc)
-			return ret;
-		if (prefs.grep_str)
-			ret = doc->grep(doc, prefs.grep_str);
-		else
+			ret = 0;
+		} else if (prefs.grep_str) {
+			int r = doc->grep(doc, prefs.grep_str);
+			if (!r)
+				ret = 0;
+		} else {
 			ret = view_file (doc, &prefs);
-		doc->close(doc);
+		}
+		doc->close (doc);
 	}
 
 	return ret;
