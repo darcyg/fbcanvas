@@ -1,5 +1,5 @@
 /*
- * main.c - 17.5.2008 - 16.6.2008 Ari & Tero Roponen
+ * main.c - 17.5.2008 - 24.6.2008 Ari & Tero Roponen
  */
 
 #include <linux/input.h>
@@ -32,7 +32,7 @@ struct prefs
 };
 
 /* Can't be static. */
-const char *argp_program_version = "fb version 20080619";
+const char *argp_program_version = "fb version 20080624";
 
 static struct argp_option options[] = {
 	{"count", 'c', NULL, 0, "display page count"},
@@ -72,7 +72,8 @@ error_t parse_arguments (int key, char *arg, struct argp_state *state)
 		prefs->y = atoi (arg);
 		break;
 	case ARGP_KEY_SUCCESS:
-		if (state->argc - state->next != 1)
+		if (state->argc - state->next != 1
+		    && !prefs->just_pagecount)
 			argp_usage (state);
 		break;
 	}
@@ -248,21 +249,25 @@ int main(int argc, char *argv[])
 	extern void register_plugins (void);
 	register_plugins ();
 
-	doc = open_document(argv[ind]);
-	if (doc)
+	if (prefs.just_pagecount)
 	{
-		if (prefs.just_pagecount)
+		for (int i = ind; i < argc; i++)
 		{
+			doc = open_document (argv[i]);
 			fprintf (stderr, "%s has %d page%s.\n",
 				 doc->filename, doc->pagecount,
 				 doc->pagecount > 1 ? "s":"");
-			ret = 0;
-		} else if (prefs.grep_str) {
-			ret = doc->grep(doc, prefs.grep_str);
-		} else {
-			ret = view_file (doc, &prefs);
+			doc->close (doc);
 		}
-
+		ret = 0;
+	} else {
+		doc = open_document(argv[ind]);
+		if (! doc)
+			return ret;
+		if (prefs.grep_str)
+			ret = doc->grep(doc, prefs.grep_str);
+		else
+			ret = view_file (doc, &prefs);
 		doc->close(doc);
 	}
 
