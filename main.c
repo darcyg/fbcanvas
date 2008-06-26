@@ -276,6 +276,7 @@ int main(int argc, char *argv[])
 			if (!r)
 				ret = 0;
 		} else {
+			init_terminal();
 			ret = view_file (doc, &prefs);
 		}
 		doc->close (doc);
