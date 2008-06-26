@@ -172,8 +172,19 @@ static int read_key(void)
 			{
 				int key = tolower(getch());
 
-				if (key == 12) /* CTRL-L */
-					key = 'l';
+				switch (key)
+				{
+					case 12: /* CTRL-L */
+						key = 'l';
+						break;
+					case 14: /* CTRL-N */
+						key = 'n';
+						break;
+					case 16: /* CTRL-P */
+						key = 'p';
+						break;
+				}
+
 				return modifiers | key;
 			}
 		}
