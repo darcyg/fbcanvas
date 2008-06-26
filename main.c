@@ -1,5 +1,5 @@
 /*
- * main.c - 17.5.2008 - 24.6.2008 Ari & Tero Roponen
+ * main.c - 17.5.2008 - 25.6.2008 Ari & Tero Roponen
  */
 
 #include <linux/input.h>
@@ -29,6 +29,7 @@ struct prefs
 
 	int just_pagecount;
 	char *grep_str;
+	int quiet;
 };
 
 /* Can't be static. */
@@ -38,6 +39,7 @@ static struct argp_option options[] = {
 	{"count", 'c', NULL, 0, "display page count"},
 	{"grep", 'g', "TEXT", 0, "search for text"},
 	{"page", 'p', "PAGE", 0, "goto given page"},
+	{"quiet", 'q', NULL, 0, "Don't display startup message"},
 	{"scale", 's', "SCALE", 0, "set scale factor"},
 	{NULL, 'x', "X", 0, "set x-offset"},
 	{NULL, 'y', "Y", 0, "set y-offset"},
@@ -60,6 +62,9 @@ error_t parse_arguments (int key, char *arg, struct argp_state *state)
 		break;
 	case 'p':
 		prefs->page = atoi (arg) - 1;
+		break;
+	case 'q':
+		prefs->quiet = 1;
 		break;
 	case 's':
 		prefs->scale = strtod (arg, NULL);
@@ -235,8 +240,11 @@ static int view_file (struct document *doc, struct prefs *prefs)
 
 	doc->update(doc);
 
-	sprintf(status, "%s - %s", argp_program_version, doc->filename);
-	doc->set_message(doc, status);
+	if (! prefs->quiet)
+	{
+		sprintf(status, "%s - %s", argp_program_version, doc->filename);
+		doc->set_message(doc, status);
+	}
 
 	main_loop (doc);
 
