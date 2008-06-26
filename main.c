@@ -19,6 +19,7 @@
 #include "fbcanvas.h"
 #include "commands.h"
 #include "keymap.h"
+#include "terminal.h"
 
 struct prefs
 {
@@ -86,107 +87,6 @@ error_t parse_arguments (int key, char *arg, struct argp_state *state)
 	return 0;
 }
 
-bool need_repaint = false;
-
-void handle_signal(int s)
-{
-	int fd = open("/dev/tty", O_RDWR);
-	if (fd)
-	{
-		if (s == SIGUSR1)
-		{
-			/* Release display */
-			ioctl(fd, VT_RELDISP, 1);
-		} else if (s == SIGUSR2) {
-			/* Acquire display */
-			ioctl(fd, VT_RELDISP, VT_ACKACQ);
-			need_repaint = true;
-		}
-
-		close(fd);
-	}
-}
-
-static int read_key(void)
-{
-	static int fd = -1;
-	static struct pollfd pfd[2];
-	static sigset_t sigs;
-	static int modifiers = 0;
-
-	if (fd == -1)
-	{
-		sigfillset(&sigs);
-		sigdelset(&sigs, SIGUSR1);
-		sigdelset(&sigs, SIGUSR2);
-
-		fd = open("/dev/input/event2", O_RDONLY);
-		if (fd < 0)
-		{
-			perror("Could not open /dev/input/event2");
-			return -1;
-		}
-
-		pfd[0].fd = STDIN_FILENO;
-		pfd[0].events = POLLIN;
-		pfd[1].fd = fd;
-		pfd[1].events = POLLIN;
-		return 0;
-	}
-
-	for (;;)
-	{
-		int ret = ppoll(pfd, 2, NULL, &sigs);
-		if (ret == -1) /* error, most likely EINTR. */
-		{
-			/* This will be handled later */
-		} else if (ret == 0) { /* Timeout */
-			/* Nothing to do */
-		} else {
-			/* evdev input available */
-			if (pfd[1].revents)
-			{
-				struct input_event ev;
-				read(fd, &ev, sizeof(ev));
-
-				if (ev.type == EV_KEY)
-				{
-					unsigned int m = 0;
-					if (ev.code == KEY_LEFTSHIFT || ev.code == KEY_RIGHTSHIFT)
-						m = SHIFT;
-					if (ev.code == KEY_LEFTCTRL || ev.code == KEY_RIGHTCTRL)
-						m = CONTROL;
-					if (ev.code == KEY_LEFTALT || ev.code == KEY_RIGHTALT)
-						m = ALT;
-
-					if (ev.value == 1 || ev.value == 2)
-						modifiers |= m;
-					else if (ev.value == 0)
-						modifiers &= ~m;
-				}
-
-				if (need_repaint)
-				{
-					need_repaint = false;
-					return 'l' | CONTROL;
-				}
-			}
-
-			/* stdin input available */
-			if (pfd[0].revents)
-			{
-				int key = tolower(getch());
-
-				/* CTRL-A ... CTRL-Z */
-				if (key >= 1 && key <= 26)
-					key += 'a' - 1;
-
-				return modifiers | key;
-			}
-		}
-	}
-}
-
 static void main_loop (struct document *doc)
 {
 	WINDOW *win = initscr();
@@ -218,10 +118,6 @@ static void main_loop (struct document *doc)
 static int view_file (struct document *doc, struct prefs *prefs)
 {
 	char status[128];
-
-	/* First call tries to initialize the input devices */
-	if (read_key() < 0)
-		return 1;
 
 	if (prefs->page < doc->pagecount)
 		doc->pagenum = prefs->page;
@@ -276,11 +172,13 @@ int main(int argc, char *argv[])
 			if (!r)
 				ret = 0;
 		} else {
-			init_terminal();
+			ret = init_terminal();
+			if (ret < 0)
+				goto out;
 			ret = view_file (doc, &prefs);
 		}
 		doc->close (doc);
 	}
-
+out:
 	return ret;
 }

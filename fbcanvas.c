@@ -1,6 +1,7 @@
 /*
  * fbcanvas.c - 17.5.2008 - 19.6.2008 Ari & Tero Roponen
  */
+#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <errno.h>
 #include <linux/fb.h>
