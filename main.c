@@ -177,18 +177,9 @@ static int read_key(void)
 			{
 				int key = tolower(getch());
 
-				switch (key)
-				{
-					case 12: /* CTRL-L */
-						key = 'l';
-						break;
-					case 14: /* CTRL-N */
-						key = 'n';
-						break;
-					case 16: /* CTRL-P */
-						key = 'p';
-						break;
-				}
+				/* CTRL-A ... CTRL-Z */
+				if (key >= 1 && key <= 26)
+					key += 'a' - 1;
 
 				return modifiers | key;
 			}
