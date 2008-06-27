@@ -63,14 +63,15 @@ static int modifiers = 0;
 
 static int init_input(void)
 {
+	static const char kbd_dev[] = "/dev/input/by-path/platform-i8042-serio-0-event-kbd";
 	sigfillset(&sigs);
 	sigdelset(&sigs, SIGUSR1);
 	sigdelset(&sigs, SIGUSR2);
 
-	fd = open("/dev/input/event2", O_RDONLY);
+	fd = open(kbd_dev, O_RDONLY);
 	if (fd < 0)
 	{
-		perror("Could not open /dev/input/event2");
+		perror(kbd_dev);
 		return -1;
 	}
 
