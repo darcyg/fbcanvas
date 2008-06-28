@@ -56,9 +56,16 @@ static cairo_surface_t *merge_surfaces (struct document *doc)
 	{
 		PangoLayout *layout;
 		PangoFontDescription *desc;
+		int msg_lines = 1;
+
+		for (int i = 0; doc->message[i]; i++)
+		{
+			if (doc->message[i] == '\n')
+				msg_lines++;
+		}
 
 		/* Restrict operations to message area. */
-		cairo_rectangle (cr, 0, 0, doc->fbcanvas->fb->width, 20);
+		cairo_rectangle (cr, 0, 0, doc->fbcanvas->fb->width, msg_lines * 23);
 		cairo_clip (cr);
 
 		/* Black background. */

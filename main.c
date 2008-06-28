@@ -129,7 +129,7 @@ static int view_file (struct document *doc, struct prefs *prefs)
 
 	if (! prefs->quiet)
 	{
-		sprintf(status, "%s - %s", argp_program_version, doc->filename);
+		sprintf(status, "%s\n%s", argp_program_version, doc->filename);
 		doc->set_message(doc, status);
 	}
 

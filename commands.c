@@ -232,6 +232,17 @@ static void cmd_display_current_page (struct document *doc)
 	doc->set_message(doc, buf);
 }
 
+static void cmd_display_info(struct document *doc)
+{
+	char buf[256];
+
+	sprintf(buf, "File: %s\nPage: %d/%d",
+		basename(doc->filename),
+		doc->pagenum + 1,
+		doc->pagecount);
+	doc->set_message(doc, buf);
+}
+
 static void scale_doc_full (struct document *doc, double xs, double ys)
 {
 	double w = doc->fbcanvas->fb->width;
@@ -297,6 +308,7 @@ void setup_keys (void)
 		{'f', cmd_full_screen},
 		{'g', cmd_reset},
 		{'h', cmd_full_height},
+		{'i', cmd_display_info},
 		{'l' | CONTROL, cmd_redraw},
 		{'n' | CONTROL, cmd_down},
 		{'p', cmd_display_current_page},
