@@ -20,8 +20,6 @@ void x11_main_loop(struct document *doc)
 {
 	XEvent report;
 
-//	doc->draw(doc);
-
 	for (;;)
 	{
 
@@ -53,8 +51,12 @@ void x11_main_loop(struct document *doc)
 						XCloseDisplay(display);
 						goto out;
 
+					case 20: key = '+'; break;
+					case 29: key = 'y'; break;
 					case 33: key = 'p'; break;
-
+					case 52: key = 'z'; break;
+					case 53: key = 'x'; break;
+					case 61: key = '-'; break;
 					case 98: key = KEY_UP; break;
 					case 99: key = KEY_PPAGE; break;
 					case 100: key = KEY_LEFT; break;

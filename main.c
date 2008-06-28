@@ -95,8 +95,6 @@ void ncurses_main_loop (struct document *doc)
 	cbreak();
 	keypad(win, 1); /* Handle KEY_xxx */
 
-	setup_keys ();
-
 	if (setjmp (exit_loop) == 0)
 	{
 		int ch;
@@ -131,6 +129,8 @@ static int view_file (struct document *doc, struct prefs *prefs)
 		sprintf(status, "%s\n%s", argp_program_version, doc->filename);
 		doc->set_message(doc, status);
 	}
+
+	setup_keys();
 
 	doc->main_loop(doc);
 
