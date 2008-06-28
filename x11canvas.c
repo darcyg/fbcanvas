@@ -34,13 +34,14 @@ void x11_main_loop(struct document *doc)
 		switch (report.type)
 		{
 			case Expose:
+				while (XCheckTypedEvent(display, Expose, &report))
+					;
+				doc->draw(doc);
 				break;
 			case ConfigureNotify:
 				break;
 			case ButtonPress:
-				XFreeGC(display, gc);
-				XCloseDisplay(display);
-				goto out;
+				break;
 
 			case KeyPress:
 			{
@@ -50,6 +51,12 @@ void x11_main_loop(struct document *doc)
 
 				switch (xkey.keycode)
 				{
+					case 9:  /* ESC */
+					case 24: /* 'q' */
+						XFreeGC(display, gc);
+						XCloseDisplay(display);
+						goto out;
+
 					case 99: key = KEY_PPAGE; break;
 					case 105: key = KEY_NPAGE; break;
 				}
@@ -261,46 +268,7 @@ int main(int argc, char *argv[])
 
 	XMapWindow(display, win);
 
-	while (1)
-	{
-		XNextEvent(display, &report);
-
-		switch (report.type)
-		{
-			case Expose:
-				while (XCheckTypedEvent(display, Expose, &report))
-					;
-				if (window_size == SMALL)
-				{
-					TooSmall(win, gc, font_info);
-				} else {
-					draw_text(win, gc, font_info, width, height);
-					draw_graphics(win, gc, width, height);
-				}
-				break;
-
-			case ConfigureNotify:
-				width = report.xconfigure.width;
-				height = report.xconfigure.height;
-
-				if (width < size_hints.min_width || height < size_hints.min_height)
-					window_size = SMALL;
-				else
-					window_size = OK;
-				break;
-
-			case ButtonPress:
-			case KeyPress:
-				XUnloadFont(display, font_info->fid);
-				XFreeGC(display, gc);
-				XCloseDisplay(display);
-				exit(1);
-				break;
-
-			default:
-				break;
-		}
-	}
+	... Loppuosa koodista siirrettiin x11_main_loop-metodiin...
 }
 
 void get_GC(Window win, GC *gc, XFontStruct *font_info)
