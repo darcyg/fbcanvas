@@ -5,6 +5,9 @@
 #include "document.h"
 #include "file_info.h"
 
+void x11_main_loop(struct document *doc);
+void ncurses_main_loop(struct document *doc);
+
 static void close_document(struct document *doc)
 {
 	if (doc->ops->close)
@@ -130,12 +133,23 @@ struct document *open_document(char *filename)
 	{
 		struct file_info *fi;
 
-		doc->fbcanvas = fbcanvas_create(filename);
-		if (!doc->fbcanvas)
+		g_type_init();
+
+		/* First try X11, then framebuffer. */
+		doc->fbcanvas = x11canvas_create(filename);
+		if (doc->fbcanvas)
 		{
-			free (doc);
-			doc = NULL;
-			goto out;
+			doc->main_loop = x11_main_loop;
+		} else {
+			doc->fbcanvas = fbcanvas_create(filename);
+			if (!doc->fbcanvas)
+			{
+				free (doc);
+				doc = NULL;
+				goto out;
+			}
+
+			doc->main_loop = ncurses_main_loop;
 		}
 
 		cairo_matrix_init_identity (&doc->transform);

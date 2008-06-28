@@ -101,8 +101,6 @@ struct fbcanvas *fbcanvas_create(char *filename)
 	struct fbcanvas *fbc = malloc(sizeof(*fbc));
 	if (fbc)
 	{
-		g_type_init();
-
 		/* TODO: tarkista onnistuminen */
 		fbc->fb = open_framebuffer("/dev/fb0");
 		if (!fbc->fb)

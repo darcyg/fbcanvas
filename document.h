@@ -15,6 +15,8 @@ struct document_ops
 
 	int (*grep)(struct document *doc, char *regexp);
 	void (*dump_text)(struct document *doc, char *filename);
+
+	void (*main_loop)(struct document *doc);
 };
 
 struct document
@@ -47,6 +49,7 @@ struct document
 	void (*draw)(struct document *doc);
 	int (*grep)(struct document *doc, char *regexp);
 	void (*dump_text)(struct document *doc, char *filename);
+	void (*main_loop)(struct document *doc);
 
 	/* Kaikille yhteiset metodit */
 	void (*set_message)(struct document *doc, char *msg);

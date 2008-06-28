@@ -87,7 +87,7 @@ error_t parse_arguments (int key, char *arg, struct argp_state *state)
 	return 0;
 }
 
-static void main_loop (struct document *doc)
+void ncurses_main_loop (struct document *doc)
 {
 	WINDOW *win = initscr();
 
@@ -133,7 +133,7 @@ static int view_file (struct document *doc, struct prefs *prefs)
 		doc->set_message(doc, status);
 	}
 
-	main_loop (doc);
+	doc->main_loop(doc);
 
 	fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n",
 		 program_invocation_short_name,
