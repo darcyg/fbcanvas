@@ -101,7 +101,7 @@ static void draw_document(struct document *doc)
 {
 	cairo_surface_t *surf = merge_surfaces (doc);
 	struct framebuffer *fb = doc->fbcanvas->fb;
-	fb->draw(fb, cairo_image_surface_get_data(surf));
+	fb->draw(fb, surf);
 	cairo_surface_destroy (surf);
 }
 

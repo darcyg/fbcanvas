@@ -15,7 +15,7 @@ struct framebuffer
 	unsigned int height;	/* Hardware height		*/
 	unsigned int depth;	/* Hardware color depth		*/
 
-	void (*draw)(struct framebuffer *fb, unsigned char *data);
+	void (*draw)(struct framebuffer *fb, cairo_surface_t *surface);
 };
 
 struct fbcanvas

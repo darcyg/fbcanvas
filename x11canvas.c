@@ -16,15 +16,11 @@ static Window win;
 static int screen;
 static GC gc;
 
-static struct document *hack;
-
 void x11_main_loop(struct document *doc)
 {
 	XEvent report;
 
-	hack = doc;
-
-	doc->draw(doc);
+//	doc->draw(doc);
 
 	for (;;)
 	{
@@ -57,14 +53,20 @@ void x11_main_loop(struct document *doc)
 						XCloseDisplay(display);
 						goto out;
 
+					case 33: key = 'p'; break;
+
+					case 98: key = KEY_UP; break;
 					case 99: key = KEY_PPAGE; break;
+					case 100: key = KEY_LEFT; break;
+					case 102: key = KEY_RIGHT; break;
+					case 104: key = KEY_DOWN; break;
 					case 105: key = KEY_NPAGE; break;
 				}
 
 				if (key)
 				{
 					cmd = lookup_command(key);
-					cmd(hack);
+					cmd(doc);
 					doc->draw(doc);
 					break;
 				}
@@ -82,7 +84,7 @@ out:
 	;
 }
 
-static void draw_16bpp(struct framebuffer *fb, unsigned char *data)
+static void draw_16bpp(struct framebuffer *fb, cairo_surface_t *surface)
 {
 	Visual *visual = XDefaultVisual(display, 0);
 #if 0
@@ -91,7 +93,7 @@ static void draw_16bpp(struct framebuffer *fb, unsigned char *data)
 	visual->blue_mask = 0xFF << 16;
 #endif
 
-	cairo_pattern_t *img = cairo_pattern_create_for_surface (hack->cairo);
+	cairo_pattern_t *img = cairo_pattern_create_for_surface (surface);
 	cairo_surface_t *cs = cairo_xlib_surface_create(display,
 		win, visual, fb->width, fb->height);
 	cairo_t *cr = cairo_create(cs);

@@ -16,7 +16,7 @@
 #include "fbcanvas.h"
 #include "file_info.h"
 
-static void draw_16bpp(struct framebuffer *fb, unsigned char *data);
+static void draw_16bpp(struct framebuffer *fb, cairo_surface_t *surface);
 
 static struct framebuffer *open_framebuffer(char *fbdev)
 {
@@ -101,8 +101,10 @@ void fbcanvas_destroy(struct fbcanvas *fbc)
 }
 
 /* rgba 5/11, 6/5, 5/0, 0/0 */
-static void draw_16bpp(struct framebuffer *fb, unsigned char *data)
+static void draw_16bpp(struct framebuffer *fb, cairo_surface_t *surface)
 {
+	unsigned char *data = cairo_image_surface_get_data(surface);
+
 	for (int y = 0; y < fb->height; y++)
 	{
 		for (int x = 0; x < fb->width; x++)
