@@ -43,7 +43,7 @@ static cairo_surface_t *merge_surfaces (struct document *doc)
 	if (!(doc->flags & NO_GENERIC_SCALE))
 		cairo_matrix_scale (&mat, doc->scale, doc->scale);
 
-	cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
+	cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
 	cairo_paint(cr);
 
 	cairo_transform (cr, &mat);
