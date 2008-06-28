@@ -82,33 +82,6 @@ out:
 	;
 }
 
-/* TODO: tämän voisi laittaa document-olion metodiksi */
-static void x11canvas_scroll(struct document *doc, int dx, int dy)
-{
-	struct framebuffer *fb = doc->fbcanvas->fb;
-
-	doc->xoffset += dx;
-	doc->yoffset += dy;
-
-	if (doc->xoffset >= 0)
-	{
-		if (doc->xoffset >= (int)doc->width)
-			doc->xoffset = doc->width - 1;
-	} else {
-		if (-doc->xoffset >= fb->width)
-			doc->xoffset = -(fb->width - 1);
-	}
-
-	if (doc->yoffset >= 0)
-	{
-		if (doc->yoffset >= (int)doc->height)
-			doc->yoffset = doc->height - 1;
-	} else {
-		if (-doc->yoffset >= fb->height)
-			doc->yoffset = -(fb->height - 1);
-	}
-}
-
 static void draw_16bpp(struct framebuffer *fb, unsigned char *data)
 {
 	Visual *visual = XDefaultVisual(display, 0);
@@ -198,8 +171,6 @@ out_free:
 		XSetForeground(display, gc, BlackPixel(display,screen));
 		XSetLineAttributes(display, gc, 1, LineSolid, CapButt, JoinMiter);
 		XMapWindow(display, win);
-
-		fbc->scroll = x11canvas_scroll;
 	}
 out:
 	return fbc;

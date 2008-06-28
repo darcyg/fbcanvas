@@ -126,6 +126,32 @@ static void document_set_message(struct document *doc, char *msg)
 	doc->message = strdup (msg);
 }
 
+static void document_scroll(struct document *doc, int dx, int dy)
+{
+	struct framebuffer *fb = doc->fbcanvas->fb;
+
+	doc->xoffset += dx;
+	doc->yoffset += dy;
+
+	if (doc->xoffset >= 0)
+	{
+		if (doc->xoffset >= (int)doc->width)
+			doc->xoffset = doc->width - 1;
+	} else {
+		if (-doc->xoffset >= fb->width)
+			doc->xoffset = -(fb->width - 1);
+	}
+
+	if (doc->yoffset >= 0)
+	{
+		if (doc->yoffset >= (int)doc->height)
+			doc->yoffset = doc->height - 1;
+	} else {
+		if (-doc->yoffset >= fb->height)
+			doc->yoffset = -(fb->height - 1);
+	}
+}
+
 struct document *open_document(char *filename)
 {
 	struct document *doc = malloc(sizeof(*doc));
@@ -184,6 +210,7 @@ struct document *open_document(char *filename)
 		doc->grep = grep_document;
 		doc->dump_text = document_dump_text;
 		doc->set_message = document_set_message;
+		doc->scroll = document_scroll;
 
 		doc->data = doc->ops->open(doc);
 	}

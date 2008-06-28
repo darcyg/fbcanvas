@@ -21,7 +21,6 @@ struct framebuffer
 struct fbcanvas
 {
 	struct framebuffer *fb;
-	void (*scroll)(struct document *doc, int dx, int dy);
 };
 
 struct fbcanvas *fbcanvas_create(char *filename);

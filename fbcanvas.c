@@ -69,32 +69,6 @@ out:
 	return fb;
 }
 
-static void fbcanvas_scroll(struct document *doc, int dx, int dy)
-{
-	struct framebuffer *fb = doc->fbcanvas->fb;
-
-	doc->xoffset += dx;
-	doc->yoffset += dy;
-
-	if (doc->xoffset >= 0)
-	{
-		if (doc->xoffset >= (int)doc->width)
-			doc->xoffset = doc->width - 1;
-	} else {
-		if (-doc->xoffset >= fb->width)
-			doc->xoffset = -(fb->width - 1);
-	}
-
-	if (doc->yoffset >= 0)
-	{
-		if (doc->yoffset >= (int)doc->height)
-			doc->yoffset = doc->height - 1;
-	} else {
-		if (-doc->yoffset >= fb->height)
-			doc->yoffset = -(fb->height - 1);
-	}
-}
-
 struct fbcanvas *fbcanvas_create(char *filename)
 {
 	GError *err = NULL;
@@ -109,9 +83,6 @@ struct fbcanvas *fbcanvas_create(char *filename)
 			fbc = NULL;
 			goto out;
 		}
-
-		/* Asetetaan yleiset metodit. */
-		fbc->scroll = fbcanvas_scroll;
 	}
 
 out:

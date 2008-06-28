@@ -53,6 +53,7 @@ struct document
 
 	/* Kaikille yhteiset metodit */
 	void (*set_message)(struct document *doc, char *msg);
+	void (*scroll)(struct document *doc, int dx, int dy);
 };
 
 enum

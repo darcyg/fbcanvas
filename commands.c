@@ -66,22 +66,22 @@ static void cmd_last_page (struct document *doc)
 
 static void cmd_down (struct document *doc)
 {
-	doc->fbcanvas->scroll(doc, 0, doc->fbcanvas->fb->height / 20);
+	doc->scroll(doc, 0, doc->fbcanvas->fb->height / 20);
 }
 
 static void cmd_up (struct document *doc)
 {
-	doc->fbcanvas->scroll(doc, 0, -(doc->fbcanvas->fb->height / 20));
+	doc->scroll(doc, 0, -(doc->fbcanvas->fb->height / 20));
 }
 
 static void cmd_left (struct document *doc)
 {
-	doc->fbcanvas->scroll(doc, -(doc->fbcanvas->fb->width / 20), 0);
+	doc->scroll(doc, -(doc->fbcanvas->fb->width / 20), 0);
 }
 
 static void cmd_right (struct document *doc)
 {
-	doc->fbcanvas->scroll(doc, doc->fbcanvas->fb->width / 20, 0);
+	doc->scroll(doc, doc->fbcanvas->fb->width / 20, 0);
 }
 
 static void cmd_set_zoom (struct document *doc)

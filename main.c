@@ -8,7 +8,6 @@
 #include <argp.h>
 #include <fcntl.h>
 #include <ncurses.h>
-#undef scroll
 #include <poll.h>
 #include <setjmp.h>
 #include <signal.h>
