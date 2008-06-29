@@ -21,6 +21,7 @@ struct framebuffer
 struct fbcanvas
 {
 	struct framebuffer *fb;
+	cairo_surface_t *surface;
 };
 
 struct fbcanvas *fbcanvas_create(char *filename);
