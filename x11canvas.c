@@ -86,7 +86,7 @@ out:
 	;
 }
 
-static void draw_16bpp(struct framebuffer *fb, cairo_surface_t *surface)
+static void dummy_draw(struct framebuffer *fb, cairo_surface_t *surface)
 {
 	/* merge_surfaces did all the work for us. */
 	return;
@@ -120,7 +120,8 @@ out_free:
 			switch (fbc->fb->depth)
 			{
 				case 16:
-					fbc->fb->draw = draw_16bpp;
+				case 24:
+					fbc->fb->draw = dummy_draw;
 					break;
 				default:
 					fprintf(stderr, "Unsupported depth: %d\n", fbc->fb->depth);
