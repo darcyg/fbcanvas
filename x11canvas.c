@@ -88,24 +88,8 @@ out:
 
 static void draw_16bpp(struct framebuffer *fb, cairo_surface_t *surface)
 {
-	Visual *visual = XDefaultVisual(display, 0);
-#if 0
-	visual->red_mask = 0xFF << 0;
-	visual->green_mask = 0xFF << 8;
-	visual->blue_mask = 0xFF << 16;
-#endif
-
-	cairo_pattern_t *img = cairo_pattern_create_for_surface (surface);
-	cairo_surface_t *cs = cairo_xlib_surface_create(display,
-		win, visual, fb->width, fb->height);
-	cairo_t *cr = cairo_create(cs);
-
-	cairo_set_source (cr, img);
-	cairo_paint(cr);
-
-	cairo_pattern_destroy(img);
-	cairo_surface_destroy(cs);
-	cairo_destroy(cr);
+	/* merge_surfaces did all the work for us. */
+	return;
 }
 
 struct fbcanvas *x11canvas_create(char *filename)
@@ -176,9 +160,9 @@ out_free:
 		XSetLineAttributes(display, gc, 1, LineSolid, CapButt, JoinMiter);
 		XMapWindow(display, win);
 
-		cairo_surface_t *tmp = cairo_image_surface_create (
-			CAIRO_FORMAT_ARGB32, fbc->fb->width, fbc->fb->height);
-		fbc->surface = tmp;
+		Visual *visual = XDefaultVisual(display, 0);
+		fbc->surface = cairo_xlib_surface_create
+			(display, win, visual, fbc->fb->width, fbc->fb->height);
 	}
 out:
 	return fbc;
