@@ -97,18 +97,8 @@ static void merge_surfaces (struct document *doc, cairo_surface_t *surf)
 static void draw_document(struct document *doc)
 {
 	struct fbcanvas *canvas = doc->fbcanvas;
-#if 1
-	cairo_surface_t *tmp = cairo_image_surface_create (
-		CAIRO_FORMAT_ARGB32, canvas->fb->width, canvas->fb->height);
-	canvas->surface = tmp;
-#endif
-
 	merge_surfaces (doc, canvas->surface);
 	canvas->fb->draw(canvas->fb, canvas->surface);
-
-#if 1
-	cairo_surface_destroy (tmp); /* destroys canvas->surface */
-#endif
 }
 
 static int grep_document(struct document *doc, char *regexp)

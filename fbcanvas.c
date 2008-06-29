@@ -83,6 +83,10 @@ struct fbcanvas *fbcanvas_create(char *filename)
 			fbc = NULL;
 			goto out;
 		}
+
+		cairo_surface_t *tmp = cairo_image_surface_create (
+			CAIRO_FORMAT_ARGB32, fbc->fb->width, fbc->fb->height);
+		fbc->surface = tmp;
 	}
 
 out:
@@ -92,6 +96,8 @@ out:
 void fbcanvas_destroy(struct fbcanvas *fbc)
 {
 	struct framebuffer *fb = fbc->fb;
+
+	cairo_surface_destroy (fbc->surface);
 
 	/* Unmap framebuffer */
 	munmap(fb->mem, fb->width * fb->height * (fb->depth / 8));

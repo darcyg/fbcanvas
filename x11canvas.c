@@ -175,6 +175,10 @@ out_free:
 		XSetForeground(display, gc, BlackPixel(display,screen));
 		XSetLineAttributes(display, gc, 1, LineSolid, CapButt, JoinMiter);
 		XMapWindow(display, win);
+
+		cairo_surface_t *tmp = cairo_image_surface_create (
+			CAIRO_FORMAT_ARGB32, fbc->fb->width, fbc->fb->height);
+		fbc->surface = tmp;
 	}
 out:
 	return fbc;
