@@ -25,13 +25,9 @@ static void update_document(struct document *doc)
 	doc->height = cairo_image_surface_get_height(doc->cairo);
 }
 
-static cairo_surface_t *merge_surfaces (struct document *doc)
+static void merge_surfaces (struct document *doc, cairo_surface_t *surf)
 {
 	cairo_pattern_t *img = cairo_pattern_create_for_surface (doc->cairo);
-	cairo_surface_t *surf = cairo_surface_create_similar (
-		doc->cairo, CAIRO_CONTENT_COLOR_ALPHA,
-		doc->fbcanvas->fb->width, doc->fbcanvas->fb->height);
-
 	cairo_t *cr = cairo_create (surf);
 	cairo_matrix_t mat = doc->transform;
 
@@ -96,14 +92,15 @@ static cairo_surface_t *merge_surfaces (struct document *doc)
 	}
 
 	cairo_destroy (cr);
-
-	return surf;
 }
 
 static void draw_document(struct document *doc)
 {
-	cairo_surface_t *surf = merge_surfaces (doc);
+	cairo_surface_t *surf = cairo_surface_create_similar (
+		doc->cairo, CAIRO_CONTENT_COLOR_ALPHA,
+		doc->fbcanvas->fb->width, doc->fbcanvas->fb->height);
 	struct framebuffer *fb = doc->fbcanvas->fb;
+	merge_surfaces (doc, surf);
 	fb->draw(fb, surf);
 	cairo_surface_destroy (surf);
 }
