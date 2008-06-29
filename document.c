@@ -96,20 +96,18 @@ static void merge_surfaces (struct document *doc, cairo_surface_t *surf)
 
 static void draw_document(struct document *doc)
 {
+	struct fbcanvas *canvas = doc->fbcanvas;
 #if 1
-	cairo_surface_t *tmp = cairo_surface_create_similar (
-		doc->cairo, CAIRO_CONTENT_COLOR_ALPHA,
-		doc->fbcanvas->fb->width, doc->fbcanvas->fb->height);
-	doc->fbcanvas->surface = tmp;
+	cairo_surface_t *tmp = cairo_image_surface_create (
+		CAIRO_FORMAT_ARGB32, canvas->fb->width, canvas->fb->height);
+	canvas->surface = tmp;
 #endif
 
-	cairo_surface_t *surf = doc->fbcanvas->surface;
-	struct framebuffer *fb = doc->fbcanvas->fb;
-	merge_surfaces (doc, surf);
-	fb->draw(fb, surf);
+	merge_surfaces (doc, canvas->surface);
+	canvas->fb->draw(canvas->fb, canvas->surface);
 
 #if 1
-	cairo_surface_destroy (tmp); /* destroys doc->fbcanvas->surface */
+	cairo_surface_destroy (tmp); /* destroys canvas->surface */
 #endif
 }
 
