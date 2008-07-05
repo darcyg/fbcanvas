@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "document.h"
-#include "fbcanvas.h"
 #include "file_info.h"
 
 struct pdf_data

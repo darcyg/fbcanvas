@@ -13,14 +13,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "fbcanvas.h"
 #include "document.h"
 #include "file_info.h"
 
 static void draw_16bpp(struct backend *be, cairo_surface_t *surface);
 
 struct backend fb_backend;
-static struct framebuffer fb;
+
+static struct framebuffer
+{
+	unsigned char *mem;	/* mmap()ed framebuffer memory  */
+	unsigned int depth;     /* Hardware color depth         */
+} fb;
 
 static struct backend *open_fb(char *filename)
 {

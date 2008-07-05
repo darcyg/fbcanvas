@@ -15,7 +15,6 @@
 #include <string.h>
 #include <unistd.h>
 #include "document.h"
-#include "fbcanvas.h"
 #include "commands.h"
 #include "keymap.h"
 #include "terminal.h"
