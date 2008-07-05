@@ -52,7 +52,7 @@ static struct backend *open_fb(char *filename)
 		switch (be->fb->depth)
 		{
 			case 16:
-				be->fb->draw = draw_16bpp;
+				be->draw = draw_16bpp;
 				break;
 			default:
 				fprintf(stderr, "Unsupported depth: %d\n", be->fb->depth);

@@ -95,7 +95,7 @@ static void merge_surfaces (struct document *doc, cairo_surface_t *surf)
 static void draw_document(struct document *doc)
 {
 	merge_surfaces (doc, doc->backend->surface);
-	doc->backend->fb->draw(doc->backend, doc->backend->surface);
+	doc->backend->draw(doc->backend, doc->backend->surface);
 }
 
 static int grep_document(struct document *doc, char *regexp)

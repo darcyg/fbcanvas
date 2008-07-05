@@ -9,7 +9,6 @@
 #include <stdlib.h>
 
 #include "commands.h"
-#include "fbcanvas.h"
 
 static Display *display;
 static Window win;
@@ -86,7 +85,7 @@ out:
 	;
 }
 
-static void dummy_draw(struct framebuffer *fb, cairo_surface_t *surface)
+static void dummy_draw(struct backend *be, cairo_surface_t *surface)
 {
 	/* merge_surfaces did all the work for us. */
 	return;
@@ -116,8 +115,7 @@ static struct backend *x11canvas_create(char *filename)
 		be->width = DisplayWidth(display, screen);
 		be->height = DisplayHeight(display, screen);
 		be->fb->depth = DefaultDepth(display, screen);
-		be->fb->draw = dummy_draw;
-
+		be->draw = dummy_draw;
 	} else {
 		be = NULL;
 		goto out;

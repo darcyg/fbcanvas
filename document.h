@@ -1,6 +1,7 @@
 #ifndef DOCUMENT_H
 #define DOCUMENT_H
 
+#include <cairo/cairo.h>
 #include "fbcanvas.h"
 
 struct document;
@@ -26,6 +27,7 @@ struct backend
 	void (*main_loop)(struct document *doc);
 
 	cairo_surface_t *surface;
+	void (*draw)(struct backend *be, cairo_surface_t *surface);
 
 	unsigned int width;
 	unsigned int height;
