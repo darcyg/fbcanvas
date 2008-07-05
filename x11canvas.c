@@ -155,9 +155,11 @@ static struct backend *x11canvas_create(char *filename)
 	XSetLineAttributes(display, gc, 1, LineSolid, CapButt, JoinMiter);
 	XMapWindow(display, win);
 
-	cairo_surface_t *tmp = cairo_image_surface_create (
-		CAIRO_FORMAT_ARGB32, be->width, be->height);
-	be->surface = tmp;
+	be->surface = cairo_xlib_surface_create(display,
+		win,
+		XDefaultVisual(display, 0),
+		be->width,
+		be->height);
 
 out:
 	return be;
