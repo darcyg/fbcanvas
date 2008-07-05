@@ -1,3 +1,4 @@
+#include <poppler.h>
 #include <math.h>
 #include <stdlib.h>
 #include "document.h"

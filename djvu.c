@@ -1,3 +1,4 @@
+#include <poppler.h>
 #include <libdjvu/ddjvuapi.h>
 #include "document.h"
 #include "fbcanvas.h"
@@ -16,7 +17,7 @@ static void *open_djvu(struct document *doc)
 	struct djvu_data *data = malloc(sizeof(*data));
 	if (data)
 	{
-		struct fbcanvas *fbc = doc->fbcanvas;
+		struct backend *fbc = doc->backend;
 		const ddjvu_message_t *msg;
 
 		data->context = ddjvu_context_create("fbcanvas");
@@ -67,7 +68,7 @@ static void close_djvu(struct document *doc)
 static cairo_surface_t *update_djvu(struct document *doc)
 {
 	struct djvu_data *data = doc->data;
-	struct framebuffer *fb = doc->fbcanvas->fb;
+	struct framebuffer *fb = doc->backend->fb;
 	unsigned int rgb[] =
 	{
 		0xFF << 0,	/* R */

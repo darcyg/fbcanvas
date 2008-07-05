@@ -19,9 +19,24 @@ struct document_ops
 	void (*main_loop)(struct document *doc);
 };
 
+struct backend
+{
+	struct backend *(*open)(char *filename);
+	void (*close)(struct backend *fbc);
+	void (*main_loop)(struct document *doc);
+
+	cairo_surface_t *surface;
+
+	unsigned int width;
+	unsigned int height;
+	void *data;
+
+	struct framebuffer *fb;
+};
+
 struct document
 {
-	struct fbcanvas *fbcanvas;
+	struct backend *backend;
 	char *filename;
 	void *data;
 	char *message;

@@ -16,7 +16,7 @@ static Window win;
 static int screen;
 static GC gc;
 
-void x11_main_loop(struct document *doc)
+static void x11_main_loop(struct document *doc)
 {
 	XEvent report;
 
@@ -86,18 +86,13 @@ out:
 	;
 }
 
-static void draw_16bpp(struct framebuffer *fb, cairo_surface_t *surface)
+static void draw_16bpp(struct backend *be, cairo_surface_t *surface)
 {
 	Visual *visual = XDefaultVisual(display, 0);
-#if 0
-	visual->red_mask = 0xFF << 0;
-	visual->green_mask = 0xFF << 8;
-	visual->blue_mask = 0xFF << 16;
-#endif
 
 	cairo_pattern_t *img = cairo_pattern_create_for_surface (surface);
 	cairo_surface_t *cs = cairo_xlib_surface_create(display,
-		win, visual, fb->width, fb->height);
+		win, visual, be->width, be->height);
 	cairo_t *cr = cairo_create(cs);
 
 	cairo_set_source (cr, img);
@@ -108,81 +103,91 @@ static void draw_16bpp(struct framebuffer *fb, cairo_surface_t *surface)
 	cairo_destroy(cr);
 }
 
-struct fbcanvas *x11canvas_create(char *filename)
+struct backend x11_backend;
+
+static struct backend *x11canvas_create(char *filename)
 {
-	struct fbcanvas *fbc = malloc(sizeof(*fbc));
+	struct backend *be = &x11_backend;
+
+	XGCValues values;
+	XSizeHints size_hints;
+	char *display_name = NULL;
+	display = XOpenDisplay(display_name);
+	if (!display)
 	{
-		XGCValues values;
-		XSizeHints size_hints;
-		char *display_name = NULL;
-		display = XOpenDisplay(display_name);
-		if (!display)
-		{
-out_free:
-			free(fbc);
-			fbc = NULL;
-			goto out;
-		}
+		be = NULL;
+		goto out;
 
-		fbc->fb = malloc(sizeof(*fbc->fb));
-		if (fbc->fb)
-		{
-			screen = DefaultScreen(display);
-
-			fbc->fb->width = DisplayWidth(display, screen);
-			fbc->fb->height = DisplayHeight(display, screen);
-			fbc->fb->depth = DefaultDepth(display, screen);
-
-			switch (fbc->fb->depth)
-			{
-				case 16:
-					fbc->fb->draw = draw_16bpp;
-					break;
-				default:
-					fprintf(stderr, "Unsupported depth: %d\n", fbc->fb->depth);
-					exit(1);
-			}
-		} else goto out_free;
-
-		win = XCreateSimpleWindow(display,
-			RootWindow(display, screen),
-			0, 0,
-			fbc->fb->width,
-			fbc->fb->height,
-			0, /* Border width */
-			BlackPixel(display, screen),
-			WhitePixel(display,screen));
-
-		size_hints.flags = PPosition | PSize | PMinSize;
-		size_hints.x = 0;
-	        size_hints.y = 0;
-		size_hints.width = fbc->fb->width;
-		size_hints.height = fbc->fb->height;
-		size_hints.min_width = 350;
-		size_hints.min_height = 250;
-
-		XSetStandardProperties(display, win,
-			"fb", NULL, NULL,
-			NULL, 0, &size_hints);
-
-		XSelectInput(display, win,
-			ExposureMask |
-			KeyPressMask |
-			ButtonPressMask |
-			StructureNotifyMask);
-
-		gc = XCreateGC(display, win, 0, &values);
-		XSetForeground(display, gc, BlackPixel(display,screen));
-		XSetLineAttributes(display, gc, 1, LineSolid, CapButt, JoinMiter);
-		XMapWindow(display, win);
-
-		cairo_surface_t *tmp = cairo_image_surface_create (
-			CAIRO_FORMAT_ARGB32, fbc->fb->width, fbc->fb->height);
-		fbc->surface = tmp;
 	}
+
+	be->fb = malloc(sizeof(*be->fb));
+	if (be->fb)
+	{
+		screen = DefaultScreen(display);
+		be->width = DisplayWidth(display, screen);
+		be->height = DisplayHeight(display, screen);
+		be->fb->depth = DefaultDepth(display, screen);
+
+		switch (be->fb->depth)
+		{
+			case 16:
+				be->fb->draw = draw_16bpp;
+				break;
+			default:
+				fprintf(stderr, "Unsupported depth: %d\n", be->fb->depth);
+				exit(1);
+		}
+	} else {
+		be = NULL;
+		goto out;
+	}
+
+	win = XCreateSimpleWindow(display,
+		RootWindow(display, screen),
+		0, 0,
+		be->width,
+		be->height,
+		0, /* Border width */
+		BlackPixel(display, screen),
+		WhitePixel(display,screen));
+
+	size_hints.flags = PPosition | PSize | PMinSize;
+	size_hints.x = 0;
+	size_hints.y = 0;
+	size_hints.width = be->width;
+	size_hints.height = be->height;
+	size_hints.min_width = 350;
+	size_hints.min_height = 250;
+
+	XSetStandardProperties(display, win,
+		"fb", NULL, NULL,
+		NULL, 0, &size_hints);
+
+	XSelectInput(display, win,
+		ExposureMask |
+		KeyPressMask |
+		ButtonPressMask |
+		StructureNotifyMask);
+
+	gc = XCreateGC(display, win, 0, &values);
+	XSetForeground(display, gc, BlackPixel(display,screen));
+	XSetLineAttributes(display, gc, 1, LineSolid, CapButt, JoinMiter);
+	XMapWindow(display, win);
+
+	cairo_surface_t *tmp = cairo_image_surface_create (
+		CAIRO_FORMAT_ARGB32, be->width, be->height);
+	be->surface = tmp;
+
 out:
-	return fbc;
+	return be;
 }
+
+struct backend x11_backend =
+{
+	.open = x11canvas_create,
+	.main_loop = x11_main_loop,
+};
+
 
 #if 0
 int main(int argc, char *argv[])

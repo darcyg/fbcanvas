@@ -5,14 +5,12 @@
 #include "document.h"
 #include "file_info.h"
 
-void x11_main_loop(struct document *doc);
-void ncurses_main_loop(struct document *doc);
-
 static void close_document(struct document *doc)
 {
 	if (doc->ops->close)
 		doc->ops->close(doc);
-	fbcanvas_destroy(doc->fbcanvas);
+	if (doc->backend->close)
+		doc->backend->close(doc->backend);
 	free(doc->filename);
 	free(doc);
 }
@@ -67,7 +65,7 @@ static void merge_surfaces (struct document *doc, cairo_surface_t *surf)
 		}
 
 		/* Restrict operations to message area. */
-		cairo_rectangle (cr, 0, 0, doc->fbcanvas->fb->width, msg_lines * 23);
+		cairo_rectangle (cr, 0, 0, doc->backend->width, msg_lines * 23);
 		cairo_clip (cr);
 
 		/* Black background. */
@@ -96,9 +94,8 @@ static void merge_surfaces (struct document *doc, cairo_surface_t *surf)
 
 static void draw_document(struct document *doc)
 {
-	struct fbcanvas *canvas = doc->fbcanvas;
-	merge_surfaces (doc, canvas->surface);
-	canvas->fb->draw(canvas->fb, canvas->surface);
+	merge_surfaces (doc, doc->backend->surface);
+	doc->backend->fb->draw(doc->backend, doc->backend->surface);
 }
 
 static int grep_document(struct document *doc, char *regexp)
@@ -124,8 +121,6 @@ static void document_set_message(struct document *doc, char *msg)
 
 static void document_scroll(struct document *doc, int dx, int dy)
 {
-	struct framebuffer *fb = doc->fbcanvas->fb;
-
 	doc->xoffset += dx;
 	doc->yoffset += dy;
 
@@ -134,8 +129,8 @@ static void document_scroll(struct document *doc, int dx, int dy)
 		if (doc->xoffset >= (int)doc->width)
 			doc->xoffset = doc->width - 1;
 	} else {
-		if (-doc->xoffset >= fb->width)
-			doc->xoffset = -(fb->width - 1);
+		if (-doc->xoffset >= doc->backend->width)
+			doc->xoffset = -(doc->backend->width - 1);
 	}
 
 	if (doc->yoffset >= 0)
@@ -143,10 +138,20 @@ static void document_scroll(struct document *doc, int dx, int dy)
 		if (doc->yoffset >= (int)doc->height)
 			doc->yoffset = doc->height - 1;
 	} else {
-		if (-doc->yoffset >= fb->height)
-			doc->yoffset = -(fb->height - 1);
+		if (-doc->yoffset >= doc->backend->height)
+			doc->yoffset = -(doc->backend->height - 1);
 	}
 }
+
+extern struct backend x11_backend;
+extern struct backend fb_backend;
+
+static struct backend *backends[] =
+{
+	&x11_backend,
+	&fb_backend,
+	NULL
+};
 
 struct document *open_document(char *filename)
 {
@@ -154,24 +159,27 @@ struct document *open_document(char *filename)
 	if (doc)
 	{
 		struct file_info *fi;
+		struct backend *fbc = NULL;
 
 		g_type_init();
 
-		/* First try X11, then framebuffer. */
-		doc->fbcanvas = x11canvas_create(filename);
-		if (doc->fbcanvas)
+		/* Try different backends */
+		for (int i = 0; backends[i]; i++)
 		{
-			doc->main_loop = x11_main_loop;
-		} else {
-			doc->fbcanvas = fbcanvas_create(filename);
-			if (!doc->fbcanvas)
+			fbc = backends[i]->open(filename);
+			if (fbc)
 			{
-				free (doc);
-				doc = NULL;
-				goto out;
+				doc->backend = fbc;
+				doc->main_loop = backends[i]->main_loop;
+				break;
 			}
+		}
 
-			doc->main_loop = ncurses_main_loop;
+		if (!doc->backend)
+		{
+			free (doc);
+			doc = NULL;
+			goto out;
 		}
 
 		cairo_matrix_init_identity (&doc->transform);

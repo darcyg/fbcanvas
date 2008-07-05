@@ -66,22 +66,22 @@ static void cmd_last_page (struct document *doc)
 
 static void cmd_down (struct document *doc)
 {
-	doc->scroll(doc, 0, doc->fbcanvas->fb->height / 20);
+	doc->scroll(doc, 0, doc->backend->height / 20);
 }
 
 static void cmd_up (struct document *doc)
 {
-	doc->scroll(doc, 0, -(doc->fbcanvas->fb->height / 20));
+	doc->scroll(doc, 0, -(doc->backend->height / 20));
 }
 
 static void cmd_left (struct document *doc)
 {
-	doc->scroll(doc, -(doc->fbcanvas->fb->width / 20), 0);
+	doc->scroll(doc, -(doc->backend->width / 20), 0);
 }
 
 static void cmd_right (struct document *doc)
 {
-	doc->scroll(doc, doc->fbcanvas->fb->width / 20, 0);
+	doc->scroll(doc, doc->backend->width / 20, 0);
 }
 
 static void cmd_set_zoom (struct document *doc)
@@ -205,7 +205,6 @@ static void cmd_goto_top (struct document *doc)
 
 static void cmd_goto_bottom (struct document *doc)
 {
-	struct framebuffer *fb = doc->fbcanvas->fb;
 	static int last_y;
 	if (last_command == this_command)
 	{
@@ -214,7 +213,7 @@ static void cmd_goto_bottom (struct document *doc)
 		last_y = tmp;
 	} else {
 		last_y = doc->yoffset;
-		doc->yoffset = doc->height - fb->height;
+		doc->yoffset = doc->height - doc->backend->height;
 	}
 }
 
@@ -245,8 +244,8 @@ static void cmd_display_info(struct document *doc)
 
 static void scale_doc_full (struct document *doc, double xs, double ys)
 {
-	double w = doc->fbcanvas->fb->width;
-	double h = doc->fbcanvas->fb->height;
+	double w = doc->backend->width;
+	double h = doc->backend->height;
 	cairo_matrix_t scale;
 
 	cairo_matrix_init (&scale, w / xs, 0.0, 0.0, h / ys, 0.0, 0.0);
@@ -277,7 +276,7 @@ static void cmd_full_width (struct document *doc)
 
 	if (doc->flags & NO_GENERIC_SCALE)
 	{
-		doc->scale = (double)doc->fbcanvas->fb->width / (double)doc->width;
+		doc->scale = (double)doc->backend->width / (double)doc->width;
 		doc->update(doc);
 	} else {
 		scale_doc_full (doc, doc->width, doc->width);
@@ -290,7 +289,7 @@ static void cmd_full_height (struct document *doc)
 
 	if (doc->flags & NO_GENERIC_SCALE)
 	{
-		doc->scale = (double)doc->fbcanvas->fb->height / (double)doc->height;
+		doc->scale = (double)doc->backend->height / (double)doc->height;
 		doc->update(doc);
 	} else {
 		scale_doc_full (doc, doc->height, doc->height);
