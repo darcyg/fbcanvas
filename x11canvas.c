@@ -86,21 +86,10 @@ out:
 	;
 }
 
-static void draw_16bpp(struct backend *be, cairo_surface_t *surface)
+static void dummy_draw(struct framebuffer *fb, cairo_surface_t *surface)
 {
-	Visual *visual = XDefaultVisual(display, 0);
-
-	cairo_pattern_t *img = cairo_pattern_create_for_surface (surface);
-	cairo_surface_t *cs = cairo_xlib_surface_create(display,
-		win, visual, be->width, be->height);
-	cairo_t *cr = cairo_create(cs);
-
-	cairo_set_source (cr, img);
-	cairo_paint(cr);
-
-	cairo_pattern_destroy(img);
-	cairo_surface_destroy(cs);
-	cairo_destroy(cr);
+	/* merge_surfaces did all the work for us. */
+	return;
 }
 
 struct backend x11_backend;
@@ -127,16 +116,8 @@ static struct backend *x11canvas_create(char *filename)
 		be->width = DisplayWidth(display, screen);
 		be->height = DisplayHeight(display, screen);
 		be->fb->depth = DefaultDepth(display, screen);
+		be->fb->draw = dummy_draw;
 
-		switch (be->fb->depth)
-		{
-			case 16:
-				be->fb->draw = draw_16bpp;
-				break;
-			default:
-				fprintf(stderr, "Unsupported depth: %d\n", be->fb->depth);
-				exit(1);
-		}
 	} else {
 		be = NULL;
 		goto out;
