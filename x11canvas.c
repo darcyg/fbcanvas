@@ -108,18 +108,11 @@ static struct backend *x11canvas_create(char *filename)
 
 	}
 
-	be->fb = malloc(sizeof(*be->fb));
-	if (be->fb)
-	{
-		screen = DefaultScreen(display);
-		be->width = DisplayWidth(display, screen);
-		be->height = DisplayHeight(display, screen);
-		be->fb->depth = DefaultDepth(display, screen);
-		be->draw = dummy_draw;
-	} else {
-		be = NULL;
-		goto out;
-	}
+	screen = DefaultScreen(display);
+	be->width = DisplayWidth(display, screen);
+	be->height = DisplayHeight(display, screen);
+//	be->fb->depth = DefaultDepth(display, screen);
+	be->draw = dummy_draw;
 
 	win = XCreateSimpleWindow(display,
 		RootWindow(display, screen),

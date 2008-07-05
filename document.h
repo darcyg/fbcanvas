@@ -2,7 +2,6 @@
 #define DOCUMENT_H
 
 #include <cairo/cairo.h>
-#include "fbcanvas.h"
 
 struct document;
 
@@ -23,7 +22,7 @@ struct document_ops
 struct backend
 {
 	struct backend *(*open)(char *filename);
-	void (*close)(struct backend *fbc);
+	void (*close)(struct backend *be);
 	void (*main_loop)(struct document *doc);
 
 	cairo_surface_t *surface;
@@ -32,8 +31,6 @@ struct backend
 	unsigned int width;
 	unsigned int height;
 	void *data;
-
-	struct framebuffer *fb;
 };
 
 struct document
