@@ -20,14 +20,15 @@ static void draw_16bpp(struct backend *be, cairo_surface_t *surface);
 
 struct backend fb_backend;
 
-static struct framebuffer
+struct framebuffer
 {
 	unsigned char *mem;	/* mmap()ed framebuffer memory  */
 	unsigned int depth;     /* Hardware color depth         */
-} fb;
+};
 
 static struct backend *open_fb(char *filename)
 {
+	struct framebuffer *fb;
 	struct backend *be = &fb_backend;
 	struct fb_var_screeninfo fbinfo;
 
@@ -40,6 +41,15 @@ static struct backend *open_fb(char *filename)
 		goto out;
 	}
 
+	fb = malloc(sizeof(*fb));
+	if (!fb)
+	{
+		be = NULL;
+		goto out;
+	}
+
+	be->data = fb;
+
 	if (ioctl(fd, FBIOGET_VSCREENINFO, &fbinfo) < 0)
 	{
 		/* TODO: käsittele virhe */
@@ -48,21 +58,21 @@ static struct backend *open_fb(char *filename)
 
 	be->width = fbinfo.xres;
 	be->height = fbinfo.yres;
-	fb.depth = fbinfo.bits_per_pixel;
+	fb->depth = fbinfo.bits_per_pixel;
 
-	switch (fb.depth)
+	switch (fb->depth)
 	{
 		case 16:
 			be->draw = draw_16bpp;
 			break;
 		default:
-			fprintf(stderr, "Unsupported depth: %d\n", fb.depth);
+			fprintf(stderr, "Unsupported depth: %d\n", fb->depth);
 			exit(1);
 	}
 
-	fb.mem = mmap(NULL, be->width * be->height * (fb.depth / 8),
+	fb->mem = mmap(NULL, be->width * be->height * (fb->depth / 8),
 		PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-	if (fb.mem == MAP_FAILED)
+	if (fb->mem == MAP_FAILED)
 	{
 		/* TODO: käsittele virhe */
 		perror("mmap");
@@ -78,15 +88,19 @@ out:
 
 static void close_fb(struct backend *be)
 {
+	struct framebuffer *fb = be->data;
+
 	cairo_surface_destroy (be->surface);
 
 	/* Unmap framebuffer */
-	munmap(fb.mem, be->width * be->height * (fb.depth / 8));
+	munmap(fb->mem, be->width * be->height * (fb->depth / 8));
+	free(fb);
 }
 
 /* rgba 5/11, 6/5, 5/0, 0/0 */
 static void draw_16bpp(struct backend *be, cairo_surface_t *surface)
 {
+	struct framebuffer *fb = be->data;
 	unsigned char *data = cairo_image_surface_get_data(surface);
 
 	for (int y = 0; y < be->height; y++)
@@ -99,7 +113,7 @@ static void draw_16bpp(struct backend *be, cairo_surface_t *surface)
 						(((1<<6) * tmp[1] / 256) & ((1<<6)-1)) << 5 |
 						(((1<<5) * tmp[2] / 256) & ((1<<5)-1)) << 0;
 
-			*((unsigned short *)fb.mem + y * be->width + x) = color;
+			*((unsigned short *)fb->mem + y * be->width + x) = color;
 		}
 	}
 }
