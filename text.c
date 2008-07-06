@@ -39,8 +39,7 @@ static void close_text (struct document *doc)
 
 static char *get_text_page (FILE *fp, int page)
 {
-	static char lines[20][128]; /* XXX */
-	char *text;
+	static char *text;
 
 	if (text)
 	{
@@ -48,25 +47,25 @@ static char *get_text_page (FILE *fp, int page)
 		text = NULL;
 	}
 
-	/* Page is 20 lines. */
+	/* Page is LINE_COUNT lines. */
 	/* Skip previous pages. */
 	fseek (fp, 0, SEEK_SET);
 
 	while (page-- > 0)
 	{
-		// skip 20 lines
-		for (int i = 0; i < 20; i++)
+		// skip LINE_COUNT lines
+		for (int i = 0; i < LINE_COUNT; i++)
 		{
-			if (! fgets (lines[0], 128, fp))
+			if (! fgets (txtbuf[0], LINE_LENGTH, fp))
 				goto end_no_page;
 		}
 	}
 
-	/* Read this page (20 lines) */
+	/* Read this page (LINE_COUNT lines) */
 	int linecount = 0;
-	for (int i = 0; i < 20; i++)
+	for (int i = 0; i < LINE_COUNT; i++)
 	{
-		if (fgets (lines[i], 128, fp))
+		if (fgets (txtbuf[i], LINE_LENGTH, fp))
 			linecount++;
 		else
 			break;
@@ -74,14 +73,14 @@ static char *get_text_page (FILE *fp, int page)
 
 	int len = 0;
 	for (int i = 0; i < linecount; i++)
-		len += strlen (lines[i]);
+		len += strlen (txtbuf[i]);
 	text = malloc (len + 1);
 	int pos = 0;
 
 	for (int i = 0; i < linecount; i++)
 	{
-		len = strlen (lines[i]);
-		memcpy (text + pos, lines[i], len);
+		len = strlen (txtbuf[i]);
+		memcpy (text + pos, txtbuf[i], len);
 		pos += len;
 	}
 	text[pos] = '\0';
@@ -93,8 +92,8 @@ end_no_page:
 
 static cairo_surface_t *update_text (struct document *doc)
 {
-	cairo_surface_t *surf =
-		cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 800, 600);
+	cairo_surface_t *surf = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
+		doc->backend->width, doc->backend->height);
 	cairo_t *cr = cairo_create (surf);
 
 	/* White background. */
