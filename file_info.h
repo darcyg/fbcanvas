@@ -7,6 +7,7 @@
 struct file_info
 {
 	char *type;
+	char *extension;
 	struct document_ops *ops;
 };
 

@@ -184,5 +184,5 @@ static struct document_ops pdf_ops =
 	.dump_text = dump_text_pdf,
 };
 
-struct file_info pdf_info = {"PDF", &pdf_ops};
+struct file_info pdf_info = {"PDF", NULL, &pdf_ops};
 
