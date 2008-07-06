@@ -29,25 +29,21 @@ struct framebuffer
 static struct backend *open_fb(char *filename)
 {
 	struct framebuffer *fb;
-	struct backend *be = &fb_backend;
+	struct backend *be = NULL;
 	struct fb_var_screeninfo fbinfo;
 
 	int fd = open("/dev/fb0", O_RDWR);
 	if (fd < 0)
 	{
-		/* TODO: käsittele virhe */
 		fprintf(stderr, "Could not open /dev/fb0: %s\n", strerror(errno));
-		be = NULL;
 		goto out;
 	}
 
 	fb = malloc(sizeof(*fb));
 	if (!fb)
-	{
-		be = NULL;
 		goto out;
-	}
 
+	be = &fb_backend;
 	be->data = fb;
 
 	if (ioctl(fd, FBIOGET_VSCREENINFO, &fbinfo) < 0)
