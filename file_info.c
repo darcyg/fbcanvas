@@ -19,6 +19,8 @@ void register_plugins (void)
 	extern struct file_info ppm_info;
 	extern struct file_info tiff_info;
 	extern struct file_info xpm_info;
+	extern struct file_info utf8_text_info;
+	extern struct file_info ascii_text_info;
 
 	struct file_info *fi[] =
 	{
@@ -32,6 +34,8 @@ void register_plugins (void)
 		&ppm_info,
 		&tiff_info,
 		&xpm_info,
+		&utf8_text_info,
+		&ascii_text_info,
 		NULL
 	};
 
