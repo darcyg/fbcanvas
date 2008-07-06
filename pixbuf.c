@@ -2,7 +2,6 @@
 #include <math.h>
 #include <stdlib.h>
 #include "document.h"
-#include "fbcanvas.h"
 #include "file_info.h"
 
 struct pixbuf_data
