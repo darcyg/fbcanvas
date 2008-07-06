@@ -10,24 +10,28 @@
 
 #include "commands.h"
 
-static Display *display;
-static Window win;
-static int screen;
-static GC gc;
+struct x11_data
+{
+	Display *display;
+	int screen;
+	Window win;
+	GC gc;
+};
 
 static void x11_main_loop(struct document *doc)
 {
+	struct x11_data *data = doc->backend->data;
+
 	XEvent report;
 
 	for (;;)
 	{
-
-		XNextEvent(display, &report);
+		XNextEvent(data->display, &report);
 
 		switch (report.type)
 		{
 			case Expose:
-				while (XCheckTypedEvent(display, Expose, &report))
+				while (XCheckTypedEvent(data->display, Expose, &report))
 					;
 				doc->draw(doc);
 				break;
@@ -46,8 +50,6 @@ static void x11_main_loop(struct document *doc)
 				{
 					case 9:  /* ESC */
 					case 24: /* 'q' */
-						XFreeGC(display, gc);
-						XCloseDisplay(display);
 						goto out;
 
 					case 20: key = '+'; break;
@@ -93,35 +95,46 @@ static void dummy_draw(struct backend *be, cairo_surface_t *surface)
 
 struct backend x11_backend;
 
-static struct backend *x11canvas_create(char *filename)
+static struct backend *open_x11(char *filename)
 {
 	struct backend *be = &x11_backend;
 
 	XGCValues values;
 	XSizeHints size_hints;
 	char *display_name = NULL;
-	display = XOpenDisplay(display_name);
-	if (!display)
+
+	struct x11_data *data = malloc(sizeof(*data));
+	if (!data)
 	{
+		be = NULL;
+		goto out;
+	}
+
+	be->data = data;
+	
+	data->display = XOpenDisplay(display_name);
+	if (!data->display)
+	{
+		free(data);
 		be = NULL;
 		goto out;
 
 	}
 
-	screen = DefaultScreen(display);
-	be->width = DisplayWidth(display, screen);
-	be->height = DisplayHeight(display, screen);
-//	be->fb->depth = DefaultDepth(display, screen);
+	data->screen = DefaultScreen(data->display);
+	be->width = DisplayWidth(data->display, data->screen);
+	be->height = DisplayHeight(data->display, data->screen);
+//	be->fb->depth = DefaultDepth(data->display, data->screen);
 	be->draw = dummy_draw;
 
-	win = XCreateSimpleWindow(display,
-		RootWindow(display, screen),
+	data->win = XCreateSimpleWindow(data->display,
+		RootWindow(data->display, data->screen),
 		0, 0,
 		be->width,
 		be->height,
 		0, /* Border width */
-		BlackPixel(display, screen),
-		WhitePixel(display,screen));
+		BlackPixel(data->display, data->screen),
+		WhitePixel(data->display, data->screen));
 
 	size_hints.flags = PPosition | PSize | PMinSize;
 	size_hints.x = 0;
@@ -131,24 +144,24 @@ static struct backend *x11canvas_create(char *filename)
 	size_hints.min_width = 350;
 	size_hints.min_height = 250;
 
-	XSetStandardProperties(display, win,
+	XSetStandardProperties(data->display, data->win,
 		"fb", NULL, NULL,
 		NULL, 0, &size_hints);
 
-	XSelectInput(display, win,
+	XSelectInput(data->display, data->win,
 		ExposureMask |
 		KeyPressMask |
 		ButtonPressMask |
 		StructureNotifyMask);
 
-	gc = XCreateGC(display, win, 0, &values);
-	XSetForeground(display, gc, BlackPixel(display,screen));
-	XSetLineAttributes(display, gc, 1, LineSolid, CapButt, JoinMiter);
-	XMapWindow(display, win);
+	data->gc = XCreateGC(data->display, data->win, 0, &values);
+	XSetForeground(data->display, data->gc, BlackPixel(data->display, data->screen));
+	XSetLineAttributes(data->display, data->gc, 1, LineSolid, CapButt, JoinMiter);
+	XMapWindow(data->display, data->win);
 
-	be->surface = cairo_xlib_surface_create(display,
-		win,
-		XDefaultVisual(display, 0),
+	be->surface = cairo_xlib_surface_create(data->display,
+		data->win,
+		XDefaultVisual(data->display, 0),
 		be->width,
 		be->height);
 
@@ -156,9 +169,20 @@ out:
 	return be;
 }
 
+static void close_x11(struct backend *be)
+{
+	struct x11_data *data = be->data;
+
+	XFreeGC(data->display, data->gc);
+	XCloseDisplay(data->display);
+
+	free(data);
+}
+
 struct backend x11_backend =
 {
-	.open = x11canvas_create,
+	.open = open_x11,
+	.close = close_x11,
 	.main_loop = x11_main_loop,
 };
 
