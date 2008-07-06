@@ -8,10 +8,16 @@
 #include "document.h"
 #include "file_info.h"
 
-#define LINE_LENGTH 128
-#define LINE_COUNT  20
+#define LINE_COUNT  24
 
-static char txtbuf[LINE_COUNT][LINE_LENGTH];
+static char *next_line (struct document *doc)
+{
+	char *buf = NULL;
+	size_t size = 0;
+	if (getline (&buf, &size, (FILE *)doc->data) > 0)
+		return buf;
+	return NULL;
+}
 
 static void *open_text (struct document *doc)
 {
@@ -22,10 +28,15 @@ static void *open_text (struct document *doc)
 		abort ();
 	}
 
+	doc->data = fp;		/* next_line needs this */
 	doc->pagecount = 1;
 
-	while (fgets(txtbuf[0], LINE_LENGTH, fp))
+	char *tmp;
+	while ((tmp = next_line (doc)) != NULL)
+	{
+		free (tmp);
 		doc->pagecount++;
+	}
 
 	doc->pagecount = (doc->pagecount + LINE_COUNT - 1) / LINE_COUNT;
 
@@ -37,9 +48,10 @@ static void close_text (struct document *doc)
 	fclose ((FILE *)doc->data);
 }
 
-static char *get_text_page (FILE *fp, int page)
+static char *get_text_page (struct document *doc, int page)
 {
 	static char *text;
+	char *txtbuf[LINE_COUNT];
 
 	if (text)
 	{
@@ -49,15 +61,17 @@ static char *get_text_page (FILE *fp, int page)
 
 	/* Page is LINE_COUNT lines. */
 	/* Skip previous pages. */
-	fseek (fp, 0, SEEK_SET);
+	fseek ((FILE *)doc->data, 0, SEEK_SET);
 
 	while (page-- > 0)
 	{
 		// skip LINE_COUNT lines
 		for (int i = 0; i < LINE_COUNT; i++)
 		{
-			if (! fgets (txtbuf[0], LINE_LENGTH, fp))
+			char *tmp = next_line (doc);
+			if (! tmp)
 				goto end_no_page;
+			free (tmp);
 		}
 	}
 
@@ -65,7 +79,8 @@ static char *get_text_page (FILE *fp, int page)
 	int linecount = 0;
 	for (int i = 0; i < LINE_COUNT; i++)
 	{
-		if (fgets (txtbuf[i], LINE_LENGTH, fp))
+		txtbuf[i] = next_line (doc);
+		if (txtbuf[i])
 			linecount++;
 		else
 			break;
@@ -75,15 +90,18 @@ static char *get_text_page (FILE *fp, int page)
 	for (int i = 0; i < linecount; i++)
 		len += strlen (txtbuf[i]);
 	text = malloc (len + 1);
-	int pos = 0;
 
+	int pos = 0;
 	for (int i = 0; i < linecount; i++)
 	{
 		len = strlen (txtbuf[i]);
 		memcpy (text + pos, txtbuf[i], len);
 		pos += len;
+		free (txtbuf[i]);
+		txtbuf[i] = NULL;
 	}
 	text[pos] = '\0';
+
 	return text;
 
 end_no_page:
@@ -100,7 +118,7 @@ static cairo_surface_t *update_text (struct document *doc)
 	cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
 	cairo_paint(cr);
 
-	char *text = get_text_page (doc->data, doc->pagenum);
+	char *text = get_text_page (doc, doc->pagenum);
 	if (! text)
 	{
 		text = "<End of Text>";
