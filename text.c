@@ -8,6 +8,11 @@
 #include "document.h"
 #include "file_info.h"
 
+#define LINE_LENGTH 128
+#define LINE_COUNT  20
+
+static char txtbuf[LINE_COUNT][LINE_LENGTH];
+
 static void *open_text (struct document *doc)
 {
 	FILE *fp = fopen (doc->filename,"rm");
@@ -17,7 +22,13 @@ static void *open_text (struct document *doc)
 		abort ();
 	}
 
-	doc->pagecount = 999;	/* XXX */
+	doc->pagecount = 1;
+
+	while (fgets(txtbuf[0], LINE_LENGTH, fp))
+		doc->pagecount++;
+
+	doc->pagecount = (doc->pagecount + LINE_COUNT - 1) / LINE_COUNT;
+
 	return fp;
 }
 
