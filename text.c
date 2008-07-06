@@ -19,6 +19,13 @@ static char *next_line (struct document *doc)
 	return NULL;
 }
 
+static int skip_line (struct document *doc)
+{
+	char *tmp = next_line (doc);
+	free (tmp);
+	return tmp != NULL;
+}
+
 static void *open_text (struct document *doc)
 {
 	FILE *fp = fopen (doc->filename,"rm");
@@ -28,15 +35,11 @@ static void *open_text (struct document *doc)
 		abort ();
 	}
 
-	doc->data = fp;		/* next_line needs this */
+	doc->data = fp;		/* skip_line needs this */
 	doc->pagecount = 1;
 
-	char *tmp;
-	while ((tmp = next_line (doc)) != NULL)
-	{
-		free (tmp);
+	while (skip_line (doc))
 		doc->pagecount++;
-	}
 
 	doc->pagecount = (doc->pagecount + LINE_COUNT - 1) / LINE_COUNT;
 
@@ -67,12 +70,8 @@ static char *get_text_page (struct document *doc, int page)
 	{
 		// skip LINE_COUNT lines
 		for (int i = 0; i < LINE_COUNT; i++)
-		{
-			char *tmp = next_line (doc);
-			if (! tmp)
+			if (! skip_line (doc))
 				goto end_no_page;
-			free (tmp);
-		}
 	}
 
 	/* Read this page (LINE_COUNT lines) */
