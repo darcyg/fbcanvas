@@ -150,5 +150,6 @@ static struct document_ops text_ops =
 	.update = update_text,
 };
 
-struct file_info utf8_text_info = {"UTF-8 ", &text_ops};
-struct file_info ascii_text_info = {"ASCII ", &text_ops};
+struct file_info utf8_text_info = {"UTF-8 ", NULL, &text_ops};
+struct file_info ascii_text_info = {"ASCII ", NULL, &text_ops};
+struct file_info txt_text_info = {NULL, ".txt", &text_ops};

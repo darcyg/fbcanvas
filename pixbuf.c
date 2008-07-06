@@ -61,12 +61,12 @@ static struct document_ops pixbuf_ops =
 };
 
 /* Nämä toimivat suoraan pixbufin avulla */
-struct file_info bmp_info = {"PC bitmap", &pixbuf_ops};
-struct file_info gif_info = {"GIF image data", &pixbuf_ops};
-struct file_info jpg_info = {"JPEG", &pixbuf_ops};
-struct file_info png_info = {"PNG", &pixbuf_ops};
-struct file_info pcx_info = {"PCX", &pixbuf_ops};
-struct file_info ppm_info = {"Netpbm PPM", &pixbuf_ops};
-struct file_info tiff_info = {"TIFF image data", &pixbuf_ops};
-struct file_info xpm_info = {"X pixmap image text", &pixbuf_ops};
+struct file_info bmp_info = {"PC bitmap", NULL, &pixbuf_ops};
+struct file_info gif_info = {"GIF image data", NULL, &pixbuf_ops};
+struct file_info jpg_info = {"JPEG", NULL, &pixbuf_ops};
+struct file_info png_info = {"PNG", NULL, &pixbuf_ops};
+struct file_info pcx_info = {"PCX", NULL, &pixbuf_ops};
+struct file_info ppm_info = {"Netpbm PPM", NULL, &pixbuf_ops};
+struct file_info tiff_info = {"TIFF image data", NULL, &pixbuf_ops};
+struct file_info xpm_info = {"X pixmap image text", NULL, &pixbuf_ops};
 

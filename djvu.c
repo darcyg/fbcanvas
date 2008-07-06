@@ -163,6 +163,6 @@ static struct document_ops djvu_ops =
 //	.grep = grep_djvu,
 };
 
-struct file_info djvu_info = {"DjVu Image file", &djvu_ops};
+struct file_info djvu_info = {"DjVu Image file", NULL, &djvu_ops};
 
 

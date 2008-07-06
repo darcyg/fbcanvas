@@ -21,6 +21,7 @@ void register_plugins (void)
 	extern struct file_info xpm_info;
 	extern struct file_info utf8_text_info;
 	extern struct file_info ascii_text_info;
+	extern struct file_info txt_text_info;
 
 	struct file_info *fi[] =
 	{
@@ -36,6 +37,7 @@ void register_plugins (void)
 		&xpm_info,
 		&utf8_text_info,
 		&ascii_text_info,
+		&txt_text_info,
 		NULL
 	};
 
@@ -66,15 +68,23 @@ struct file_info *get_file_info (char *filename)
 		return NULL;
 	}
 
-	for (i = 0;
-	     (fi = g_array_index (file_infos, struct file_info *, i)) != NULL;
-	     i++)
+	i = 0;
+	while ((fi = g_array_index (file_infos, struct file_info *, i)) != NULL)
 	{
-		if (! strncmp (type, fi->type, strlen (fi->type)))
-			break;
+		if (fi->type)
+		{
+			if (! strncmp (type, fi->type, strlen (fi->type)))
+				break;
+		} else if (fi->extension) {
+			char *ext = strrchr(filename, '.');
+			if (ext && !strcmp (fi->extension, ext))
+				break;
+		}
+
+		i++;
 	}
 
-	if (!fi) /* TODO: Try to identify file by its extension */
+	if (!fi)
 		fprintf (stderr, "Unsupported file type: %s\n", type);
 
 	magic_close (magic);
