@@ -235,6 +235,12 @@ static void cmd_display_info(struct document *doc)
 {
 	char buf[256];
 
+	if (last_command == this_command)
+	{
+		this_command = 'l' | CONTROL;
+		return;
+	}
+
 	sprintf(buf, "File: %s\nPage: %d/%d",
 		basename(doc->filename),
 		doc->pagenum + 1,
