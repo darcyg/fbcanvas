@@ -7,8 +7,14 @@
 #include <unistd.h>
 #include "document.h"
 #include "file_info.h"
+#include "keymap.h"
 
 #define LINE_COUNT  24
+
+static void cmd_text_key_down (struct document *doc)
+{
+	doc->set_message (doc, "text key down");
+}
 
 static char *next_line (struct document *doc)
 {
@@ -19,11 +25,17 @@ static char *next_line (struct document *doc)
 	return NULL;
 }
 
-static int skip_line (struct document *doc)
+static int skip_line (struct document *doc, int count)
 {
-	char *tmp = next_line (doc);
-	free (tmp);
-	return tmp != NULL;
+	char *tmp;
+	while (count-- > 0)
+	{
+		tmp = next_line (doc);
+		free (tmp);
+		if (! tmp)
+			return 0;
+	}
+	return 1;
 }
 
 static void *open_text (struct document *doc)
@@ -38,10 +50,13 @@ static void *open_text (struct document *doc)
 	doc->data = fp;		/* skip_line needs this */
 	doc->pagecount = 1;
 
-	while (skip_line (doc))
+	while (skip_line (doc, 1))
 		doc->pagecount++;
 
 	doc->pagecount = (doc->pagecount + LINE_COUNT - 1) / LINE_COUNT;
+
+	/* Set scroll command. */
+	set_key (' ', cmd_text_key_down);
 
 	return fp;
 }
@@ -68,10 +83,8 @@ static char *get_text_page (struct document *doc, int page)
 
 	while (page-- > 0)
 	{
-		// skip LINE_COUNT lines
-		for (int i = 0; i < LINE_COUNT; i++)
-			if (! skip_line (doc))
-				goto end_no_page;
+		if (! skip_line (doc, LINE_COUNT))
+			goto end_no_page;
 	}
 
 	/* Read this page (LINE_COUNT lines) */
