@@ -24,6 +24,16 @@ static void cmd_text_key_down (struct document *doc)
 	doc->update (doc);
 }
 
+static void cmd_text_key_up (struct document *doc)
+{
+	struct text_info *ti = doc->data;
+	if (ti->base_line > 0)
+	{
+		ti->base_line--;
+		doc->update (doc);
+	}
+}
+
 static char *next_line (struct document *doc)
 {
 	struct text_info *ti = doc->data;
@@ -66,8 +76,9 @@ static void *open_text (struct document *doc)
 
 	doc->pagecount = (doc->pagecount + LINE_COUNT - 1) / LINE_COUNT;
 
-	/* Set scroll command. */
-	set_key (' ', cmd_text_key_down);
+	/* Set scroll commands. */
+	set_key ('v', cmd_text_key_down);
+	set_key ('v' | SHIFT, cmd_text_key_up);
 
 	return &text_info;
 }
