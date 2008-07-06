@@ -11,16 +11,25 @@
 
 #define LINE_COUNT  24
 
+static struct text_info
+{
+	FILE *fp;
+	int base_line;
+} text_info;
+
 static void cmd_text_key_down (struct document *doc)
 {
-	doc->set_message (doc, "text key down");
+	struct text_info *ti = doc->data;
+	ti->base_line++;
+	doc->update (doc);
 }
 
 static char *next_line (struct document *doc)
 {
+	struct text_info *ti = doc->data;
 	char *buf = NULL;
 	size_t size = 0;
-	if (getline (&buf, &size, (FILE *)doc->data) > 0)
+	if (getline (&buf, &size, ti->fp) > 0)
 		return buf;
 	return NULL;
 }
@@ -47,7 +56,9 @@ static void *open_text (struct document *doc)
 		abort ();
 	}
 
-	doc->data = fp;		/* skip_line needs this */
+	text_info.fp = fp;
+	text_info.base_line = 0;
+	doc->data = &text_info;		/* skip_line needs this */
 	doc->pagecount = 1;
 
 	while (skip_line (doc, 1))
@@ -58,17 +69,19 @@ static void *open_text (struct document *doc)
 	/* Set scroll command. */
 	set_key (' ', cmd_text_key_down);
 
-	return fp;
+	return &text_info;
 }
 
 static void close_text (struct document *doc)
 {
-	fclose ((FILE *)doc->data);
+	struct text_info *ti = doc->data;
+	fclose (ti->fp);
 }
 
 static char *get_text_page (struct document *doc, int page)
 {
 	static char *text;
+	struct text_info *ti = doc->data;
 	char *txtbuf[LINE_COUNT];
 
 	if (text)
@@ -79,7 +92,8 @@ static char *get_text_page (struct document *doc, int page)
 
 	/* Page is LINE_COUNT lines. */
 	/* Skip previous pages. */
-	fseek ((FILE *)doc->data, 0, SEEK_SET);
+	fseek (ti->fp, 0, SEEK_SET);
+	skip_line (doc, ti->base_line);
 
 	while (page-- > 0)
 	{
