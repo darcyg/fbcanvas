@@ -1,5 +1,6 @@
 /* text.c - 6.7.2008 - 7.7.2008 Ari & Tero Roponen */
 
+#include <ncurses.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,10 +64,10 @@ static void cmd_text_key_left (struct document *doc)
 static void setup_text_keys (void)
 {
 	/* Set scroll commands. */
-	set_key ('v', cmd_text_key_down);
-	set_key ('v' | SHIFT, cmd_text_key_up);
-	set_key ('b', cmd_text_key_right);
-	set_key ('b' | SHIFT, cmd_text_key_left);
+	set_key (KEY_DOWN, cmd_text_key_down);
+	set_key (KEY_UP, cmd_text_key_up);
+	set_key (KEY_RIGHT, cmd_text_key_right);
+	set_key (KEY_LEFT, cmd_text_key_left);
 }
 
 static char *next_line (struct document *doc)
