@@ -302,6 +302,48 @@ static void cmd_full_height (struct document *doc)
 	}
 }
 
+
+static GHashTable *cmd_read_keymap;
+static char cmdbuf[128];	/* XXX */
+static int cmdpos;
+
+static void cmd_read_finish (struct document *doc)
+{
+	cmdbuf[cmdpos] = '\0';
+	doc->set_message (doc, cmdbuf);
+
+	/* Back to normal mode. */
+	use_keymap (NULL);
+}
+
+static void cmd_read_insert (struct document *doc)
+{
+	char buf[140];		/* XXX */
+
+	cmdbuf[cmdpos++] = this_command;
+	cmdbuf[cmdpos] = '\0';
+	sprintf (buf, "C:\\> %s", cmdbuf);
+	doc->set_message (doc, buf);
+}
+
+static void cmd_read_mode (struct document *doc)
+{
+	if (! cmd_read_keymap)
+	{
+		cmd_read_keymap = g_hash_table_new (NULL, NULL);
+		use_keymap (cmd_read_keymap);
+		for (int ch = 'a'; ch <= 'z'; ch++)
+			set_key (ch, cmd_read_insert);
+		set_key (' ', cmd_read_insert);
+		set_key (106, cmd_read_finish); /* RET */
+		use_keymap (NULL);
+	}
+	cmdpos = 0;
+	use_keymap (cmd_read_keymap);
+	doc->set_message (doc, "C:\\> ");
+}
+
+
 void setup_keys (void)
 {
 	struct
@@ -319,6 +361,7 @@ void setup_keys (void)
 		{'p', cmd_display_current_page},
 		{'p' | CONTROL, cmd_up},
 		{'q', cmd_quit},
+		{106, cmd_read_mode}, /* RET */
 		{'s', cmd_save},
 		{'t', cmd_dump_text},
 		{'w', cmd_full_width},
