@@ -217,6 +217,8 @@ struct document *open_document(char *filename)
 		doc->scroll = document_scroll;
 
 		doc->data = doc->ops->open(doc);
+		if (fi->setup_keys)
+			fi->setup_keys ();
 	}
 out:
 	return doc;

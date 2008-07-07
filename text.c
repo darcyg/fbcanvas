@@ -1,5 +1,6 @@
-/* text.c - 6.7.2008 - 6.7.2008 Ari & Tero Roponen */
+/* text.c - 6.7.2008 - 7.7.2008 Ari & Tero Roponen */
 
+#include <ncurses.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,23 +16,58 @@ static struct text_info
 {
 	FILE *fp;
 	int base_line;
+	int xoffset;
 } text_info;
 
 static void cmd_text_key_down (struct document *doc)
 {
 	struct text_info *ti = doc->data;
-	ti->base_line++;
+	int line = doc->pagenum * LINE_COUNT + ti->base_line;
+
+	line++;
+	ti->base_line = line % LINE_COUNT;
+	doc->pagenum = line / LINE_COUNT;
 	doc->update (doc);
 }
 
 static void cmd_text_key_up (struct document *doc)
 {
 	struct text_info *ti = doc->data;
-	if (ti->base_line > 0)
+	int line = doc->pagenum * LINE_COUNT + ti->base_line;
+
+	if (line > 0)
 	{
-		ti->base_line--;
+		line--;
+		ti->base_line = line % LINE_COUNT;
+		doc->pagenum = line / LINE_COUNT;
 		doc->update (doc);
 	}
+}
+
+static void cmd_text_key_right (struct document *doc)
+{
+	struct text_info *ti = doc->data;
+	ti->xoffset++;
+	doc->update (doc);
+}
+
+static void cmd_text_key_left (struct document *doc)
+{
+	struct text_info *ti = doc->data;
+	if (ti->xoffset > 0)
+	{
+		ti->xoffset--;
+		doc->update (doc);
+	}
+}
+
+static void setup_text_keys (void)
+{
+	/* Set scroll commands. */
+	set_key (KEY_DOWN, cmd_text_key_down);
+	set_key (KEY_UP, cmd_text_key_up);
+	set_key (KEY_RIGHT, cmd_text_key_right);
+	set_key (KEY_LEFT, cmd_text_key_left);
 }
 
 static char *next_line (struct document *doc)
@@ -68,6 +104,7 @@ static void *open_text (struct document *doc)
 
 	text_info.fp = fp;
 	text_info.base_line = 0;
+	text_info.xoffset = 0;
 	doc->data = &text_info;		/* skip_line needs this */
 	doc->pagecount = 1;
 
@@ -75,10 +112,6 @@ static void *open_text (struct document *doc)
 		doc->pagecount++;
 
 	doc->pagecount = (doc->pagecount + LINE_COUNT - 1) / LINE_COUNT;
-
-	/* Set scroll commands. */
-	set_key ('v', cmd_text_key_down);
-	set_key ('v' | SHIFT, cmd_text_key_up);
 
 	return &text_info;
 }
@@ -147,6 +180,7 @@ end_no_page:
 
 static cairo_surface_t *update_text (struct document *doc)
 {
+	struct text_info *ti = doc->data;
 	cairo_surface_t *surf = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
 		doc->backend->width, doc->backend->height);
 	cairo_t *cr = cairo_create (surf);
@@ -171,7 +205,7 @@ static cairo_surface_t *update_text (struct document *doc)
 
 	/* Black text. */
 	cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
-//	cairo_move_to (cr, 8, 0); /* after the cursor */
+	cairo_move_to (cr, -ti->xoffset * 14, 0);
 	pango_cairo_update_layout (cr, layout);
 	pango_cairo_show_layout (cr, layout);
 	g_object_unref (layout);
@@ -187,6 +221,6 @@ static struct document_ops text_ops =
 	.update = update_text,
 };
 
-struct file_info utf8_text_info = {"UTF-8 ", NULL, &text_ops};
-struct file_info ascii_text_info = {"ASCII ", NULL, &text_ops};
-struct file_info txt_text_info = {NULL, ".txt", &text_ops};
+struct file_info utf8_text_info = {"UTF-8 ", NULL, &text_ops, setup_text_keys};
+struct file_info ascii_text_info = {"ASCII ", NULL, &text_ops, setup_text_keys};
+struct file_info txt_text_info = {NULL, ".txt", &text_ops, setup_text_keys};
