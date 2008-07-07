@@ -10,7 +10,7 @@ void *lookup_key (int character);
 void set_key (int character, void *command);
 void use_keymap (fb_keymap_t *keymap); /* NULL for default keymap. */
 
-#define ALT	(1<<30);
+#define ALT	(1<<30)
 #define SHIFT	(1<<29)
 #define CONTROL	(1<<28)
 
