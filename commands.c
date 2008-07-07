@@ -331,11 +331,8 @@ static void cmd_read_insert (struct document *doc)
 		case KEY_Z ... KEY_M:
 			key = "zxcvbnm"[this_command - KEY_Z];
 			break;
-		case KEY_1 ... KEY_9:
-			key = "123456789"[this_command - KEY_1];
-			break;
-		case KEY_0:
-			key = '0';
+		case KEY_1 ... KEY_0:
+			key = "1234567890"[this_command - KEY_1];
 			break;
 		case KEY_SPACE:
 			key = ' ';
