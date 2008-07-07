@@ -326,6 +326,16 @@ static void cmd_read_insert (struct document *doc)
 	doc->set_message (doc, buf);
 }
 
+static void cmd_read_backspace (struct document *doc)
+{
+	char buf[140] = {0}; /* XXX */
+
+	if (cmdpos > 0)
+		cmdbuf[--cmdpos] = '\0';
+	sprintf (buf, "C:\\> %s", cmdbuf);
+	doc->set_message (doc, buf);
+}
+
 static void cmd_read_mode (struct document *doc)
 {
 	if (! cmd_read_keymap)
@@ -336,6 +346,7 @@ static void cmd_read_mode (struct document *doc)
 			set_key (ch, cmd_read_insert);
 		set_key (' ', cmd_read_insert);
 		set_key (106, cmd_read_finish); /* RET */
+		set_key (263, cmd_read_backspace); /* Backspace */
 		use_keymap (NULL);
 	}
 	cmdpos = 0;
