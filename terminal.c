@@ -1,4 +1,3 @@
-#include <ncurses.h>
 #include <linux/input.h>
 #include <linux/vt.h>
 #include <sys/ioctl.h>
@@ -6,6 +5,7 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <unistd.h>
 #include "document.h"
@@ -57,7 +57,8 @@ static int init_vt_switch(void)
 	return -1;
 }
 
-static int fd = -1;
+static int keyboard_fd = -1;
+static int mouse_fd = -1;
 static struct pollfd pfd[2];
 static sigset_t sigs;
 static int modifiers = 0;
@@ -65,20 +66,23 @@ static int modifiers = 0;
 static int init_input(void)
 {
 	static const char kbd_dev[] = "/dev/input/by-path/platform-i8042-serio-0-event-kbd";
+	static const char mouse_dev[] = "/dev/input/mice";
 	sigfillset(&sigs);
 	sigdelset(&sigs, SIGUSR1);
 	sigdelset(&sigs, SIGUSR2);
 
-	fd = open(kbd_dev, O_RDONLY);
-	if (fd < 0)
+	keyboard_fd = open(kbd_dev, O_RDONLY);
+	if (keyboard_fd < 0)
 	{
 		perror(kbd_dev);
 		return -1;
 	}
 
-	pfd[0].fd = STDIN_FILENO;
+	mouse_fd = open(mouse_dev, O_RDONLY);
+
+	pfd[0].fd = mouse_fd;
 	pfd[0].events = POLLIN;
-	pfd[1].fd = fd;
+	pfd[1].fd = keyboard_fd;
 	pfd[1].events = POLLIN;
 	return 0;
 }
@@ -106,12 +110,17 @@ int read_key(struct document *doc)
 		} else if (ret == 0) { /* Timeout */
 			/* Nothing to do */
 		} else {
-			/* evdev input available */
+			/* Mouse input available */
+			if (pfd[0].revents)
+			{
+			}
+
+			/* Keyboard input available */
 			if (pfd[1].revents)
 			{
 				int key = 0;
 				struct input_event ev;
-				read(fd, &ev, sizeof(ev));
+				read(keyboard_fd, &ev, sizeof(ev));
 
 				if (ev.type == EV_KEY)
 				{
@@ -135,12 +144,7 @@ int read_key(struct document *doc)
 						key = ev.code;
 
 					if (key)
-					{
-						if (pfd[0].revents)
-							getch();
-
 						return modifiers | key;
-					}
 				}
 
 				if (need_repaint)

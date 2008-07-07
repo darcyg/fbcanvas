@@ -8,12 +8,12 @@
 #include <sys/ioctl.h>
 #include <argp.h>
 #include <fcntl.h>
-#include <ncurses.h>
 #include <poll.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
 #include "document.h"
 #include "commands.h"
@@ -93,15 +93,16 @@ static void parse_line(char *cmdline)
 
 void ncurses_main_loop (struct document *doc)
 {
-	WINDOW *win = initscr();
+	struct termios term, saved_term;
 
+	/* Disable echo */
+	tcgetattr(0, &term);
+	saved_term = term;
+	term.c_lflag &= ~ECHO;
+	tcsetattr(0, TCSANOW, &term);
+
+	/* Go to graphics mode */
 	ioctl(0, KDSETMODE, KD_GRAPHICS);
-
-	refresh();
-	noecho();
-	cbreak();
-	keypad(win, 1);		/* Handle KEY_xxx */
-	curs_set (0);		/* invisible */
 
 	if (setjmp (exit_loop) == 0)
 	{
@@ -116,10 +117,12 @@ void ncurses_main_loop (struct document *doc)
 		}
 	}
 
+	/* Return to text mode */
 	ioctl(0, KDSETMODE, KD_TEXT);
 
-	curs_set (1);		/* normal */
-	endwin ();
+	/* Flush i/o and return terminal settings */
+	tcflush(0, TCIOFLUSH);
+	tcsetattr(0, TCSANOW, &saved_term);
 }
 
 static int view_file (struct document *doc, struct prefs *prefs)

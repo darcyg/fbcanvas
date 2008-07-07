@@ -1,10 +1,10 @@
+#include <linux/input.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
 #include <cairo/cairo.h>
 #include <cairo/cairo-xlib.h>
 
-#include <ncurses.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -59,11 +59,11 @@ static void x11_main_loop(struct document *doc)
 					case 53: key = 'x'; break;
 					case 61: key = '-'; break;
 					case 98: key = KEY_UP; break;
-					case 99: key = KEY_PPAGE; break;
+					case 99: key = KEY_PAGEUP; break;
 					case 100: key = KEY_LEFT; break;
 					case 102: key = KEY_RIGHT; break;
 					case 104: key = KEY_DOWN; break;
-					case 105: key = KEY_NPAGE; break;
+					case 105: key = KEY_PAGEDOWN; break;
 				}
 
 				if (key)
