@@ -109,7 +109,7 @@ void ncurses_main_loop (struct document *doc)
 			ch = read_key(doc);
 			if (doc->flags & COMMAND_MODE)
 			{
-				char buf[128] = {'>', ' '};
+				unsigned char buf[128] = {'>', ' '};
 				int ind = 2;
 
 				do
@@ -118,8 +118,19 @@ void ncurses_main_loop (struct document *doc)
 					doc->draw(doc);
 					ch = read_key(doc);
 
-					if (ch && (ch != 106)) //106 taitaa olla return...
-						buf[ind++] = ch;
+					switch (ch)
+					{
+						case 0:
+						case 106: /* Ehkä return */
+							break;
+						case 263: /* Backspace */
+							buf[--ind] = '\0';
+							break;
+						default:
+							fprintf(stderr, "Arvo: %d\n", ch);
+							buf[ind++] = ch;
+							break;
+					}
 				} while (doc->flags & COMMAND_MODE);
 
 				if (buf[2])
