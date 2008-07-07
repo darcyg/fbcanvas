@@ -11,11 +11,26 @@
 jmp_buf exit_loop;
 static int this_command;
 static int last_command;
+static int in_command_mode;
+
+static GHashTable *cmd_read_keymap;
+static char cmdbuf[128];	/* XXX */
+static int cmdpos;
+
+static void print_cmd_read_line (struct document *doc)
+{
+	char buf[140];		/* XXX */
+	sprintf (buf, "C:\\> %s", cmdbuf);
+	doc->set_message (doc, buf);
+}
 
 static void cmd_unbound (struct document *doc)
 {
 	printf ("\a"); /* bell */
 	fflush (stdout);
+
+	if (in_command_mode)
+		print_cmd_read_line (doc);
 }
 
 static void cmd_quit (struct document *doc)
@@ -302,11 +317,6 @@ static void cmd_full_height (struct document *doc)
 	}
 }
 
-
-static GHashTable *cmd_read_keymap;
-static char cmdbuf[128];	/* XXX */
-static int cmdpos;
-
 static void cmd_read_finish (struct document *doc)
 {
 	cmdbuf[cmdpos] = '\0';
@@ -314,26 +324,21 @@ static void cmd_read_finish (struct document *doc)
 
 	/* Back to normal mode. */
 	use_keymap (NULL);
+	in_command_mode = 0;
 }
 
 static void cmd_read_insert (struct document *doc)
 {
-	char buf[140];		/* XXX */
-
 	cmdbuf[cmdpos++] = this_command;
 	cmdbuf[cmdpos] = '\0';
-	sprintf (buf, "C:\\> %s", cmdbuf);
-	doc->set_message (doc, buf);
+	print_cmd_read_line (doc);
 }
 
 static void cmd_read_backspace (struct document *doc)
 {
-	char buf[140] = {0}; /* XXX */
-
 	if (cmdpos > 0)
 		cmdbuf[--cmdpos] = '\0';
-	sprintf (buf, "C:\\> %s", cmdbuf);
-	doc->set_message (doc, buf);
+	print_cmd_read_line (doc);
 }
 
 static void cmd_read_mode (struct document *doc)
@@ -349,11 +354,12 @@ static void cmd_read_mode (struct document *doc)
 		set_key (263, cmd_read_backspace); /* Backspace */
 		use_keymap (NULL);
 	}
+
 	cmdpos = 0;
 	use_keymap (cmd_read_keymap);
-	doc->set_message (doc, "C:\\> ");
+	in_command_mode = 1;
+	print_cmd_read_line (doc);
 }
-
 
 void setup_keys (void)
 {
