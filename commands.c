@@ -355,7 +355,8 @@ static void cmd_read_mode (struct document *doc)
 		use_keymap (NULL);
 	}
 
-	cmdpos = 0;
+	cmdbuf[cmdpos = 0] = '\0';
+
 	use_keymap (cmd_read_keymap);
 	in_command_mode = 1;
 	print_cmd_read_line (doc);
