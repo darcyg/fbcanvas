@@ -323,16 +323,19 @@ static void cmd_read_insert (struct document *doc)
 	switch (this_command)
 	{
 		case KEY_Q ... KEY_P:
-			key = this_command - KEY_Q + 'q';
+			key = "qwertyuiop"[this_command - KEY_Q];
 			break;
 		case KEY_A ... KEY_L:
-			key = this_command - KEY_A + 'a';
+			key = "asdfghjkl"[this_command - KEY_A];
 			break;
 		case KEY_Z ... KEY_M:
-			key = this_command - KEY_Z + 'z';
+			key = "zxcvbnm"[this_command - KEY_Z];
 			break;
-		case KEY_1 ... KEY_0:
-			key = this_command - KEY_1 + '1';
+		case KEY_1 ... KEY_9:
+			key = "123456789"[this_command - KEY_1];
+			break;
+		case KEY_0:
+			key = '0';
 			break;
 		case KEY_SPACE:
 			key = ' ';
