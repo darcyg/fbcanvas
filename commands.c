@@ -1,9 +1,9 @@
 /* commands.c - 13.6.2008 - 7.7.2008 Ari & Tero Roponen */
+#include <linux/input.h>
 #include <cairo/cairo.h>
 #include <math.h>
-#include <ncurses.h>
+#include <stdio.h>
 #include <string.h>
-#undef scroll
 #include "commands.h"
 #include "document.h"
 #include "keymap.h"
@@ -96,7 +96,7 @@ static void cmd_right (struct document *doc)
 
 static void cmd_set_zoom (struct document *doc)
 {
-	double scale = 1.0 + 0.1 * (this_command - '0');
+	double scale = 1.0 + 0.1 * (this_command - KEY_1);
 	doc->scale = scale;
 
 	if (doc->flags & NO_GENERIC_SCALE)
@@ -179,7 +179,7 @@ static void cmd_flip_z (struct document *doc)
 	int height = (doc->flags & NO_GENERIC_SCALE) ?
 		doc->height : ceil(doc->scale * doc->height);
 
-	int dir = (this_command == ('z' | SHIFT)) ? 1 : -1;
+	int dir = (this_command == (KEY_Z | SHIFT)) ? 1 : -1;
 	cairo_matrix_t flipz;
 	cairo_matrix_init (&flipz, 0, dir, -dir, 0,
 			   (dir == 1) ? height : 0,
@@ -231,7 +231,7 @@ static void cmd_display_current_page (struct document *doc)
 {
 	if (last_command == this_command)
 	{
-		this_command = 'l' | CONTROL;
+		this_command = KEY_L | CONTROL;
 		return;
 	}
 
@@ -242,7 +242,7 @@ static void cmd_display_info(struct document *doc)
 {
 	if (last_command == this_command)
 	{
-		this_command = 'l' | CONTROL;
+		this_command = KEY_L | CONTROL;
 		return;
 	}
 
@@ -319,7 +319,27 @@ static void cmd_read_finish (struct document *doc)
 
 static void cmd_read_insert (struct document *doc)
 {
-	cmdbuf[cmdpos++] = this_command;
+	int key = 0;
+	switch (this_command)
+	{
+		case KEY_Q ... KEY_P:
+			key = this_command - KEY_Q + 'q';
+			break;
+		case KEY_A ... KEY_L:
+			key = this_command - KEY_A + 'a';
+			break;
+		case KEY_Z ... KEY_M:
+			key = this_command - KEY_Z + 'z';
+			break;
+		case KEY_1 ... KEY_0:
+			key = this_command - KEY_1 + '1';
+			break;
+		case KEY_SPACE:
+			key = ' ';
+			break;
+	}
+
+	cmdbuf[cmdpos++] = key;
 	cmdbuf[cmdpos] = '\0';
 	doc->set_message (doc, "C:\\> %s_", cmdbuf);
 }
@@ -343,14 +363,18 @@ static void cmd_read_mode (struct document *doc)
 	{
 		cmd_read_keymap = create_keymap ();
 		use_keymap (cmd_read_keymap);
-		for (int ch = 'a'; ch <= 'z'; ch++)
+		for (int ch = KEY_Q; ch <= KEY_P; ch++)
 			set_key (ch, cmd_read_insert);
-		for (int ch = '0'; ch <= '9'; ch++)
+		for (int ch = KEY_A; ch <= KEY_L; ch++)
 			set_key (ch, cmd_read_insert);
-		set_key (' ', cmd_read_insert);
-		set_key (106, cmd_read_finish); /* RET */
-		set_key (263, cmd_read_backspace); /* Backspace */
-		set_key (27, cmd_read_quit);	   /* ESC */
+		for (int ch = KEY_Z; ch <= KEY_M; ch++)
+			set_key (ch, cmd_read_insert);
+		for (int ch = KEY_1; ch <= KEY_0; ch++)
+			set_key (ch, cmd_read_insert);
+		set_key (KEY_SPACE, cmd_read_insert);
+		set_key (KEY_ENTER, cmd_read_finish);
+		set_key (KEY_BACKSPACE, cmd_read_backspace);
+		set_key (KEY_ESC, cmd_read_quit);
 		use_keymap (NULL);
 	}
 
@@ -368,48 +392,48 @@ void setup_keys (void)
 		unsigned int code;
 		void (*cmd)(struct document *doc);
 	} keys[] = {
-		{27, cmd_quit},
-		{'f', cmd_full_screen},
-		{'g', cmd_reset},
-		{'h', cmd_full_height},
-		{'i', cmd_display_info},
-		{'l' | CONTROL, cmd_redraw},
-		{'n' | CONTROL, cmd_down},
-		{'p', cmd_display_current_page},
-		{'p' | CONTROL, cmd_up},
-		{'q', cmd_quit},
-		{106, cmd_read_mode}, /* RET */
-		{'s', cmd_save},
-		{'t', cmd_dump_text},
-		{'w', cmd_full_width},
-		{'x', cmd_flip_x},
-		{'y', cmd_flip_y},
-		{'z', cmd_flip_z},
-		{'z' | SHIFT, cmd_flip_z},
+		{KEY_ESC, cmd_quit},
+		{KEY_F, cmd_full_screen},
+		{KEY_G, cmd_reset},
+		{KEY_H, cmd_full_height},
+		{KEY_I, cmd_display_info},
+		{KEY_L | CONTROL, cmd_redraw},
+		{KEY_N | CONTROL, cmd_down},
+		{KEY_P, cmd_display_current_page},
+		{KEY_P | CONTROL, cmd_up},
+		{KEY_Q, cmd_quit},
+		{KEY_ENTER, cmd_read_mode}, /* RET */
+		{KEY_S, cmd_save},
+		{KEY_T, cmd_dump_text},
+		{KEY_W, cmd_full_width},
+		{KEY_X, cmd_flip_x},
+		{KEY_Y, cmd_flip_y},
+		{KEY_Z, cmd_flip_z},
+		{KEY_Z | SHIFT, cmd_flip_z},
 
 		{KEY_HOME, cmd_goto_top},
 		{KEY_HOME | CONTROL, cmd_first_page},
 		{KEY_END, cmd_goto_bottom},
 		{KEY_END | CONTROL, cmd_last_page},
-		{KEY_NPAGE, cmd_next_page},
-		{KEY_PPAGE, cmd_prev_page},
+		{KEY_PAGEDOWN, cmd_next_page},
+		{KEY_PAGEUP, cmd_prev_page},
 		{KEY_DOWN, cmd_down},
 		{KEY_UP, cmd_up},
 		{KEY_LEFT, cmd_left},
 		{KEY_RIGHT, cmd_right},
 
-		{'0', cmd_set_zoom},
-		{'1', cmd_set_zoom},
-		{'2', cmd_set_zoom},
-		{'3', cmd_set_zoom},
-		{'4', cmd_set_zoom},
-		{'5', cmd_set_zoom},
-		{'6', cmd_set_zoom},
-		{'7', cmd_set_zoom},
-		{'8', cmd_set_zoom},
-		{'9', cmd_set_zoom},
-		{'+', cmd_zoom_in},
-		{'-', cmd_zoom_out},
+		{KEY_0, cmd_set_zoom},
+		{KEY_1, cmd_set_zoom},
+		{KEY_2, cmd_set_zoom},
+		{KEY_3, cmd_set_zoom},
+		{KEY_4, cmd_set_zoom},
+		{KEY_5, cmd_set_zoom},
+		{KEY_6, cmd_set_zoom},
+		{KEY_7, cmd_set_zoom},
+		{KEY_8, cmd_set_zoom},
+		{KEY_9, cmd_set_zoom},
+		{KEY_MINUS, cmd_zoom_in}, /* +/- tulevat englanninkielisen    */
+		{KEY_SLASH, cmd_zoom_out}, /* näppäismistöasettelun mukaisesti */
 		{0, NULL}
 	};
 
