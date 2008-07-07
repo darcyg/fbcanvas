@@ -109,6 +109,7 @@ int read_key(struct document *doc)
 			/* evdev input available */
 			if (pfd[1].revents)
 			{
+				int key = 0;
 				struct input_event ev;
 				read(fd, &ev, sizeof(ev));
 
@@ -126,25 +127,24 @@ int read_key(struct document *doc)
 						modifiers |= m;
 					else if (ev.value == 0)
 						modifiers &= ~m;
+
+					if (ev.value == 1 || ev.value == 2)
+						key = ev.code;
+
+					if (key)
+					{
+						if (pfd[0].revents)
+							getch();
+
+						return modifiers | key;
+					}
 				}
 
 				if (need_repaint)
 				{
 					need_repaint = false;
-					return 'l' | CONTROL;
+					return KEY_L | CONTROL;
 				}
-			}
-
-			/* stdin input available */
-			if (pfd[0].revents)
-			{
-				int key = tolower(getch());
-
-				/* CTRL-A ... CTRL-Z */
-				if (key >= 1 && key <= 26)
-					key += 'a' - 1;
-
-				return modifiers | key;
 			}
 		}
 	}

@@ -3,6 +3,7 @@
  */
 
 #include <linux/input.h>
+#include <linux/kd.h>
 #include <linux/vt.h>
 #include <sys/ioctl.h>
 #include <argp.h>
@@ -94,6 +95,8 @@ void ncurses_main_loop (struct document *doc)
 {
 	WINDOW *win = initscr();
 
+	ioctl(0, KDSETMODE, KD_GRAPHICS);
+
 	refresh();
 	noecho();
 	cbreak();
@@ -112,6 +115,8 @@ void ncurses_main_loop (struct document *doc)
 			command (doc);
 		}
 	}
+
+	ioctl(0, KDSETMODE, KD_TEXT);
 
 	curs_set (1);		/* normal */
 	endwin ();
@@ -138,6 +143,18 @@ static int view_file (struct document *doc, struct prefs *prefs)
 		 doc->scale, doc->xoffset, doc->yoffset);
 }
 
+static void cleanup(void)
+{
+	int mode = -1;
+
+	/* Make sure console is usable after exit */
+	if (ioctl(0, KDGETMODE, &mode) >= 0)
+	{
+		if (mode == KD_GRAPHICS)
+			ioctl(0, KDSETMODE, KD_TEXT);
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	int ind;
@@ -147,6 +164,8 @@ int main(int argc, char *argv[])
 	struct argp argp = {options, parse_arguments, "FILE", };
 
 	struct document *doc;
+
+	atexit(cleanup);
 
 	argp_parse (&argp, argc, argv, 0, &ind, &prefs);
 
