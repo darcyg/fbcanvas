@@ -1,5 +1,5 @@
 /*
- * main.c - 17.5.2008 - 6.7.2008 Ari & Tero Roponen
+ * main.c - 17.5.2008 - 7.7.2008 Ari & Tero Roponen
  */
 
 #include <linux/input.h>
@@ -129,8 +129,6 @@ static int view_file (struct document *doc, struct prefs *prefs)
 		doc->set_message(doc, status);
 	}
 
-	setup_keys();
-
 	doc->main_loop(doc);
 
 	fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n",
@@ -153,6 +151,8 @@ int main(int argc, char *argv[])
 
 	extern void register_plugins (void);
 	register_plugins ();
+
+	setup_keys();
 
 	for (int i = ind; i < argc; i++)
 	{

@@ -60,6 +60,15 @@ static void cmd_text_key_left (struct document *doc)
 	}
 }
 
+static void setup_text_keys (void)
+{
+	/* Set scroll commands. */
+	set_key ('v', cmd_text_key_down);
+	set_key ('v' | SHIFT, cmd_text_key_up);
+	set_key ('b', cmd_text_key_right);
+	set_key ('b' | SHIFT, cmd_text_key_left);
+}
+
 static char *next_line (struct document *doc)
 {
 	struct text_info *ti = doc->data;
@@ -102,12 +111,6 @@ static void *open_text (struct document *doc)
 		doc->pagecount++;
 
 	doc->pagecount = (doc->pagecount + LINE_COUNT - 1) / LINE_COUNT;
-
-	/* Set scroll commands. */
-	set_key ('v', cmd_text_key_down);
-	set_key ('v' | SHIFT, cmd_text_key_up);
-	set_key ('b', cmd_text_key_right);
-	set_key ('b' | SHIFT, cmd_text_key_left);
 
 	return &text_info;
 }
@@ -217,6 +220,6 @@ static struct document_ops text_ops =
 	.update = update_text,
 };
 
-struct file_info utf8_text_info = {"UTF-8 ", NULL, &text_ops};
-struct file_info ascii_text_info = {"ASCII ", NULL, &text_ops};
-struct file_info txt_text_info = {NULL, ".txt", &text_ops};
+struct file_info utf8_text_info = {"UTF-8 ", NULL, &text_ops, setup_text_keys};
+struct file_info ascii_text_info = {"ASCII ", NULL, &text_ops, setup_text_keys};
+struct file_info txt_text_info = {NULL, ".txt", &text_ops, setup_text_keys};
