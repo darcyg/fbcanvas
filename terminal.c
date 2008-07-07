@@ -128,6 +128,9 @@ int read_key(struct document *doc)
 					else if (ev.value == 0)
 						modifiers &= ~m;
 
+					if (m)
+						continue;
+
 					if (ev.value == 1 || ev.value == 2)
 						key = ev.code;
 
