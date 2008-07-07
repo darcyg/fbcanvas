@@ -331,6 +331,12 @@ static void cmd_read_backspace (struct document *doc)
 	doc->set_message (doc, "C:\\> %s", cmdbuf);
 }
 
+static void cmd_read_quit (struct document *doc)
+{
+	use_keymap (NULL);
+	in_command_mode = 0;
+}
+
 static void cmd_read_mode (struct document *doc)
 {
 	if (! cmd_read_keymap)
@@ -344,6 +350,7 @@ static void cmd_read_mode (struct document *doc)
 		set_key (' ', cmd_read_insert);
 		set_key (106, cmd_read_finish); /* RET */
 		set_key (263, cmd_read_backspace); /* Backspace */
+		set_key (27, cmd_read_quit);	   /* ESC */
 		use_keymap (NULL);
 	}
 
