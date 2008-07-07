@@ -1,13 +1,14 @@
+#include <ncurses.h>
 #include <linux/input.h>
 #include <linux/vt.h>
 #include <sys/ioctl.h>
 #include <ctype.h>
 #include <fcntl.h>
-#include <ncurses.h>
 #include <poll.h>
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "document.h"
 #include "keymap.h"
 
 static bool need_repaint = false;
@@ -94,7 +95,7 @@ out:
 	return ret;
 }
 
-int read_key(void)
+int read_key(struct document *doc)
 {
 	for (;;)
 	{
@@ -125,6 +126,12 @@ int read_key(void)
 						modifiers |= m;
 					else if (ev.value == 0)
 						modifiers &= ~m;
+
+					if (ev.code == KEY_ENTER && ev.value == 0)
+					{
+						doc->flags ^= COMMAND_MODE;
+						return 0;
+					}
 				}
 
 				if (need_repaint)

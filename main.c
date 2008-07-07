@@ -85,6 +85,11 @@ error_t parse_arguments (int key, char *arg, struct argp_state *state)
 	return 0;
 }
 
+static void parse_line(char *cmdline)
+{
+	fprintf(stderr, "Command: '%s'\n", cmdline);
+}
+
 void ncurses_main_loop (struct document *doc)
 {
 	WINDOW *win = initscr();
@@ -97,14 +102,32 @@ void ncurses_main_loop (struct document *doc)
 	if (setjmp (exit_loop) == 0)
 	{
 		int ch;
-		command_t command;
 		for (;;)		/* Main loop */
 		{
 			doc->draw(doc);
 
-			ch = read_key();
-			command = lookup_command (ch);
-			command (doc);
+			ch = read_key(doc);
+			if (doc->flags & COMMAND_MODE)
+			{
+				char buf[128] = {'>', ' '};
+				int ind = 2;
+
+				do
+				{
+					doc->set_message(doc, buf);
+					doc->draw(doc);
+					ch = read_key(doc);
+
+					if (ch && (ch != 106)) //106 taitaa olla return...
+						buf[ind++] = ch;
+				} while (doc->flags & COMMAND_MODE);
+
+				if (buf[2])
+					parse_line(buf+2);
+			} else {
+				command_t command = lookup_command (ch);
+				command (doc);
+			}
 		}
 	}
 

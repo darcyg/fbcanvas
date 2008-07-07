@@ -73,6 +73,7 @@ struct document
 enum
 {
 	NO_GENERIC_SCALE = 1,
+	COMMAND_MODE = 2,
 };
 
 struct document *open_document(char *filename);
