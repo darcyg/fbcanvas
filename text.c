@@ -1,6 +1,6 @@
 /* text.c - 6.7.2008 - 7.7.2008 Ari & Tero Roponen */
 
-#include <ncurses.h>
+#include <linux/input.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
