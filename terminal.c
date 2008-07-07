@@ -141,7 +141,25 @@ int read_key(struct document *doc)
 						continue;
 
 					if (ev.value == 1 || ev.value == 2)
-						key = ev.code;
+					{
+						/*
+						 * Ei päästetä ALT+konsolinvaihtoa
+						 * pääohjelmaan asti.
+						 */
+						switch (ev.code)
+						{
+							case KEY_F1 ... KEY_F10:
+							case KEY_F11 ... KEY_F12:
+							case KEY_LEFT:
+							case KEY_RIGHT:
+								if (!(modifiers & ALT))
+									key = ev.code;
+								break;
+							default:
+								key = ev.code;
+								break;
+						}
+					}
 
 					if (key)
 						return modifiers | key;
