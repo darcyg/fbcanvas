@@ -96,7 +96,10 @@ static void cmd_right (struct document *doc)
 
 static void cmd_set_zoom (struct document *doc)
 {
-	double scale = 1.0 + 0.1 * (this_command - KEY_1);
+	double scale = 1.0;
+	if (this_command != KEY_0)
+		scale += 0.1 * (this_command - KEY_1);
+
 	doc->scale = scale;
 
 	if (doc->flags & NO_GENERIC_SCALE)
