@@ -8,6 +8,8 @@
 #include "document.h"
 #include "keymap.h"
 
+extern void execute_extended_command (struct document *doc, char *cmd);
+
 jmp_buf exit_loop;
 static int this_command;
 static int last_command;
@@ -320,11 +322,12 @@ static void cmd_full_height (struct document *doc)
 static void cmd_read_finish (struct document *doc)
 {
 	cmdbuf[cmdpos] = '\0';
-	doc->set_message (doc, cmdbuf);
 
 	/* Back to normal mode. */
 	use_keymap (NULL);
 	in_command_mode = 0;
+
+	execute_extended_command (doc, cmdbuf);
 }
 
 static void cmd_read_insert (struct document *doc)
