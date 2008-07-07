@@ -127,7 +127,7 @@ void ncurses_main_loop (struct document *doc)
 							buf[--ind] = '\0';
 							break;
 						default:
-							fprintf(stderr, "Arvo: %d\n", ch);
+						//	fprintf(stderr, "Arvo: %d\n", ch);
 							buf[ind++] = ch;
 							break;
 					}
