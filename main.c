@@ -97,12 +97,13 @@ void ncurses_main_loop (struct document *doc)
 	refresh();
 	noecho();
 	cbreak();
-	keypad(win, 1); /* Handle KEY_xxx */
+	keypad(win, 1);		/* Handle KEY_xxx */
+	curs_set (0);		/* invisible */
 
 	if (setjmp (exit_loop) == 0)
 	{
 		int ch;
-		for (;;)		/* Main loop */
+		for (;;)	/* Main loop */
 		{
 			doc->draw(doc);
 
@@ -112,6 +113,7 @@ void ncurses_main_loop (struct document *doc)
 		}
 	}
 
+	curs_set (1);		/* normal */
 	endwin ();
 }
 
