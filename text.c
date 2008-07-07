@@ -61,6 +61,19 @@ static void cmd_text_key_left (struct document *doc)
 	}
 }
 
+static void close_text (struct document *doc);
+static void *open_text (struct document *doc);
+
+static void cmd_text_revert (struct document *doc)
+{
+	close_text (doc);
+	open_text (doc);
+
+	reset_transformations (doc);
+	doc->update (doc);
+}
+
+
 static void setup_text_keys (void)
 {
 	/* Set scroll commands. */
@@ -68,6 +81,8 @@ static void setup_text_keys (void)
 	set_key (KEY_UP, cmd_text_key_up);
 	set_key (KEY_RIGHT, cmd_text_key_right);
 	set_key (KEY_LEFT, cmd_text_key_left);
+
+	set_key (KEY_G, cmd_text_revert);
 }
 
 static char *next_line (struct document *doc)
