@@ -1,4 +1,4 @@
-/* commands.c - 13.6.2008 - 23.6.2008 Ari & Tero Roponen */
+/* commands.c - 13.6.2008 - 7.7.2008 Ari & Tero Roponen */
 #include <cairo/cairo.h>
 #include <math.h>
 #include <ncurses.h>
@@ -353,6 +353,7 @@ void setup_keys (void)
 		{0, NULL}
 	};
 
+	use_keymap (NULL);	/* Global keymap */
 	for (int i = 0; keys[i].cmd; i++)
 		set_key(keys[i].code, keys[i].cmd);
 }
