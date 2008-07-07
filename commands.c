@@ -339,6 +339,8 @@ static void cmd_read_mode (struct document *doc)
 		use_keymap (cmd_read_keymap);
 		for (int ch = 'a'; ch <= 'z'; ch++)
 			set_key (ch, cmd_read_insert);
+		for (int ch = '0'; ch <= '9'; ch++)
+			set_key (ch, cmd_read_insert);
 		set_key (' ', cmd_read_insert);
 		set_key (106, cmd_read_finish); /* RET */
 		set_key (263, cmd_read_backspace); /* Backspace */

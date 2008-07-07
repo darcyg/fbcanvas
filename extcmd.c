@@ -18,8 +18,28 @@ static void ecmd_echo (struct document *doc, int argc, char *argv[])
 		doc->set_message (doc, "Usage: echo text");
 }
 
+static void ecmd_goto (struct document *doc, int argc, char *argv[])
+{
+	if (argc != 2)
+	{
+		doc->set_message (doc, "Usage: goto pagenum");
+		return;
+	}
+
+	int page = atoi (argv[1]);
+	if ((page > 0) && (page <= doc->pagecount))
+	{
+		doc->pagenum = page - 1;
+		doc->update (doc);
+	} else {
+		doc->set_message (doc, "Invalid pagenum: %s", argv[1]);
+	}
+}
+
+
 struct extcommand commands[] = {
 	{"echo", ecmd_echo},
+	{"goto", ecmd_goto},
 	{"version", ecmd_version},
 	{NULL, NULL}
 };
