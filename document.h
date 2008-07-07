@@ -66,7 +66,7 @@ struct document
 	void (*main_loop)(struct document *doc);
 
 	/* Kaikille yhteiset metodit */
-	void (*set_message)(struct document *doc, char *msg);
+	void (*set_message)(struct document *doc, char *fmt, ...);
 	void (*scroll)(struct document *doc, int dx, int dy);
 };
 

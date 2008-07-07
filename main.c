@@ -117,8 +117,6 @@ void ncurses_main_loop (struct document *doc)
 
 static int view_file (struct document *doc, struct prefs *prefs)
 {
-	char status[128];
-
 	if (prefs->page < doc->pagecount)
 		doc->pagenum = prefs->page;
 	doc->xoffset = prefs->x;
@@ -128,10 +126,7 @@ static int view_file (struct document *doc, struct prefs *prefs)
 	doc->update(doc);
 
 	if (! prefs->quiet)
-	{
-		sprintf(status, "%s\n%s", argp_program_version, doc->filename);
-		doc->set_message(doc, status);
-	}
+		doc->set_message (doc, "%s\n%s", argp_program_version, doc->filename);
 
 	doc->main_loop(doc);
 

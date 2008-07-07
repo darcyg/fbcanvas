@@ -19,20 +19,13 @@ static GHashTable *cmd_read_keymap;
 static char cmdbuf[128];	/* XXX */
 static int cmdpos;
 
-static void print_cmd_read_line (struct document *doc)
-{
-	char buf[140];		/* XXX */
-	sprintf (buf, "C:\\> %s", cmdbuf);
-	doc->set_message (doc, buf);
-}
-
 static void cmd_unbound (struct document *doc)
 {
 	printf ("\a"); /* bell */
 	fflush (stdout);
 
 	if (in_command_mode)
-		print_cmd_read_line (doc);
+		doc->set_message (doc, "C:\\> %s", cmdbuf);
 }
 
 static void cmd_quit (struct document *doc)
@@ -236,33 +229,27 @@ static void cmd_goto_bottom (struct document *doc)
 
 static void cmd_display_current_page (struct document *doc)
 {
-	char buf[10];
-
 	if (last_command == this_command)
 	{
 		this_command = 'l' | CONTROL;
 		return;
 	}
 
-	sprintf (buf, "%d/%d", doc->pagenum + 1, doc->pagecount);
-	doc->set_message(doc, buf);
+	doc->set_message(doc, "%d/%d", doc->pagenum + 1, doc->pagecount);
 }
 
 static void cmd_display_info(struct document *doc)
 {
-	char buf[256];
-
 	if (last_command == this_command)
 	{
 		this_command = 'l' | CONTROL;
 		return;
 	}
 
-	sprintf(buf, "File: %s\nPage: %d/%d",
-		basename(doc->filename),
-		doc->pagenum + 1,
-		doc->pagecount);
-	doc->set_message(doc, buf);
+	doc->set_message (doc, "File: %s\nPage: %d/%d",
+			  basename(doc->filename),
+			  doc->pagenum + 1,
+			  doc->pagecount);
 }
 
 static void scale_doc_full (struct document *doc, double xs, double ys)
@@ -334,14 +321,14 @@ static void cmd_read_insert (struct document *doc)
 {
 	cmdbuf[cmdpos++] = this_command;
 	cmdbuf[cmdpos] = '\0';
-	print_cmd_read_line (doc);
+	doc->set_message (doc, "C:\\> %s", cmdbuf);
 }
 
 static void cmd_read_backspace (struct document *doc)
 {
 	if (cmdpos > 0)
 		cmdbuf[--cmdpos] = '\0';
-	print_cmd_read_line (doc);
+	doc->set_message (doc, "C:\\> %s", cmdbuf);
 }
 
 static void cmd_read_mode (struct document *doc)
@@ -362,7 +349,7 @@ static void cmd_read_mode (struct document *doc)
 
 	use_keymap (cmd_read_keymap);
 	in_command_mode = 1;
-	print_cmd_read_line (doc);
+	doc->set_message (doc, "C:\\> %s", cmdbuf);
 }
 
 void setup_keys (void)

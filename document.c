@@ -1,5 +1,6 @@
 #include <pango/pangocairo.h>
 #include <math.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include "document.h"
@@ -113,10 +114,17 @@ static void document_dump_text(struct document *doc, char *filename)
 		doc->ops->dump_text(doc, filename);
 }
 
-static void document_set_message(struct document *doc, char *msg)
+static void document_set_message(struct document *doc, char *fmt, ...)
 {
+	va_list args;
+	char *buf;
+
+	va_start (args, fmt);
+	vasprintf (&buf, fmt, args);
+	va_end (args);
+
 	free (doc->message);
-	doc->message = strdup (msg);
+	doc->message = strdup (buf);
 }
 
 static void document_scroll(struct document *doc, int dx, int dy)
