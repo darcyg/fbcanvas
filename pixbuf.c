@@ -1,4 +1,4 @@
-#include <poppler.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 #include <math.h>
 #include <stdlib.h>
 #include "document.h"
