@@ -440,6 +440,9 @@ void setup_keys (void)
 	use_keymap (NULL);	/* Global keymap */
 	for (int i = 0; keys[i].cmd; i++)
 		set_key(keys[i].code, keys[i].cmd);
+
+	extern void register_extended_commands (void); /* extcmd.c */
+	register_extended_commands ();
 }
 
 command_t lookup_command (int character)
