@@ -25,7 +25,7 @@ static void cmd_unbound (struct document *doc)
 	fflush (stdout);
 
 	if (in_command_mode)
-		doc->set_message (doc, "C:\\> %s", cmdbuf);
+		doc->set_message (doc, "C:\\> %s_", cmdbuf);
 }
 
 static void cmd_quit (struct document *doc)
@@ -321,14 +321,14 @@ static void cmd_read_insert (struct document *doc)
 {
 	cmdbuf[cmdpos++] = this_command;
 	cmdbuf[cmdpos] = '\0';
-	doc->set_message (doc, "C:\\> %s", cmdbuf);
+	doc->set_message (doc, "C:\\> %s_", cmdbuf);
 }
 
 static void cmd_read_backspace (struct document *doc)
 {
 	if (cmdpos > 0)
 		cmdbuf[--cmdpos] = '\0';
-	doc->set_message (doc, "C:\\> %s", cmdbuf);
+	doc->set_message (doc, "C:\\> %s_", cmdbuf);
 }
 
 static void cmd_read_quit (struct document *doc)
@@ -358,7 +358,7 @@ static void cmd_read_mode (struct document *doc)
 
 	use_keymap (cmd_read_keymap);
 	in_command_mode = 1;
-	doc->set_message (doc, "C:\\> %s", cmdbuf);
+	doc->set_message (doc, "C:\\> %s_", cmdbuf);
 }
 
 void setup_keys (void)
