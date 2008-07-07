@@ -69,7 +69,7 @@ static int modifiers = 0;
 static int init_input(void)
 {
 	static const char kbd_dev[] = "/dev/input/by-path/platform-i8042-serio-0-event-kbd";
-	static const char mouse_dev[] = "/dev/input/mice";
+	static const char mouse_dev[] = "/dev/input/by-path/platform-i8042-serio-1-event-mouse";
 	sigfillset(&sigs);
 	sigdelset(&sigs, SIGUSR1);
 	sigdelset(&sigs, SIGUSR2);
@@ -82,6 +82,8 @@ static int init_input(void)
 	}
 
 	mouse_fd = open(mouse_dev, O_RDONLY);
+	if (mouse_fd < 0)
+		perror(mouse_dev);
 
 	pfd[0].fd = mouse_fd;
 	pfd[0].events = POLLIN;
@@ -116,6 +118,25 @@ int read_key(struct document *doc)
 			/* Mouse input available */
 			if (pfd[0].revents)
 			{
+				struct input_event ev;
+				read(mouse_fd, &ev, sizeof(ev));
+
+				if (ev.type == EV_REL)
+				{
+					if (ev.code == REL_X)
+					{
+						if (ev.value < 0)
+							return KEY_LEFT | SHIFT;
+						else if (ev.value > 0)
+							return KEY_RIGHT | SHIFT;
+
+					} else if (ev.code == REL_Y) {
+						if (ev.value < 0)
+							return KEY_UP | SHIFT;
+						else if (ev.value > 0)
+							return KEY_DOWN | SHIFT;
+					}
+				}
 			}
 
 			/* Keyboard input available */

@@ -76,22 +76,34 @@ static void cmd_last_page (struct document *doc)
 
 static void cmd_down (struct document *doc)
 {
-	doc->scroll(doc, 0, doc->backend->height / 20);
+	int delta = doc->backend->height / 20;
+	if (this_command & SHIFT)
+		delta = 1;
+	doc->scroll(doc, 0, delta);
 }
 
 static void cmd_up (struct document *doc)
 {
-	doc->scroll(doc, 0, -(doc->backend->height / 20));
+	int delta = -(doc->backend->height / 20);
+	if (this_command & SHIFT)
+		delta = -1;
+	doc->scroll(doc, 0, delta);
 }
 
 static void cmd_left (struct document *doc)
 {
-	doc->scroll(doc, -(doc->backend->width / 20), 0);
+	int delta = -(doc->backend->width / 20);
+	if (this_command & SHIFT)
+		delta = -1;
+	doc->scroll(doc, delta, 0);
 }
 
 static void cmd_right (struct document *doc)
 {
-	doc->scroll(doc, doc->backend->width / 20, 0);
+	int delta = doc->backend->width / 20;
+	if (this_command & SHIFT)
+		delta = 1;
+	doc->scroll(doc, delta, 0);
 }
 
 static void cmd_set_zoom (struct document *doc)
@@ -418,9 +430,13 @@ void setup_keys (void)
 		{KEY_PAGEDOWN, cmd_next_page},
 		{KEY_PAGEUP, cmd_prev_page},
 		{KEY_DOWN, cmd_down},
+		{KEY_DOWN | SHIFT, cmd_down},
 		{KEY_UP, cmd_up},
+		{KEY_UP | SHIFT, cmd_up},
 		{KEY_LEFT, cmd_left},
+		{KEY_LEFT | SHIFT, cmd_left},
 		{KEY_RIGHT, cmd_right},
+		{KEY_RIGHT | SHIFT, cmd_right},
 
 		{KEY_0, cmd_set_zoom},
 		{KEY_1, cmd_set_zoom},
