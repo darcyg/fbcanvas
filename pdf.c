@@ -58,7 +58,7 @@ static void close_pdf(struct document *doc)
 /* Print lines from STR that match REGEXP.
    WHERE and PAGE specify the current filename and page number.
    Return 0 if some matches were found, else 1. */
-static int grep_from_str (char *regexp, char *str, char *where, unsigned int page)
+int grep_from_str (char *regexp, char *str, char *where, unsigned int page)
 {
 	regex_t re;
 	regmatch_t match;

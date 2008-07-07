@@ -1,21 +1,18 @@
 /* extcmd.c - 7.7.2008 - 7.7.2008 Ari & Tero Roponen */
+#include <glib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "document.h"
 #include "extcmd.h"
 
-struct extcommand
-{
-	char *name;
-	extcmd_t action;
-};
-
-struct extcommand commands[];
+static GHashTable *commands;
 
 void set_extcmd (char *name, extcmd_t action)
 {
-	abort ();
+	if (! commands)
+		commands = g_hash_table_new (g_str_hash, g_str_equal);
+	g_hash_table_replace (commands, name, action);
 }
 
 static void ecmd_version (struct document *doc, int argc, char *argv[])
@@ -55,18 +52,25 @@ static void ecmd_help (struct document *doc, int argc, char *argv[])
 	char buf[7 * 10]; /* about 10 commands à 7 chars or something... */
 	int pos = 0;
 
-	for (int i = 0; commands[i].name; i++)
-		pos += sprintf (buf + pos, "%s\n", commands[i].name);
+	GList *names = g_hash_table_get_keys (commands);
+	for (GList *it = names; it; it = it->next)
+	{
+		pos += sprintf (buf + pos, "%s\n", it->data);
+		if (it->next == names)
+			break;
+	}
+	g_list_free (names);
+
 	doc->set_message (doc, "Commands:\n%s", buf);
 }
 
-struct extcommand commands[] = {
-	{"echo", ecmd_echo},
-	{"goto", ecmd_goto},
-	{"help", ecmd_help},
-	{"version", ecmd_version},
-	{NULL, NULL}
-};
+void register_extended_commands (void)
+{
+	set_extcmd ("echo", ecmd_echo);
+	set_extcmd ("goto", ecmd_goto);
+	set_extcmd ("version", ecmd_version);
+	set_extcmd ("help", ecmd_help);
+}
 
 void execute_extended_command (struct document *doc, char *cmd)
 {
@@ -85,13 +89,10 @@ void execute_extended_command (struct document *doc, char *cmd)
 		} else break;
 	} while (argc < 9);
 	argv[argc] = NULL;
-	
-	for (int i = 0; commands[i].name; i++)
-	{
-		if (strcmp (cmd, commands[i].name) == 0)
-		{
-			commands[i].action (doc, argc, argv);
-			return;
-		}
-	}
+
+	if (! commands)
+		return;
+	extcmd_t command = g_hash_table_lookup (commands, argv[0]);
+	if (command)
+		command (doc, argc, argv);
 }
