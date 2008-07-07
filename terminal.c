@@ -11,6 +11,7 @@
 #include "document.h"
 #include "keymap.h"
 
+static bool active_console = true;
 static bool need_repaint = false;
 
 static void handle_signal(int s)
@@ -21,11 +22,13 @@ static void handle_signal(int s)
 		if (s == SIGUSR1)
 		{
 			/* Release display */
+			active_console = false;
 			ioctl(fd, VT_RELDISP, 1);
 		} else if (s == SIGUSR2) {
 			/* Acquire display */
 			ioctl(fd, VT_RELDISP, VT_ACKACQ);
 			need_repaint = true;
+			active_console = true;
 		}
 
 		close(fd);
@@ -161,7 +164,7 @@ int read_key(struct document *doc)
 						}
 					}
 
-					if (key)
+					if (key && active_console)
 						return modifiers | key;
 				}
 
