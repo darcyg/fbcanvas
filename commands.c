@@ -1,6 +1,7 @@
 /* commands.c - 13.6.2008 - 7.7.2008 Ari & Tero Roponen */
 #include <linux/input.h>
 #include <cairo/cairo.h>
+#include <ctype.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -331,25 +332,29 @@ static void cmd_read_finish (struct document *doc)
 
 static void cmd_read_insert (struct document *doc)
 {
+	int ind = this_command & ~SHIFT;
 	int key = 0;
-	switch (this_command)
+	switch (ind)
 	{
 		case KEY_Q ... KEY_P:
-			key = "qwertyuiop"[this_command - KEY_Q];
+			key = "qwertyuiop"[ind - KEY_Q];
 			break;
 		case KEY_A ... KEY_L:
-			key = "asdfghjkl"[this_command - KEY_A];
+			key = "asdfghjkl"[ind - KEY_A];
 			break;
 		case KEY_Z ... KEY_M:
-			key = "zxcvbnm"[this_command - KEY_Z];
+			key = "zxcvbnm"[ind - KEY_Z];
 			break;
 		case KEY_1 ... KEY_0:
-			key = "1234567890"[this_command - KEY_1];
+			key = "1234567890"[ind - KEY_1];
 			break;
 		case KEY_SPACE:
 			key = ' ';
 			break;
 	}
+
+	if (this_command & SHIFT)
+		key = toupper(key);
 
 	cmdbuf[cmdpos++] = key;
 	cmdbuf[cmdpos] = '\0';
@@ -376,11 +381,20 @@ static void cmd_read_mode (struct document *doc)
 		cmd_read_keymap = create_keymap ();
 		use_keymap (cmd_read_keymap);
 		for (int ch = KEY_Q; ch <= KEY_P; ch++)
+		{
 			set_key (ch, cmd_read_insert);
+			set_key (ch | SHIFT, cmd_read_insert);
+		}
 		for (int ch = KEY_A; ch <= KEY_L; ch++)
+		{
 			set_key (ch, cmd_read_insert);
+			set_key (ch | SHIFT, cmd_read_insert);
+		}
 		for (int ch = KEY_Z; ch <= KEY_M; ch++)
+		{
 			set_key (ch, cmd_read_insert);
+			set_key (ch | SHIFT, cmd_read_insert);
+		}
 		for (int ch = KEY_1; ch <= KEY_0; ch++)
 			set_key (ch, cmd_read_insert);
 		set_key (KEY_SPACE, cmd_read_insert);
