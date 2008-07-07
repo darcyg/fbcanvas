@@ -36,10 +36,20 @@ static void ecmd_goto (struct document *doc, int argc, char *argv[])
 	}
 }
 
+static void ecmd_help (struct document *doc, int argc, char *argv[])
+{
+	char buf[7 * 10]; /* about 10 commands à 7 chars or something... */
+	int pos = 0;
+
+	for (int i = 0; commands[i].name; i++)
+		pos += sprintf (buf + pos, "%s\n", commands[i].name);
+	doc->set_message (doc, "Commands:\n%s", buf);
+}
 
 struct extcommand commands[] = {
 	{"echo", ecmd_echo},
 	{"goto", ecmd_goto},
+	{"help", ecmd_help},
 	{"version", ecmd_version},
 	{NULL, NULL}
 };
