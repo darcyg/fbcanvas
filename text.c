@@ -10,7 +10,7 @@
 #include "file_info.h"
 #include "keymap.h"
 
-#define LINE_COUNT  24
+#define LINE_COUNT  30
 
 static struct text_info
 {
@@ -214,7 +214,7 @@ static cairo_surface_t *update_text (struct document *doc)
 	PangoLayout *layout = (PangoLayout *) pango_cairo_create_layout (cr);
 	pango_layout_set_text (layout, text, -1);
 
-	PangoFontDescription *desc = pango_font_description_from_string ("Sans 14");
+	PangoFontDescription *desc = pango_font_description_from_string ("Serif 12");
 	pango_layout_set_font_description (layout, desc);
 	pango_font_description_free (desc);
 
