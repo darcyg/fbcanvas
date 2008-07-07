@@ -7,6 +7,7 @@
 #include <pango/pangocairo.h>
 #include <unistd.h>
 #include "document.h"
+#include "extcmd.h"
 #include "file_info.h"
 #include "keymap.h"
 
@@ -73,6 +74,28 @@ static void cmd_text_revert (struct document *doc)
 	doc->update (doc);
 }
 
+static char *get_text_page (struct document *doc, int page);
+extern int grep_from_str (char *regexp, char *str, char *where, unsigned int page); /* pdf.c */
+
+static void ecmd_text_find (struct document *doc, int argc, char *argv[])
+{
+	if (argc != 2)
+		doc->set_message (doc, "Usage: find string");
+	else
+	{
+		for (int i = doc->pagenum; i < doc->pagecount; i++)
+		{
+			char *str = get_text_page (doc, i);
+			if (grep_from_str (argv[1], str, doc->filename, i) == 0)
+			{
+				doc->pagenum = i;
+				doc->update (doc);
+				return;
+			}
+		}
+		doc->set_message (doc, "No matches");
+	}
+}
 
 static void setup_text_keys (void)
 {
@@ -83,6 +106,8 @@ static void setup_text_keys (void)
 	set_key (KEY_LEFT, cmd_text_key_left);
 
 	set_key (KEY_G, cmd_text_revert);
+
+	set_extcmd ("find", ecmd_text_find);
 }
 
 static char *next_line (struct document *doc)
