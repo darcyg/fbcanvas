@@ -18,6 +18,7 @@ void register_plugins (void)
 	extern struct file_info png_info;
 	extern struct file_info ppm_info;
 	extern struct file_info tiff_info;
+	extern struct file_info xbm_info;
 	extern struct file_info xpm_info;
 	extern struct file_info utf8_text_info;
 	extern struct file_info ascii_text_info;
@@ -34,6 +35,7 @@ void register_plugins (void)
 		&png_info,
 		&ppm_info,
 		&tiff_info,
+		&xbm_info,
 		&xpm_info,
 		&utf8_text_info,
 		&ascii_text_info,

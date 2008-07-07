@@ -68,5 +68,5 @@ struct file_info png_info = {"PNG", NULL, &pixbuf_ops};
 struct file_info pcx_info = {"PCX", NULL, &pixbuf_ops};
 struct file_info ppm_info = {"Netpbm PPM", NULL, &pixbuf_ops};
 struct file_info tiff_info = {"TIFF image data", NULL, &pixbuf_ops};
+struct file_info xbm_info = {NULL, ".xbm", &pixbuf_ops};
 struct file_info xpm_info = {"X pixmap image text", NULL, &pixbuf_ops};
-
