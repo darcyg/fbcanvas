@@ -47,24 +47,29 @@ static void ecmd_goto (struct document *doc, int argc, char *argv[])
 	}
 }
 
-#if 0
 static void ecmd_help (struct document *doc, int argc, char *argv[])
 {
 	char buf[7 * 10]; /* about 10 commands à 7 chars or something... */
 	int pos = 0;
 
-	for (int i = 0; commands[i].name; i++)
-		pos += sprintf (buf + pos, "%s\n", commands[i].name);
+	GList *names = g_hash_table_get_keys (commands);
+	for (GList *it = names; it; it = it->next)
+	{
+		pos += sprintf (buf + pos, "%s\n", it->data);
+		if (it->next == names)
+			break;
+	}
+	g_list_free (names);
+
 	doc->set_message (doc, "Commands:\n%s", buf);
 }
-#endif
 
 void register_extended_commands (void)
 {
 	set_extcmd ("echo", ecmd_echo);
 	set_extcmd ("goto", ecmd_goto);
 	set_extcmd ("version", ecmd_version);
-//	set_extcmd ("help", ecmd_help);
+	set_extcmd ("help", ecmd_help);
 }
 
 void execute_extended_command (struct document *doc, char *cmd)
