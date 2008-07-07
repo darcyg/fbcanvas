@@ -15,7 +15,7 @@ static int this_command;
 static int last_command;
 static int in_command_mode;
 
-static GHashTable *cmd_read_keymap;
+static fb_keymap_t *cmd_read_keymap;
 static char cmdbuf[128];	/* XXX */
 static int cmdpos;
 
@@ -361,7 +361,7 @@ static void cmd_read_mode (struct document *doc)
 {
 	if (! cmd_read_keymap)
 	{
-		cmd_read_keymap = g_hash_table_new (NULL, NULL);
+		cmd_read_keymap = create_keymap ();
 		use_keymap (cmd_read_keymap);
 		for (int ch = KEY_Q; ch <= KEY_P; ch++)
 			set_key (ch, cmd_read_insert);
