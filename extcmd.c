@@ -1,8 +1,22 @@
 /* extcmd.c - 7.7.2008 - 7.7.2008 Ari & Tero Roponen */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "document.h"
 #include "extcmd.h"
+
+struct extcommand
+{
+	char *name;
+	extcmd_t action;
+};
+
+struct extcommand commands[];
+
+void set_extcmd (char *name, extcmd_t action)
+{
+	abort ();
+}
 
 static void ecmd_version (struct document *doc, int argc, char *argv[])
 {
