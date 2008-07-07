@@ -267,10 +267,7 @@ static void scale_doc_full (struct document *doc, double xs, double ys)
 
 static void cmd_reset (struct document *doc)
 {
-	doc->scale = 1.0;
-	doc->xoffset = 0;
-	doc->yoffset = 0;
-	cairo_matrix_init_identity (&doc->transform);
+	reset_transformations (doc);
 
 	/* Update is needed to reset to the original image. */
 	if (doc->flags & NO_GENERIC_SCALE)

@@ -10,7 +10,7 @@
 #include "file_info.h"
 #include "keymap.h"
 
-#define LINE_COUNT  24
+#define LINE_COUNT  30
 
 static struct text_info
 {
@@ -61,6 +61,19 @@ static void cmd_text_key_left (struct document *doc)
 	}
 }
 
+static void close_text (struct document *doc);
+static void *open_text (struct document *doc);
+
+static void cmd_text_revert (struct document *doc)
+{
+	close_text (doc);
+	open_text (doc);
+
+	reset_transformations (doc);
+	doc->update (doc);
+}
+
+
 static void setup_text_keys (void)
 {
 	/* Set scroll commands. */
@@ -68,6 +81,8 @@ static void setup_text_keys (void)
 	set_key (KEY_UP, cmd_text_key_up);
 	set_key (KEY_RIGHT, cmd_text_key_right);
 	set_key (KEY_LEFT, cmd_text_key_left);
+
+	set_key (KEY_G, cmd_text_revert);
 }
 
 static char *next_line (struct document *doc)
@@ -199,7 +214,7 @@ static cairo_surface_t *update_text (struct document *doc)
 	PangoLayout *layout = (PangoLayout *) pango_cairo_create_layout (cr);
 	pango_layout_set_text (layout, text, -1);
 
-	PangoFontDescription *desc = pango_font_description_from_string ("Sans 14");
+	PangoFontDescription *desc = pango_font_description_from_string ("Serif 12");
 	pango_layout_set_font_description (layout, desc);
 	pango_font_description_free (desc);
 
