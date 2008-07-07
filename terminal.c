@@ -126,12 +126,6 @@ int read_key(struct document *doc)
 						modifiers |= m;
 					else if (ev.value == 0)
 						modifiers &= ~m;
-
-					if (ev.code == KEY_ENTER && ev.value == 0)
-					{
-						doc->flags ^= COMMAND_MODE;
-						return 0;
-					}
 				}
 
 				if (need_repaint)

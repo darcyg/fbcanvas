@@ -107,38 +107,8 @@ void ncurses_main_loop (struct document *doc)
 			doc->draw(doc);
 
 			ch = read_key(doc);
-			if (doc->flags & COMMAND_MODE)
-			{
-				unsigned char buf[128] = {'>', ' '};
-				int ind = 2;
-
-				do
-				{
-					doc->set_message(doc, buf);
-					doc->draw(doc);
-					ch = read_key(doc);
-
-					switch (ch)
-					{
-						case 0:
-						case 106: /* Ehkä return */
-							break;
-						case 263: /* Backspace */
-							buf[--ind] = '\0';
-							break;
-						default:
-						//	fprintf(stderr, "Arvo: %d\n", ch);
-							buf[ind++] = ch;
-							break;
-					}
-				} while (doc->flags & COMMAND_MODE);
-
-				if (buf[2])
-					parse_line(buf+2);
-			} else {
-				command_t command = lookup_command (ch);
-				command (doc);
-			}
+			command_t command = lookup_command (ch);
+			command (doc);
 		}
 	}
 
