@@ -3,9 +3,12 @@
 #define KEYMAP_H
 #include <glib.h>
 
+typedef GHashTable fb_keymap_t;
+#define create_keymap() g_hash_table_new (NULL, NULL)
+
 void *lookup_key (int character);
 void set_key (int character, void *command);
-void use_keymap (GHashTable *keymap); /* NULL for default keymap. */
+void use_keymap (fb_keymap_t *keymap); /* NULL for default keymap. */
 
 #define ALT	(1<<30);
 #define SHIFT	(1<<29)
