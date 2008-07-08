@@ -328,15 +328,20 @@ static void cmd_full_height (struct document *doc)
 	}
 }
 
-static void cmd_read_finish (struct document *doc)
+static void reset_cmd_read (void)
 {
-	cmdbuf[cmdpos] = '\0';
-
 	/* Back to normal mode. */
 	use_keymap (NULL);
 	in_command_mode = 0;
+	prompt = "C:\\> ";
+	cmdbuf[cmdpos = 0] = '\0';
+}
 
+static void cmd_read_finish (struct document *doc)
+{
+	cmdbuf[cmdpos] = '\0';
 	execute_extended_command (doc, cmdbuf);
+	reset_cmd_read ();
 }
 
 static void cmd_read_insert (struct document *doc)
@@ -381,8 +386,7 @@ static void cmd_read_backspace (struct document *doc)
 
 static void cmd_read_quit (struct document *doc)
 {
-	use_keymap (NULL);
-	in_command_mode = 0;
+	reset_cmd_read ();
 }
 
 static void cmd_read_mode (struct document *doc)
@@ -414,8 +418,6 @@ static void cmd_read_mode (struct document *doc)
 		set_key (KEY_ESC, cmd_read_quit);
 		use_keymap (NULL);
 	}
-
-	cmdbuf[cmdpos = 0] = '\0';
 
 	use_keymap (cmd_read_keymap);
 	in_command_mode = 1;
