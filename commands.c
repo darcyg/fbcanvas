@@ -14,6 +14,7 @@ jmp_buf exit_loop;
 static int this_command;
 static int last_command;
 static int in_command_mode;
+static char *prompt = "C:\\> ";
 
 static fb_keymap_t *cmd_read_keymap;
 static char cmdbuf[128];	/* XXX */
@@ -25,7 +26,7 @@ static void cmd_unbound (struct document *doc)
 	fflush (stdout);
 
 	if (in_command_mode)
-		doc->set_message (doc, "C:\\> %s_", cmdbuf);
+		doc->set_message (doc, "%s%s_", prompt, cmdbuf);
 }
 
 static void cmd_quit (struct document *doc)
@@ -368,14 +369,14 @@ static void cmd_read_insert (struct document *doc)
 
 	cmdbuf[cmdpos++] = key;
 	cmdbuf[cmdpos] = '\0';
-	doc->set_message (doc, "C:\\> %s_", cmdbuf);
+	doc->set_message (doc, "%s%s_", prompt, cmdbuf);
 }
 
 static void cmd_read_backspace (struct document *doc)
 {
 	if (cmdpos > 0)
 		cmdbuf[--cmdpos] = '\0';
-	doc->set_message (doc, "C:\\> %s_", cmdbuf);
+	doc->set_message (doc, "%s%s_", prompt, cmdbuf);
 }
 
 static void cmd_read_quit (struct document *doc)
@@ -418,7 +419,7 @@ static void cmd_read_mode (struct document *doc)
 
 	use_keymap (cmd_read_keymap);
 	in_command_mode = 1;
-	doc->set_message (doc, "C:\\> %s_", cmdbuf);
+	doc->set_message (doc, "%s%s_", prompt, cmdbuf);
 }
 
 void setup_keys (void)
