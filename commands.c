@@ -5,6 +5,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "commands.h"
 #include "document.h"
@@ -16,6 +17,7 @@ static int this_command;
 static int last_command;
 static int in_command_mode;
 static char *prompt = "C:\\> ";
+static char *ecmd_prefix = "";
 
 static fb_keymap_t *cmd_read_keymap;
 static char cmdbuf[128];	/* XXX */
@@ -335,13 +337,17 @@ static void reset_cmd_read (void)
 	use_keymap (NULL);
 	in_command_mode = 0;
 	prompt = "C:\\> ";
+	ecmd_prefix = "";
 	cmdbuf[cmdpos = 0] = '\0';
 }
 
 static void cmd_read_finish (struct document *doc)
 {
+	char *buf;
 	cmdbuf[cmdpos] = '\0';
-	execute_extended_command (doc, cmdbuf);
+	asprintf (&buf, "%s%s", ecmd_prefix, cmdbuf);
+	execute_extended_command (doc, buf);
+	free (buf);
 	reset_cmd_read ();
 }
 
