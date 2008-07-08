@@ -124,7 +124,7 @@ static void document_set_message(struct document *doc, char *fmt, ...)
 	va_end (args);
 
 	free (doc->message);
-	doc->message = strdup (buf);
+	doc->message = buf;
 }
 
 static void document_scroll(struct document *doc, int dx, int dy)
