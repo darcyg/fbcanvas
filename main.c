@@ -111,6 +111,9 @@ void ncurses_main_loop (struct document *doc)
 		{
 			doc->draw(doc);
 
+			if (doc->backend->idle_callback)
+				doc->backend->idle_callback(doc);
+
 			ch = read_key(doc);
 			command_t command = lookup_command (ch);
 			command (doc);

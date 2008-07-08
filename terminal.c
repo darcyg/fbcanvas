@@ -106,21 +106,34 @@ out:
 
 int read_key(struct document *doc)
 {
+	struct timespec ts = {.tv_sec = 0, .tv_nsec = 50000000};
+	struct timespec *idletimer = NULL;
+
+	if (doc->backend->idle_callback)
+		idletimer = &ts;
+
 	for (;;)
 	{
-		int ret = ppoll(pfd, 2, NULL, &sigs);
+		int ret = ppoll(pfd, 2, idletimer, &sigs);
 		if (ret == -1) /* error, most likely EINTR. */
 		{
 			/* This will be handled later */
 		} else if (ret == 0) { /* Timeout */
-			/* Nothing to do */
+			/* Call backend-specific idle function */
+			if (doc->backend->idle_callback)
+			{
+				doc->flags |= DOCUMENT_IDLE;
+				doc->backend->idle_callback(doc);
+				doc->flags &= ~DOCUMENT_IDLE;
+			}
+			continue;
 		} else {
 			/* Mouse input available */
 			if (pfd[0].revents)
 			{
 				struct input_event ev;
 				read(mouse_fd, &ev, sizeof(ev));
-
+#if 0
 				if (ev.type == EV_REL)
 				{
 					if (ev.code == REL_X)
@@ -137,6 +150,7 @@ int read_key(struct document *doc)
 							return KEY_DOWN | SHIFT;
 					}
 				}
+#endif
 			}
 
 			/* Keyboard input available */
