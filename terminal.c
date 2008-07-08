@@ -114,11 +114,16 @@ int read_key(struct document *doc)
 
 	for (;;)
 	{
+		struct input_event ev;
 		int ret = ppoll(pfd, 2, idletimer, &sigs);
 		if (ret == -1) /* error, most likely EINTR. */
 		{
 			/* This will be handled later */
-		} else if (ret == 0) { /* Timeout */
+			continue;
+		}
+
+		if (ret == 0) /* Timeout */
+		{
 			/* Call backend-specific idle function */
 			if (doc->backend->idle_callback)
 			{
@@ -127,88 +132,87 @@ int read_key(struct document *doc)
 				doc->flags &= ~DOCUMENT_IDLE;
 			}
 			continue;
-		} else {
-			/* Mouse input available */
-			if (pfd[0].revents)
-			{
-				struct input_event ev;
-				read(mouse_fd, &ev, sizeof(ev));
+		}
+
+		if (pfd[0].revents) /* Mouse input available */
+			read(pfd[0].fd, &ev, sizeof(ev));
+		else if (pfd[1].revents) /* Keyboard input available */
+			read(pfd[1].fd, &ev, sizeof(ev));
+		else
+			continue;
+
+		switch (ev.type)
+		{
 #if 0
-				if (ev.type == EV_REL)
-				{
-					if (ev.code == REL_X)
-					{
-						if (ev.value < 0)
-							return KEY_LEFT | SHIFT;
-						else if (ev.value > 0)
-							return KEY_RIGHT | SHIFT;
-
-					} else if (ev.code == REL_Y) {
-						if (ev.value < 0)
-							return KEY_UP | SHIFT;
-						else if (ev.value > 0)
-							return KEY_DOWN | SHIFT;
-					}
-				}
-#endif
-			}
-
-			/* Keyboard input available */
-			if (pfd[1].revents)
+		case EV_REL:
+		{
+			if (ev.code == REL_X)
 			{
-				int key = 0;
-				struct input_event ev;
-				read(keyboard_fd, &ev, sizeof(ev));
+				if (ev.value < 0)
+					return KEY_LEFT | SHIFT;
+				else if (ev.value > 0)
+					return KEY_RIGHT | SHIFT;
+			} else if (ev.code == REL_Y) {
+				if (ev.value < 0)
+					return KEY_UP | SHIFT;
+				else if (ev.value > 0)
+					return KEY_DOWN | SHIFT;
+			}
 
-				if (ev.type == EV_KEY)
+			break;
+		}
+#endif
+		case EV_KEY:
+		{
+			int key = 0;
+			unsigned int m = 0;
+
+			if (ev.code == KEY_LEFTSHIFT || ev.code == KEY_RIGHTSHIFT)
+				m = SHIFT;
+			if (ev.code == KEY_LEFTCTRL || ev.code == KEY_RIGHTCTRL)
+				m = CONTROL;
+			if (ev.code == KEY_LEFTALT || ev.code == KEY_RIGHTALT)
+				m = ALT;
+
+			if (ev.value == 1 || ev.value == 2)
+				modifiers |= m;
+			else if (ev.value == 0)
+				modifiers &= ~m;
+
+			if (m)
+				break;
+
+			if (ev.value == 1 || ev.value == 2)
+			{
+				/* Ei päästetä ALT+konsolinvaihtoa pääohjelmaan asti. */
+				switch (ev.code)
 				{
-					unsigned int m = 0;
-					if (ev.code == KEY_LEFTSHIFT || ev.code == KEY_RIGHTSHIFT)
-						m = SHIFT;
-					if (ev.code == KEY_LEFTCTRL || ev.code == KEY_RIGHTCTRL)
-						m = CONTROL;
-					if (ev.code == KEY_LEFTALT || ev.code == KEY_RIGHTALT)
-						m = ALT;
-
-					if (ev.value == 1 || ev.value == 2)
-						modifiers |= m;
-					else if (ev.value == 0)
-						modifiers &= ~m;
-
-					if (m)
-						continue;
-
-					if (ev.value == 1 || ev.value == 2)
-					{
-						/*
-						 * Ei päästetä ALT+konsolinvaihtoa
-						 * pääohjelmaan asti.
-						 */
-						switch (ev.code)
-						{
-							case KEY_F1 ... KEY_F10:
-							case KEY_F11 ... KEY_F12:
-							case KEY_LEFT:
-							case KEY_RIGHT:
-								if (!(modifiers & ALT))
-									key = ev.code;
-								break;
-							default:
-								key = ev.code;
-								break;
-						}
-					}
-
-					if (key && active_console)
-						return modifiers | key;
-				}
-
-				if (need_repaint)
-				{
-					need_repaint = false;
-					return KEY_L | CONTROL;
+					case KEY_F1 ... KEY_F10:
+					case KEY_F11 ... KEY_F12:
+					case KEY_LEFT:
+					case KEY_RIGHT:
+						if (!(modifiers & ALT))
+							key = ev.code;
+						break;
+					default:
+						key = ev.code;
+						break;
 				}
 			}
+
+			if (key && active_console)
+				return modifiers | key;
+			break;
+		}
+
+		default:
+			break;
+		}
+
+		if (need_repaint)
+		{
+			need_repaint = false;
+			return KEY_L | CONTROL;
 		}
 	}
 }
