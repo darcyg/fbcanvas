@@ -15,7 +15,7 @@ static void close_text (struct document *doc);
 static void *open_text (struct document *doc);
 static char *get_text_page (struct document *doc, int page);
 extern int grep_from_str (char *regexp, char *str, char *where, unsigned int page); /* pdf.c */
-extern void cmd_read_mode (struct document *doc);
+extern char *fb_read_line (struct document *doc, char *prompt); /* In readline.c */
 
 #define LINE_COUNT  30
 
@@ -99,9 +99,15 @@ static void ecmd_text_find (struct document *doc, int argc, char *argv[])
 
 static void cmd_find (struct document *doc)
 {
-	prompt = "Find: ";
-	ecmd_prefix = "find ";
-	cmd_read_mode (doc);
+	char *buf = fb_read_line (doc, "Find: ");
+	if (buf)
+	{
+		char *cmd;
+		asprintf (&cmd, "%s%s", "find ", buf);
+		free (buf);
+		execute_extended_command (doc, cmd);
+		free (cmd);
+	}
 }
 
 static void setup_text_keys (void)

@@ -12,24 +12,16 @@
 #include "extcmd.h"
 #include "keymap.h"
 
+extern char *fb_read_line (struct document *doc, char *prompt); /* In readline.c */
+
 jmp_buf exit_loop;
 static int this_command;
 static int last_command;
-static int in_command_mode;
-char *prompt = "C:\\> ";
-char *ecmd_prefix = "";
-
-static fb_keymap_t *cmd_read_keymap;
-static char cmdbuf[128];	/* XXX */
-static int cmdpos;
 
 static void cmd_unbound (struct document *doc)
 {
 	printf ("\a"); /* bell */
 	fflush (stdout);
-
-	if (in_command_mode)
-		doc->set_message (doc, "%s%s_", prompt, cmdbuf);
 }
 
 static void cmd_quit (struct document *doc)
@@ -331,103 +323,13 @@ static void cmd_full_height (struct document *doc)
 	}
 }
 
-static void reset_cmd_read (void)
+void cmd_extended_command (struct document *doc)
 {
-	/* Back to normal mode. */
-	use_keymap (NULL);
-	in_command_mode = 0;
-	prompt = "C:\\> ";
-	ecmd_prefix = "";
-	cmdbuf[cmdpos = 0] = '\0';
-}
-
-static void cmd_read_finish (struct document *doc)
-{
-	char *buf;
-	cmdbuf[cmdpos] = '\0';
-	asprintf (&buf, "%s%s", ecmd_prefix, cmdbuf);
-	execute_extended_command (doc, buf);
-	free (buf);
-	reset_cmd_read ();
-}
-
-static void cmd_read_insert (struct document *doc)
-{
-	int ind = this_command & ~SHIFT;
-	bool shift = this_command & SHIFT;
-	int key = 0;
-	switch (ind)
-	{
-		case KEY_Q ... KEY_P:
-			key = "qQwWeErRtTyYuUiIoOpP"[2*(ind - KEY_Q) + shift];
-			break;
-		case KEY_A ... KEY_L:
-			key = "aAsSdDfFgGhHjJkKlL"[2*(ind - KEY_A) + shift];
-			break;
-		case KEY_Z ... KEY_DOT:
-			key = "zZxXcCvVbBnNmM,;.:"[2*(ind - KEY_Z) + shift];
-			break;
-		case KEY_1 ... KEY_0:
-			key = "1!2\"3#4$5%6&7/8(9)0="[2*(ind - KEY_1) + shift];
-			break;
-		case KEY_SPACE:
-			key = ' ';
-			break;
-	}
-
-	cmdbuf[cmdpos++] = key;
-	cmdbuf[cmdpos] = '\0';
-	doc->set_message (doc, "%s%s_", prompt, cmdbuf);
-}
-
-static void cmd_read_backspace (struct document *doc)
-{
-	if (cmdpos > 0)
-		cmdbuf[--cmdpos] = '\0';
-	doc->set_message (doc, "%s%s_", prompt, cmdbuf);
-}
-
-static void cmd_read_quit (struct document *doc)
-{
-	reset_cmd_read ();
-}
-
-void cmd_read_mode (struct document *doc)
-{
-	if (! cmd_read_keymap)
-	{
-		cmd_read_keymap = create_keymap ();
-		use_keymap (cmd_read_keymap);
-		for (int ch = KEY_Q; ch <= KEY_P; ch++)
-		{
-			set_key (ch, cmd_read_insert);
-			set_key (ch | SHIFT, cmd_read_insert);
-		}
-		for (int ch = KEY_A; ch <= KEY_L; ch++)
-		{
-			set_key (ch, cmd_read_insert);
-			set_key (ch | SHIFT, cmd_read_insert);
-		}
-		for (int ch = KEY_Z; ch <= KEY_DOT; ch++)
-		{
-			set_key (ch, cmd_read_insert);
-			set_key (ch | SHIFT, cmd_read_insert);
-		}
-		for (int ch = KEY_1; ch <= KEY_0; ch++)
-		{
-			set_key (ch, cmd_read_insert);
-			set_key (ch | SHIFT, cmd_read_insert);
-		}
-		set_key (KEY_SPACE, cmd_read_insert);
-		set_key (KEY_ENTER, cmd_read_finish);
-		set_key (KEY_BACKSPACE, cmd_read_backspace);
-		set_key (KEY_ESC, cmd_read_quit);
-		use_keymap (NULL);
-	}
-
-	use_keymap (cmd_read_keymap);
-	in_command_mode = 1;
-	doc->set_message (doc, "%s%s_", prompt, cmdbuf);
+	char *prompt = "C:\\> ";
+	char *cmd = fb_read_line (doc, prompt);
+	if (cmd)
+		execute_extended_command (doc, cmd);
+	free (cmd);
 }
 
 void setup_keys (void)
@@ -447,7 +349,7 @@ void setup_keys (void)
 		{KEY_P, cmd_display_current_page},
 		{KEY_P | CONTROL, cmd_up},
 		{KEY_Q, cmd_quit},
-		{KEY_ENTER, cmd_read_mode}, /* RET */
+		{KEY_ENTER, cmd_extended_command}, /* RET */
 		{KEY_T, cmd_dump_text},
 		{KEY_W, cmd_full_width},
 		{KEY_X, cmd_flip_x},
