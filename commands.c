@@ -430,6 +430,13 @@ static void cmd_read_mode (struct document *doc)
 	doc->set_message (doc, "%s%s_", prompt, cmdbuf);
 }
 
+static void cmd_find (struct document *doc)
+{
+	prompt = "Find: ";
+	ecmd_prefix = "find ";
+	cmd_read_mode (doc);
+}
+
 void setup_keys (void)
 {
 	struct
@@ -482,6 +489,9 @@ void setup_keys (void)
 		{KEY_9, cmd_set_zoom},
 		{KEY_MINUS, cmd_zoom_in}, /* +/- tulevat englanninkielisen    */
 		{KEY_SLASH, cmd_zoom_out}, /* näppäismistöasettelun mukaisesti */
+
+		{KEY_7 | SHIFT, cmd_find}, /* "/" */
+
 		{0, NULL}
 	};
 
