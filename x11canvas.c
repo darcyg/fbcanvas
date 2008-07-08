@@ -18,75 +18,6 @@ struct x11_data
 	GC gc;
 };
 
-static void x11_main_loop(struct document *doc)
-{
-	struct x11_data *data = doc->backend->data;
-
-	XEvent report;
-
-	for (;;)
-	{
-		XNextEvent(data->display, &report);
-
-		switch (report.type)
-		{
-			case Expose:
-				while (XCheckTypedEvent(data->display, Expose, &report))
-					;
-				doc->draw(doc);
-				break;
-			case ConfigureNotify:
-				break;
-			case ButtonPress:
-				break;
-
-			case KeyPress:
-			{
-				command_t cmd;
-				XKeyEvent xkey = report.xkey;
-				int key = 0;
-
-				switch (xkey.keycode)
-				{
-					case 9:  /* ESC */
-					case 24: /* 'q' */
-						goto out;
-
-					case 20: key = '+'; break;
-					case 29: key = 'y'; break;
-					case 33: key = 'p'; break;
-					case 52: key = 'z'; break;
-					case 53: key = 'x'; break;
-					case 61: key = '-'; break;
-					case 98: key = KEY_UP; break;
-					case 99: key = KEY_PAGEUP; break;
-					case 100: key = KEY_LEFT; break;
-					case 102: key = KEY_RIGHT; break;
-					case 104: key = KEY_DOWN; break;
-					case 105: key = KEY_PAGEDOWN; break;
-				}
-
-				if (key)
-				{
-					cmd = lookup_command(key);
-					cmd(doc);
-					doc->draw(doc);
-					break;
-				}
-
-				fprintf(stderr, "Keycode: %d\n", xkey.keycode);
-				doc->draw(doc);
-				break;
-			}
-
-			default:
-				break;
-		}
-	}
-out:
-	;
-}
-
 static void dummy_draw(struct backend *be, cairo_surface_t *surface)
 {
 	/* merge_surfaces did all the work for us. */
@@ -149,10 +80,11 @@ static struct backend *open_x11(char *filename)
 		NULL, 0, &size_hints);
 
 	XSelectInput(data->display, data->win,
-		ExposureMask |
-		KeyPressMask |
-		ButtonPressMask |
-		StructureNotifyMask);
+		ExposureMask
+		/* | KeyPressMask */
+		/* | ButtonPressMask */
+		/* | StructureNotifyMask */
+		);
 
 	data->gc = XCreateGC(data->display, data->win, 0, &values);
 	XSetForeground(data->display, data->gc, BlackPixel(data->display, data->screen));
@@ -179,11 +111,43 @@ static void close_x11(struct backend *be)
 	free(data);
 }
 
+static Bool predicate(Display *display, XEvent *event, XPointer arg)
+{
+	return True;
+}
+
+static void handle_events(struct document *doc)
+{
+	XEvent ev;
+	struct x11_data *data = doc->backend->data;
+
+	/*
+	 * Check if there is a pending event, because
+	 * we don't want to block.
+	 */
+	if (XCheckIfEvent(data->display, &ev, predicate, NULL))
+	{
+		XEvent report;
+		XNextEvent(data->display, &report);
+		if (report.type == Expose)
+		{
+			while (XCheckTypedEvent(data->display, Expose, &report))
+				;
+			if (doc->flags & DOCUMENT_IDLE)
+				doc->draw(doc);
+		}
+	}
+}
+
+void ncurses_main_loop(struct document *doc);
+
 struct backend x11_backend =
 {
 	.open = open_x11,
 	.close = close_x11,
-	.main_loop = x11_main_loop,
+	.main_loop = ncurses_main_loop,
+
+	.idle_callback = handle_events,
 };
 
 

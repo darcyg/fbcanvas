@@ -25,6 +25,8 @@ struct backend
 	void (*close)(struct backend *be);
 	void (*main_loop)(struct document *doc);
 
+	void (*idle_callback)(struct document *doc);
+
 	cairo_surface_t *surface;
 	void (*draw)(struct backend *be, cairo_surface_t *surface);
 
@@ -73,6 +75,7 @@ struct document
 enum
 {
 	NO_GENERIC_SCALE = 1,
+	DOCUMENT_IDLE = 2,
 };
 
 struct document *open_document(char *filename);
