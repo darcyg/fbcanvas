@@ -1,4 +1,4 @@
-/* commands.c - 13.6.2008 - 7.7.2008 Ari & Tero Roponen */
+/* commands.c - 13.6.2008 - 8.7.2008 Ari & Tero Roponen */
 #include <linux/input.h>
 #include <cairo/cairo.h>
 #include <ctype.h>
@@ -7,9 +7,8 @@
 #include <string.h>
 #include "commands.h"
 #include "document.h"
+#include "extcmd.h"
 #include "keymap.h"
-
-extern void execute_extended_command (struct document *doc, char *cmd);
 
 jmp_buf exit_loop;
 static int this_command;
@@ -138,13 +137,22 @@ static void cmd_zoom_out (struct document *doc)
 	}
 }
 
-static void cmd_save (struct document *doc)
+static void ecmd_save (struct document *doc, int argc, char *argv[])
 {
-	int ret;
-	char savename[256];
+	if (argc != 2)
+	{
+		doc->set_message (doc, "Usage: save file.png");
+		return;
+	}
 
-	sprintf(savename, "%s-pg-%d.png", basename(doc->filename), doc->pagenum + 1);
-	ret = cairo_surface_write_to_png(doc->cairo, savename);
+	char *ext = strrchr (argv[1], '.');
+	if (! ext || strcmp (ext, ".png"))
+	{
+		doc->set_message (doc, "File name must end with \".png\".");
+		return;
+	}
+	
+	int ret = cairo_surface_write_to_png(doc->cairo, argv[1]);
 	if (ret)
 		fprintf (stderr, "%s", cairo_status_to_string(ret));
 }
@@ -351,6 +359,8 @@ static void cmd_read_insert (struct document *doc)
 		case KEY_SPACE:
 			key = ' ';
 			break;
+		case KEY_DOT:
+			key = '.';
 	}
 
 	if (this_command & SHIFT)
@@ -390,7 +400,7 @@ static void cmd_read_mode (struct document *doc)
 			set_key (ch, cmd_read_insert);
 			set_key (ch | SHIFT, cmd_read_insert);
 		}
-		for (int ch = KEY_Z; ch <= KEY_M; ch++)
+		for (int ch = KEY_Z; ch <= KEY_DOT; ch++)
 		{
 			set_key (ch, cmd_read_insert);
 			set_key (ch | SHIFT, cmd_read_insert);
@@ -429,7 +439,6 @@ void setup_keys (void)
 		{KEY_P | CONTROL, cmd_up},
 		{KEY_Q, cmd_quit},
 		{KEY_ENTER, cmd_read_mode}, /* RET */
-		{KEY_S, cmd_save},
 		{KEY_T, cmd_dump_text},
 		{KEY_W, cmd_full_width},
 		{KEY_X, cmd_flip_x},
@@ -471,8 +480,9 @@ void setup_keys (void)
 	for (int i = 0; keys[i].cmd; i++)
 		set_key(keys[i].code, keys[i].cmd);
 
-	extern void register_extended_commands (void); /* extcmd.c */
 	register_extended_commands ();
+
+	set_extcmd ("save", ecmd_save);
 }
 
 command_t lookup_command (int character)
