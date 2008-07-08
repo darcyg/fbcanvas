@@ -9,4 +9,7 @@ void set_extcmd (char *name, extcmd_t action);
 void execute_extended_command (struct document *doc, char *cmd);
 void register_extended_commands (void);
 
+extern char *prompt;
+extern char *ecmd_prefix;
+
 #endif

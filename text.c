@@ -1,4 +1,4 @@
-/* text.c - 6.7.2008 - 7.7.2008 Ari & Tero Roponen */
+/* text.c - 6.7.2008 - 8.7.2008 Ari & Tero Roponen */
 
 #include <linux/input.h>
 #include <stdio.h>
@@ -10,6 +10,12 @@
 #include "extcmd.h"
 #include "file_info.h"
 #include "keymap.h"
+
+static void close_text (struct document *doc);
+static void *open_text (struct document *doc);
+static char *get_text_page (struct document *doc, int page);
+extern int grep_from_str (char *regexp, char *str, char *where, unsigned int page); /* pdf.c */
+extern void cmd_read_mode (struct document *doc);
 
 #define LINE_COUNT  30
 
@@ -62,9 +68,6 @@ static void cmd_text_key_left (struct document *doc)
 	}
 }
 
-static void close_text (struct document *doc);
-static void *open_text (struct document *doc);
-
 static void cmd_text_revert (struct document *doc)
 {
 	close_text (doc);
@@ -73,9 +76,6 @@ static void cmd_text_revert (struct document *doc)
 	reset_transformations (doc);
 	doc->update (doc);
 }
-
-static char *get_text_page (struct document *doc, int page);
-extern int grep_from_str (char *regexp, char *str, char *where, unsigned int page); /* pdf.c */
 
 static void ecmd_text_find (struct document *doc, int argc, char *argv[])
 {
@@ -97,6 +97,13 @@ static void ecmd_text_find (struct document *doc, int argc, char *argv[])
 	}
 }
 
+static void cmd_find (struct document *doc)
+{
+	prompt = "Find: ";
+	ecmd_prefix = "find ";
+	cmd_read_mode (doc);
+}
+
 static void setup_text_keys (void)
 {
 	/* Set scroll commands. */
@@ -106,6 +113,7 @@ static void setup_text_keys (void)
 	set_key (KEY_LEFT, cmd_text_key_left);
 
 	set_key (KEY_G, cmd_text_revert);
+	set_key (KEY_7 | SHIFT, cmd_find); /* "/" */
 
 	set_extcmd ("find", ecmd_text_find);
 }

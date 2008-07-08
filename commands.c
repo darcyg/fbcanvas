@@ -16,8 +16,8 @@ jmp_buf exit_loop;
 static int this_command;
 static int last_command;
 static int in_command_mode;
-static char *prompt = "C:\\> ";
-static char *ecmd_prefix = "";
+char *prompt = "C:\\> ";
+char *ecmd_prefix = "";
 
 static fb_keymap_t *cmd_read_keymap;
 static char cmdbuf[128];	/* XXX */
@@ -392,7 +392,7 @@ static void cmd_read_quit (struct document *doc)
 	reset_cmd_read ();
 }
 
-static void cmd_read_mode (struct document *doc)
+void cmd_read_mode (struct document *doc)
 {
 	if (! cmd_read_keymap)
 	{
@@ -428,13 +428,6 @@ static void cmd_read_mode (struct document *doc)
 	use_keymap (cmd_read_keymap);
 	in_command_mode = 1;
 	doc->set_message (doc, "%s%s_", prompt, cmdbuf);
-}
-
-static void cmd_find (struct document *doc)
-{
-	prompt = "Find: ";
-	ecmd_prefix = "find ";
-	cmd_read_mode (doc);
 }
 
 void setup_keys (void)
@@ -489,8 +482,6 @@ void setup_keys (void)
 		{KEY_9, cmd_set_zoom},
 		{KEY_MINUS, cmd_zoom_in}, /* +/- tulevat englanninkielisen    */
 		{KEY_SLASH, cmd_zoom_out}, /* näppäismistöasettelun mukaisesti */
-
-		{KEY_7 | SHIFT, cmd_find}, /* "/" */
 
 		{0, NULL}
 	};
