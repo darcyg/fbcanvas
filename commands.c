@@ -3,6 +3,7 @@
 #include <cairo/cairo.h>
 #include <ctype.h>
 #include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include "commands.h"
@@ -341,30 +342,26 @@ static void cmd_read_finish (struct document *doc)
 static void cmd_read_insert (struct document *doc)
 {
 	int ind = this_command & ~SHIFT;
+	bool shift = this_command & SHIFT;
 	int key = 0;
 	switch (ind)
 	{
 		case KEY_Q ... KEY_P:
-			key = "qwertyuiop"[ind - KEY_Q];
+			key = "qQwWeErRtTyYuUiIoOpP"[2*(ind - KEY_Q) + shift];
 			break;
 		case KEY_A ... KEY_L:
-			key = "asdfghjkl"[ind - KEY_A];
+			key = "aAsSdDfFgGhHjJkKlL"[2*(ind - KEY_A) + shift];
 			break;
-		case KEY_Z ... KEY_M:
-			key = "zxcvbnm"[ind - KEY_Z];
+		case KEY_Z ... KEY_DOT:
+			key = "zZxXcCvVbBnNmM,;.:"[2*(ind - KEY_Z) + shift];
 			break;
 		case KEY_1 ... KEY_0:
-			key = "1234567890"[ind - KEY_1];
+			key = "1!2\"3#4$5%6&7/8(9)0="[2*(ind - KEY_1) + shift];
 			break;
 		case KEY_SPACE:
 			key = ' ';
 			break;
-		case KEY_DOT:
-			key = '.';
 	}
-
-	if (this_command & SHIFT)
-		key = toupper(key);
 
 	cmdbuf[cmdpos++] = key;
 	cmdbuf[cmdpos] = '\0';
@@ -406,7 +403,10 @@ static void cmd_read_mode (struct document *doc)
 			set_key (ch | SHIFT, cmd_read_insert);
 		}
 		for (int ch = KEY_1; ch <= KEY_0; ch++)
+		{
 			set_key (ch, cmd_read_insert);
+			set_key (ch | SHIFT, cmd_read_insert);
+		}
 		set_key (KEY_SPACE, cmd_read_insert);
 		set_key (KEY_ENTER, cmd_read_finish);
 		set_key (KEY_BACKSPACE, cmd_read_backspace);
