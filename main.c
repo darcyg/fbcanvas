@@ -86,11 +86,6 @@ error_t parse_arguments (int key, char *arg, struct argp_state *state)
 	return 0;
 }
 
-static void parse_line(char *cmdline)
-{
-	fprintf(stderr, "Command: '%s'\n", cmdline);
-}
-
 static void main_loop (struct document *doc)
 {
 	struct termios term, saved_term;
