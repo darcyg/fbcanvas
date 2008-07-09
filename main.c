@@ -86,11 +86,6 @@ error_t parse_arguments (int key, char *arg, struct argp_state *state)
 	return 0;
 }
 
-static void parse_line(char *cmdline)
-{
-	fprintf(stderr, "Command: '%s'\n", cmdline);
-}
-
 static int view_file (struct document *doc, struct prefs *prefs)
 {
 	if (prefs->page < doc->pagecount)
