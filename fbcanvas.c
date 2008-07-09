@@ -114,11 +114,8 @@ static void draw_16bpp(struct backend *be, cairo_surface_t *surface)
 	}
 }
 
-extern void ncurses_main_loop (struct document *doc);
-
 struct backend fb_backend =
 {
 	.open = open_fb,
 	.close = close_fb,
-	.main_loop = ncurses_main_loop,
 };

@@ -139,13 +139,10 @@ static void handle_events(struct document *doc)
 	}
 }
 
-void ncurses_main_loop(struct document *doc);
-
 struct backend x11_backend =
 {
 	.open = open_x11,
 	.close = close_x11,
-	.main_loop = ncurses_main_loop,
 
 	.idle_callback = handle_events,
 };

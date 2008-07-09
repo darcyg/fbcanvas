@@ -91,7 +91,7 @@ static void parse_line(char *cmdline)
 	fprintf(stderr, "Command: '%s'\n", cmdline);
 }
 
-void ncurses_main_loop (struct document *doc)
+static void main_loop (struct document *doc)
 {
 	struct termios term, saved_term;
 
@@ -141,7 +141,7 @@ static int view_file (struct document *doc, struct prefs *prefs)
 	if (! prefs->quiet)
 		doc->set_message (doc, "%s\n%s", argp_program_version, doc->filename);
 
-	doc->main_loop(doc);
+	main_loop(doc);
 
 	fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n",
 		 program_invocation_short_name,

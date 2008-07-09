@@ -178,7 +178,6 @@ struct document *open_document(char *filename)
 			if (fbc)
 			{
 				doc->backend = fbc;
-				doc->main_loop = backends[i]->main_loop;
 				break;
 			}
 		}
