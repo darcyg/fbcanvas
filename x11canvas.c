@@ -9,6 +9,7 @@
 #include <stdlib.h>
 
 #include "commands.h"
+#include "util.h"
 
 struct x11_data
 {
@@ -113,7 +114,7 @@ static void x11_convert_surface (cairo_surface_t *surface)
 
 static void x11_draw(struct backend *be, cairo_surface_t *surface)
 {
-	x11_convert_surface (surface);
+	convert_surface_argb_to_abgr (surface);
 
 	cairo_pattern_t *pat = cairo_pattern_create_for_surface (surface);
 	cairo_t *cr = cairo_create (((struct x11_data *)(be->data))->visible_surface);
