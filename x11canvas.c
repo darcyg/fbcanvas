@@ -16,6 +16,8 @@ struct x11_data
 	int screen;
 	Window win;
 	GC gc;
+
+	cairo_surface_t *visible_surface;
 };
 
 static void x11_main_loop(struct document *doc)
@@ -88,10 +90,14 @@ out:
 	;
 }
 
-static void dummy_draw(struct backend *be, cairo_surface_t *surface)
+static void x11_draw(struct backend *be, cairo_surface_t *surface)
 {
-	/* merge_surfaces did all the work for us. */
-	return;
+	cairo_pattern_t *pat = cairo_pattern_create_for_surface (surface);
+	cairo_t *cr = cairo_create (((struct x11_data *)(be->data))->visible_surface);
+	cairo_set_source (cr, pat);
+	cairo_paint (cr);
+	cairo_destroy (cr);
+	cairo_pattern_destroy (pat);
 }
 
 struct backend x11_backend;
@@ -126,7 +132,7 @@ static struct backend *open_x11(char *filename)
 	be->width = DisplayWidth(data->display, data->screen);
 	be->height = DisplayHeight(data->display, data->screen);
 //	be->fb->depth = DefaultDepth(data->display, data->screen);
-	be->draw = dummy_draw;
+	be->draw = x11_draw;
 
 	data->win = XCreateSimpleWindow(data->display,
 		RootWindow(data->display, data->screen),
@@ -160,11 +166,15 @@ static struct backend *open_x11(char *filename)
 	XSetLineAttributes(data->display, data->gc, 1, LineSolid, CapButt, JoinMiter);
 	XMapWindow(data->display, data->win);
 
-	be->surface = cairo_xlib_surface_create(data->display,
-		data->win,
-		XDefaultVisual(data->display, 0),
-		be->width,
-		be->height);
+	data->visible_surface = cairo_xlib_surface_create(data->display,
+							  data->win,
+							  XDefaultVisual(data->display, 0),
+							  be->width,
+							  be->height);
+
+	be->surface = cairo_surface_create_similar (data->visible_surface,
+						    CAIRO_CONTENT_COLOR_ALPHA,
+						    be->width, be->height);
 
 out:
 	return be;
