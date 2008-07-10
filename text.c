@@ -86,7 +86,7 @@ static void ecmd_text_find (struct document *doc, int argc, char *argv[])
 		for (int i = doc->pagenum; i < doc->pagecount; i++)
 		{
 			char *str = get_text_page (doc, i);
-			if (grep_from_str (argv[1], str, doc->filename, i) == 0)
+			if (grep_from_str (argv[1], str, NULL, i) == 0)
 			{
 				doc->pagenum = i;
 				doc->update (doc);
