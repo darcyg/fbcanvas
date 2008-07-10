@@ -1,4 +1,4 @@
-/* commands.c - 13.6.2008 - 8.7.2008 Ari & Tero Roponen */
+/* commands.c - 13.6.2008 - 10.7.2008 Ari & Tero Roponen */
 #include <linux/input.h>
 #include <cairo/cairo.h>
 #include <ctype.h>
@@ -11,6 +11,7 @@
 #include "document.h"
 #include "extcmd.h"
 #include "keymap.h"
+#include "util.h"
 
 extern char *fb_read_line (struct document *doc, char *prompt); /* In readline.c */
 
@@ -140,9 +141,11 @@ static void ecmd_save (struct document *doc, int argc, char *argv[])
 		return;
 	}
 	
+	convert_surface_argb_to_abgr (doc->cairo);
 	int ret = cairo_surface_write_to_png(doc->cairo, argv[1]);
 	if (ret)
 		fprintf (stderr, "%s", cairo_status_to_string(ret));
+	convert_surface_argb_to_abgr (doc->cairo);
 }
 
 static void cmd_dump_text (struct document *doc)
