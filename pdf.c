@@ -1,10 +1,10 @@
 #include <poppler/glib/poppler.h>
 #include <math.h>
-#include <regex.h>
 #include <stdlib.h>
 #include <string.h>
 #include "document.h"
 #include "file_info.h"
+#include "util.h"
 
 struct pdf_data
 {
@@ -55,47 +55,9 @@ static void close_pdf(struct document *doc)
 	}
 }
 
-/* Print lines from STR that match REGEXP.
-   WHERE and PAGE specify the current filename and page number.
-   Return 0 if some matches were found, else 1. */
-int grep_from_str (char *regexp, char *str, char *where, unsigned int page)
-{
-	regex_t re;
-	regmatch_t match;
-	int ret = 1;
-	char *beg, *end;
-
-	if (regcomp (&re, regexp, REG_EXTENDED))
-	{
-		perror ("regcomp");
-		return 1;
-	}
-
-	while (! regexec (&re, str, 1, &match, 0))
-	{
-		ret = 0;	/* Found match. */
-
-		beg = str + match.rm_so;
-		end = str +  match.rm_eo;
-
-		/* try to find line beginning and end. */
-		while (beg > str && beg[-1] != '\n')
-			beg--;
-		while (*end && *end != '\n')
-			end++;
-
-		printf ("%s:%d: %.*s\n", where, page, end - beg, beg);
-		str = end;
-	}
-
-	regfree (&re);
-	return ret;
-}
-
 static int grep_pdf(struct document *doc, char *regexp)
 {
 	struct pdf_data *data = doc->data;
-	/* TODO: use real regexps. */
 	int i, ret = 1;
 	char *str;
 
