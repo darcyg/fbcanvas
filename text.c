@@ -1,4 +1,4 @@
-/* text.c - 6.7.2008 - 8.7.2008 Ari & Tero Roponen */
+/* text.c - 6.7.2008 - 10.7.2008 Ari & Tero Roponen */
 
 #include <linux/input.h>
 #include <stdio.h>
@@ -10,11 +10,11 @@
 #include "extcmd.h"
 #include "file_info.h"
 #include "keymap.h"
+#include "util.h"
 
 static void close_text (struct document *doc);
 static void *open_text (struct document *doc);
 static char *get_text_page (struct document *doc, int page);
-extern int grep_from_str (char *regexp, char *str, char *where, unsigned int page); /* pdf.c */
 extern char *fb_read_line (struct document *doc, char *prompt); /* In readline.c */
 
 #define LINE_COUNT  30
