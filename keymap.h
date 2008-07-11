@@ -3,6 +3,11 @@
 #define KEYMAP_H
 #include <glib.h>
 
+struct event
+{
+	unsigned int keycode;
+};
+
 typedef GHashTable fb_keymap_t;
 #define create_keymap() g_hash_table_new (NULL, NULL)
 

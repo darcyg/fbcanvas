@@ -45,6 +45,7 @@ char *fb_read_line (struct document *doc, char *prompt)
 {
 	int key;
 	char ch;
+	struct event *ev;
 
 	linebuf[linepos = 0] = '\0';
 
@@ -52,7 +53,8 @@ char *fb_read_line (struct document *doc, char *prompt)
 	{
 		doc->set_message (doc, "%s%s_", prompt, linebuf);
 		doc->draw (doc);
-		key = read_key (doc);
+		ev = get_event (doc);
+		key = ev->keycode;
 		ch = fb_key_to_char (key);
 
 		if (ch)		/* insertable char */
@@ -68,7 +70,7 @@ char *fb_read_line (struct document *doc, char *prompt)
 			printf ("\a"); /* bell */
 			fflush (stdout);
 			break;
-		case KEY_L | CONTROL: /* read_key returns this. */
+		case KEY_L | CONTROL: /* get_event returns this. */
 			break;
 		case KEY_ESC:
 			return NULL;

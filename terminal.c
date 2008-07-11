@@ -104,8 +104,9 @@ out:
 	return ret;
 }
 
-int read_key(struct document *doc)
+struct event *get_event(struct document *doc)
 {
+	static struct event evt;
 	struct timespec ts = {.tv_sec = 0, .tv_nsec = 50000000};
 	struct timespec *idletimer = NULL;
 
@@ -201,7 +202,10 @@ int read_key(struct document *doc)
 			}
 
 			if (key && active_console)
-				return modifiers | key;
+			{
+				evt.keycode = modifiers | key;
+				return &evt;
+			}
 			break;
 		}
 
@@ -212,7 +216,8 @@ int read_key(struct document *doc)
 		if (need_repaint)
 		{
 			need_repaint = false;
-			return KEY_L | CONTROL;
+			evt.keycode = KEY_L | CONTROL;
+			return &evt;
 		}
 	}
 }
