@@ -104,12 +104,14 @@ static void main_loop (struct document *doc)
 		int ch;
 		for (;;)	/* Main loop */
 		{
+			struct event *ev;
 			doc->draw(doc);
 
 			if (doc->backend->idle_callback)
 				doc->backend->idle_callback(doc);
 
-			ch = read_key(doc);
+			ev = get_event(doc);
+			ch = ev->keycode;
 			command_t command = lookup_command (ch);
 			command (doc);
 		}
