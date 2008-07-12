@@ -98,7 +98,7 @@ static struct backend *open_x11(char *filename)
 	data->gc = XCreateGC(data->display, data->win, 0, &values);
 	XSetForeground(data->display, data->gc, BlackPixel(data->display, data->screen));
 	XSetLineAttributes(data->display, data->gc, 1, LineSolid, CapButt, JoinMiter);
-	XMapWindow(data->display, data->win);
+	XMapRaised(data->display, data->win);
 
 	data->visible_surface = cairo_xlib_surface_create(data->display,
 							  data->win,
