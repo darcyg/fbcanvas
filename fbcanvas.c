@@ -98,23 +98,26 @@ static void draw_16bpp(struct backend *be, cairo_surface_t *surface)
 {
 	struct framebuffer *fb = be->data;
 	unsigned int *data = (unsigned int *)cairo_image_surface_get_data(surface);
+	const unsigned int width = be->width;
+	const unsigned int height = be->height;
 
-#define Red(x) ((x) & 0xff)
-#define Green(x) (((x) >> 8) & 0xff)
-#define Blue(x) (((x) >> 16) & 0xff)
-#define Alpha(x) (((x) >> 24) & 0xff)
+#define Red(x)   (((x) >> 0)  & 0xFF)
+#define Green(x) (((x) >> 8)  & 0xFF)
+#define Blue(x)  (((x) >> 16) & 0xFF)
+#define Alpha(x) (((x) >> 24) & 0xFF)
 #define Scale(x, from, to) ((1 << (to)) * (x) / (1 << (from)))
 
-	for (int y = 0; y < be->height; y++)
+	for (int y = 0; y < height; y++)
 	{
-		for (int x = 0; x < be->width; x++)
+		for (int x = 0; x < width; x++)
 		{
-			unsigned int val = *(data + be->width * y + x);
+			unsigned int offset = width * y + x;
+			unsigned int val = *(data + offset);
 
-			*((unsigned short *)fb->mem + y * be->width + x) = 
-				((Scale(Red(val), 8, 5) << 11)
-				 | (Scale(Green(val), 8, 6) << 5)
-				 | (Scale(Blue(val), 8, 5)));
+			*((unsigned short *)fb->mem + offset) =
+				((Scale(Red(val), 8, 5) << 11) |
+				 (Scale(Green(val), 8, 6) << 5) |
+				 (Scale(Blue(val), 8, 5)));
 		}
 	}
 }
