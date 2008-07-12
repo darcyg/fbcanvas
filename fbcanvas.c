@@ -1,5 +1,5 @@
 /*
- * fbcanvas.c - 17.5.2008 - 19.6.2008 Ari & Tero Roponen
+ * fbcanvas.c - 17.5.2008 - 12.7.2008 Ari & Tero Roponen
  */
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -97,19 +97,24 @@ static void close_fb(struct backend *be)
 static void draw_16bpp(struct backend *be, cairo_surface_t *surface)
 {
 	struct framebuffer *fb = be->data;
-	unsigned char *data = cairo_image_surface_get_data(surface);
+	unsigned int *data = (unsigned int *)cairo_image_surface_get_data(surface);
+
+#define Red(x) ((x) & 0xff)
+#define Green(x) (((x) >> 8) & 0xff)
+#define Blue(x) (((x) >> 16) & 0xff)
+#define Alpha(x) (((x) >> 24) & 0xff)
+#define Scale(x, from, to) ((1 << (to)) * (x) / (1 << (from)))
 
 	for (int y = 0; y < be->height; y++)
 	{
 		for (int x = 0; x < be->width; x++)
 		{
-			unsigned char *tmp = data + 4 * (be->width * y + x);
+			unsigned int val = *(data + be->width * y + x);
 
-			unsigned short color =  (((1<<5) * tmp[0] / 256) & ((1<<5)-1)) << 11 |
-						(((1<<6) * tmp[1] / 256) & ((1<<6)-1)) << 5 |
-						(((1<<5) * tmp[2] / 256) & ((1<<5)-1)) << 0;
-
-			*((unsigned short *)fb->mem + y * be->width + x) = color;
+			*((unsigned short *)fb->mem + y * be->width + x) = 
+				((Scale(Red(val), 8, 5) << 11)
+				 | (Scale(Green(val), 8, 6) << 5)
+				 | (Scale(Blue(val), 8, 5)));
 		}
 	}
 }
