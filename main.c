@@ -30,6 +30,8 @@ struct prefs
 	int just_pagecount;
 	char *grep_str;
 	int quiet;
+
+	char *state_file;
 };
 
 /* Can't be static. */
@@ -40,11 +42,65 @@ static struct argp_option options[] = {
 	{"grep", 'g', "TEXT", 0, "search for text"},
 	{"page", 'p', "PAGE", 0, "goto given page"},
 	{"quiet", 'q', NULL, 0, "Don't display startup message"},
+	{"restore", 'r', NULL, 0, "Restore previous state"},
 	{"scale", 's', "SCALE", 0, "set scale factor"},
 	{NULL, 'x', "X", 0, "set x-offset"},
 	{NULL, 'y', "Y", 0, "set y-offset"},
 	{NULL}
 };
+
+static void load_prefs(char *filename, struct prefs *prefs)
+{
+	FILE *fp;
+	char buf[256];
+	sprintf(buf, "%s.fb", filename);
+	prefs->state_file = strdup(buf);
+	fprintf(stderr, "load_prefs: '%s'\n", prefs->state_file);
+
+	fp = fopen(prefs->state_file, "r");
+	if (fp)
+	{
+		int page;
+		double scale;
+
+		while (fgets(buf, sizeof(buf), fp))
+		{
+			*strrchr(buf, '\n') = '\0';
+
+			if (!*buf || *buf == '#')
+				continue;
+
+			if (sscanf(buf, "page=%d", &page) == 1)
+			{
+				prefs->page = page - 1;
+				continue;
+			}
+
+			if (sscanf(buf, "scale=%lf", &scale) == 1)
+			{
+				prefs->scale = scale;
+				continue;
+			}
+
+			fprintf(stderr, "load_prefs: '%s'\n", buf);
+		}
+
+		fclose(fp);
+	}
+}
+
+static void save_prefs(struct prefs *prefs)
+{
+	fprintf(stderr, "save_prefs: '%s'\n", prefs->state_file);
+	FILE *fp = fopen(prefs->state_file, "w");
+	if (fp)
+	{
+		fprintf(fp, "# fb state file\n");
+		fprintf(fp, "page=%d\n", prefs->page);
+		fprintf(fp, "scale=%lf\n", prefs->scale);
+		fclose(fp);
+	}
+}
 
 error_t parse_arguments (int key, char *arg, struct argp_state *state)
 {
@@ -65,6 +121,9 @@ error_t parse_arguments (int key, char *arg, struct argp_state *state)
 		break;
 	case 'q':
 		prefs->quiet = 1;
+		break;
+	case 'r':
+		prefs->state_file = (char *)1;
 		break;
 	case 's':
 		prefs->scale = strtod (arg, NULL);
@@ -182,6 +241,7 @@ int main(int argc, char *argv[])
 		doc = open_document (argv[i]);
 		if (! doc)
 			continue;
+
 		if (prefs.just_pagecount)
 		{
 			fprintf (stderr, "%s has %d page%s.\n",
@@ -196,8 +256,17 @@ int main(int argc, char *argv[])
 			ret = init_terminal();
 			if (ret < 0)
 				goto out;
+			if (prefs.state_file)
+				load_prefs(argv[i], &prefs);
 			ret = view_file (doc, &prefs);
+			if (prefs.state_file)
+			{
+				prefs.page = doc->pagenum;
+				prefs.scale = doc->scale;
+				save_prefs(&prefs);
+			}
 		}
+
 		doc->close (doc);
 	}
 out:
