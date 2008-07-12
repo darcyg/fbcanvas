@@ -89,10 +89,10 @@ static struct backend *open_x11(char *filename)
 		NULL, 0, &size_hints);
 
 	XSelectInput(data->display, data->win,
-		ExposureMask
-		/* | KeyPressMask */
-		/* | ButtonPressMask */
-		/* | StructureNotifyMask */
+		     ExposureMask
+		     | KeyPressMask	/* Needed to get the focus at the begining */
+		     /* | ButtonPressMask */
+		     /* | StructureNotifyMask */
 		);
 
 	data->gc = XCreateGC(data->display, data->win, 0, &values);
