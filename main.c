@@ -55,7 +55,6 @@ static void load_prefs(char *filename, struct prefs *prefs)
 	char buf[256];
 	sprintf(buf, "%s.fb", filename);
 	prefs->state_file = strdup(buf);
-	fprintf(stderr, "load_prefs: '%s'\n", prefs->state_file);
 
 	fp = fopen(prefs->state_file, "r");
 	if (fp)
@@ -91,7 +90,6 @@ static void load_prefs(char *filename, struct prefs *prefs)
 
 static void save_prefs(struct prefs *prefs)
 {
-	fprintf(stderr, "save_prefs: '%s'\n", prefs->state_file);
 	FILE *fp = fopen(prefs->state_file, "w");
 	if (fp)
 	{
@@ -219,7 +217,7 @@ int main(int argc, char *argv[])
 			ret = view_file (doc, &prefs);
 			if (prefs.state_file)
 			{
-				prefs.page = doc->pagenum;
+				prefs.page = doc->pagenum + 1;
 				prefs.scale = doc->scale;
 				save_prefs(&prefs);
 			}
