@@ -90,7 +90,7 @@ static struct backend *open_x11(char *filename)
 
 	XSelectInput(data->display, data->win,
 		     ExposureMask
-		     | KeyPressMask	/* Needed to get the focus at the begining */
+		     | KeyPressMask	/* Needed to get the focus at the beginning */
 		     /* | ButtonPressMask */
 		     /* | StructureNotifyMask */
 		);
