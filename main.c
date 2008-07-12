@@ -6,6 +6,8 @@
 #include <linux/kd.h>
 #include <linux/vt.h>
 #include <sys/ioctl.h>
+#include <sys/types.h>
+#include <attr/xattr.h>
 #include <argp.h>
 #include <fcntl.h>
 #include <poll.h>
@@ -51,52 +53,80 @@ static struct argp_option options[] = {
 
 static void load_prefs(char *filename, struct prefs *prefs)
 {
-	FILE *fp;
 	char buf[256];
-	sprintf(buf, "%s.fb", filename);
-	prefs->state_file = strdup(buf);
 
-	fp = fopen(prefs->state_file, "r");
-	if (fp)
+	/* First try extended attributes */
+	// FIXME: xattr code is not tested!
+	int err = getxattr(filename, "user.fbprefs.page", buf, sizeof(buf));
+	if (err > 0)
 	{
-		int page;
-		double scale;
+		prefs->state_file = strdup(filename);
+		prefs->page = atoi(buf) - 1;
 
-		while (fgets(buf, sizeof(buf), fp))
+		err = getxattr(filename, "user.fbprefs.scale", buf, sizeof(buf));
+		if (err > 0)
+			prefs->scale = strtod (buf, NULL);
+	} else if (errno == ENOATTR) {
+		prefs->state_file = strdup(filename);
+	} else {
+		FILE *fp;
+		sprintf(buf, "%s.fb", filename);
+		prefs->state_file = strdup(buf);
+
+		fp = fopen(prefs->state_file, "r");
+		if (fp)
 		{
-			*strrchr(buf, '\n') = '\0';
+			int page;
+			double scale;
 
-			if (!*buf || *buf == '#')
-				continue;
-
-			if (sscanf(buf, "page=%d", &page) == 1)
+			while (fgets(buf, sizeof(buf), fp))
 			{
-				prefs->page = page - 1;
-				continue;
+				*strrchr(buf, '\n') = '\0';
+
+				if (!*buf || *buf == '#')
+					continue;
+
+				if (sscanf(buf, "page=%d", &page) == 1)
+				{
+					prefs->page = page - 1;
+					continue;
+				}
+
+				if (sscanf(buf, "scale=%lf", &scale) == 1)
+				{
+					prefs->scale = scale;
+					continue;
+				}
+
+				fprintf(stderr, "load_prefs: '%s'\n", buf);
 			}
 
-			if (sscanf(buf, "scale=%lf", &scale) == 1)
-			{
-				prefs->scale = scale;
-				continue;
-			}
-
-			fprintf(stderr, "load_prefs: '%s'\n", buf);
+			fclose(fp);
 		}
-
-		fclose(fp);
 	}
 }
 
 static void save_prefs(struct prefs *prefs)
 {
-	FILE *fp = fopen(prefs->state_file, "w");
-	if (fp)
+	char buf[256];
+	int err;
+
+	// FIXME: xattr code is not tested!
+	sprintf(buf, "%d", prefs->page);
+	err = setxattr(prefs->state_file, "user.fbprefs.page", buf, strlen(buf)+1, 0);
+	if (err == 0)
 	{
-		fprintf(fp, "# fb state file\n");
-		fprintf(fp, "page=%d\n", prefs->page);
-		fprintf(fp, "scale=%lf\n", prefs->scale);
-		fclose(fp);
+		sprintf(buf, "%lf", prefs->scale);
+		setxattr(prefs->state_file, "user.fbprefs.scale", buf, strlen(buf)+1, 0);
+	} else {
+		FILE *fp = fopen(prefs->state_file, "w");
+		if (fp)
+		{
+			fprintf(fp, "# fb state file\n");
+			fprintf(fp, "page=%d\n", prefs->page);
+			fprintf(fp, "scale=%lf\n", prefs->scale);
+			fclose(fp);
+		}
 	}
 }
 
