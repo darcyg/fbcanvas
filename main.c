@@ -1,5 +1,5 @@
 /*
- * main.c - 17.5.2008 - 12.7.2008 Ari & Tero Roponen
+ * main.c - 17.5.2008 - 13.7.2008 Ari & Tero Roponen
  */
 
 #include <linux/input.h>
@@ -52,7 +52,7 @@ static struct argp_option options[] = {
 };
 
 /*
- * returns 0 if succesfull, errno if fails.
+ * returns 0 if successful, errno if fails.
  */
 static int get_int_attribute(const char *filename, const char *attr, int *value)
 {
