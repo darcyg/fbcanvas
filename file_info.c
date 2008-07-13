@@ -3,6 +3,7 @@
 #include <magic.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include "file_info.h"
 
 static GArray *file_infos;
@@ -52,6 +53,7 @@ void register_plugins (void)
 
 struct file_info *get_file_info (char *filename)
 {
+	char real_file[256];
 	struct file_info *fi = NULL;
 	magic_t magic;
 	int ret, i;
@@ -59,6 +61,22 @@ struct file_info *get_file_info (char *filename)
 
 	if (! file_infos)
 		return NULL;
+
+	snprintf(real_file, sizeof(real_file), "%s", filename);
+
+	for(;;)
+	{
+		filename = real_file;
+
+		i = readlink(filename, real_file, sizeof(real_file));
+		if (i > 0)
+		{
+			real_file[i] = '\0';
+			continue;
+		}
+
+		break;
+	}
 
 	magic = magic_open (MAGIC_NONE);
 	ret = magic_load (magic, NULL);
