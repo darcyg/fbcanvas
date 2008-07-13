@@ -51,81 +51,69 @@ static struct argp_option options[] = {
 	{NULL}
 };
 
+/*
+ * returns 0 if succesfull, errno if fails.
+ */
+static int get_int_attribute(const char *filename, const char *attr, int *value)
+{
+	/* Get attribute len */
+	char *buf;
+	int ret = getxattr(filename, attr, NULL, 0);
+	if (ret < 0)
+		return errno;
+
+	buf = alloca(ret);
+	ret = getxattr(filename, attr, buf, ret);
+	if (ret < 0)
+		return errno;
+
+	*value = atoi(buf);
+	return 0;
+}
+
+
+/*
+ * returns 0 if succesfull, errno if fails.
+ */
+static int get_double_attribute(const char *filename, const char *attr, double *value)
+{
+	/* Get attribute len */
+	char *buf;
+	int ret = getxattr(filename, attr, NULL, 0);
+	if (ret < 0)
+		return errno;
+
+	buf = alloca(ret);
+	ret = getxattr(filename, attr, buf, ret);
+	if (ret < 0)
+		return errno;
+
+	*value = strtod(buf, NULL);
+	return 0;
+}
+
 static void load_prefs(char *filename, struct prefs *prefs)
 {
-	char buf[256];
+	int ivalue;
+	double dvalue;
 
-	/* First try extended attributes */
-	int err = getxattr(filename, "user.fbprefs.page", buf, sizeof(buf));
-	if (err > 0)
-	{
-		prefs->state_file = strdup(filename);
-		prefs->page = atoi(buf) - 1;
+	prefs->state_file = strdup(filename); //XXX
 
-		err = getxattr(filename, "user.fbprefs.scale", buf, sizeof(buf));
-		if (err > 0)
-			prefs->scale = strtod (buf, NULL);
-	} else if (errno == ENOATTR) {
-		prefs->state_file = strdup(filename);
-	} else {
-		FILE *fp;
-		sprintf(buf, "%s.fb", filename);
-		prefs->state_file = strdup(buf);
-
-		fp = fopen(prefs->state_file, "r");
-		if (fp)
-		{
-			int page;
-			double scale;
-
-			while (fgets(buf, sizeof(buf), fp))
-			{
-				*strrchr(buf, '\n') = '\0';
-
-				if (!*buf || *buf == '#')
-					continue;
-
-				if (sscanf(buf, "page=%d", &page) == 1)
-				{
-					prefs->page = page - 1;
-					continue;
-				}
-
-				if (sscanf(buf, "scale=%lf", &scale) == 1)
-				{
-					prefs->scale = scale;
-					continue;
-				}
-
-				fprintf(stderr, "load_prefs: '%s'\n", buf);
-			}
-
-			fclose(fp);
-		}
-	}
+	if (get_int_attribute(filename, "user.fbprefs.page", &ivalue) == 0)
+		prefs->page = ivalue - 1;
+	if (get_double_attribute(filename, "user.fbprefs.scale", &dvalue) == 0)
+		prefs->scale = dvalue;
 }
 
 static void save_prefs(struct prefs *prefs)
 {
-	char buf[256];
-	int err;
+	char buf[16];
 
 	sprintf(buf, "%d", prefs->page);
-	err = setxattr(prefs->state_file, "user.fbprefs.page", buf, strlen(buf)+1, 0);
-	if (err == 0)
-	{
-		sprintf(buf, "%lf", prefs->scale);
-		setxattr(prefs->state_file, "user.fbprefs.scale", buf, strlen(buf)+1, 0);
-	} else {
-		FILE *fp = fopen(prefs->state_file, "w");
-		if (fp)
-		{
-			fprintf(fp, "# fb state file\n");
-			fprintf(fp, "page=%d\n", prefs->page);
-			fprintf(fp, "scale=%lf\n", prefs->scale);
-			fclose(fp);
-		}
-	}
+	setxattr(prefs->state_file, "user.fbprefs.page", buf, strlen(buf)+1, 0);
+
+	sprintf(buf, "%lf", prefs->scale);
+	setxattr(prefs->state_file, "user.fbprefs.scale", buf, strlen(buf)+1, 0);
 }
 
 error_t parse_arguments (int key, char *arg, struct argp_state *state)
