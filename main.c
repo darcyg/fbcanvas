@@ -54,7 +54,7 @@ static struct argp_option options[] = {
 /*
  * returns 0 if successful, errno if fails.
  */
-static int get_int_attribute(const char *filename, const char *attr, int *value)
+static int get_attribute(const char *filename, const char *attr, char **value)
 {
 	/* Get attribute len */
 	char *buf;
@@ -62,47 +62,34 @@ static int get_int_attribute(const char *filename, const char *attr, int *value)
 	if (ret < 0)
 		return errno;
 
-	buf = alloca(ret);
+	buf = malloc (ret);
 	ret = getxattr(filename, attr, buf, ret);
 	if (ret < 0)
+	{
+		free (buf);
 		return errno;
+	}
 
-	*value = atoi(buf);
-	return 0;
-}
-
-
-/*
- * returns 0 if succesfull, errno if fails.
- */
-static int get_double_attribute(const char *filename, const char *attr, double *value)
-{
-	/* Get attribute len */
-	char *buf;
-	int ret = getxattr(filename, attr, NULL, 0);
-	if (ret < 0)
-		return errno;
-
-	buf = alloca(ret);
-	ret = getxattr(filename, attr, buf, ret);
-	if (ret < 0)
-		return errno;
-
-	*value = strtod(buf, NULL);
+	*value = buf;
 	return 0;
 }
 
 static void load_prefs(char *filename, struct prefs *prefs)
 {
-	int ivalue;
-	double dvalue;
+	char *value;
 
 	prefs->state_file = strdup(filename); //XXX
 
-	if (get_int_attribute(filename, "user.fbprefs.page", &ivalue) == 0)
-		prefs->page = ivalue - 1;
-	if (get_double_attribute(filename, "user.fbprefs.scale", &dvalue) == 0)
-		prefs->scale = dvalue;
+	if (get_attribute(filename, "user.fbprefs.page", &value) == 0)
+	{
+		prefs->page = atoi (value) - 1;
+		free (value);
+	}
+	if (get_attribute(filename, "user.fbprefs.scale", &value) == 0)
+	{
+		prefs->scale = strtod (value, NULL);
+		free (value);
+	}
 }
 
 static void save_prefs(struct prefs *prefs)
