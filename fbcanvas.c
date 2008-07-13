@@ -100,7 +100,7 @@ static void draw_16bpp(struct backend *be, cairo_surface_t *surface)
 	unsigned int *data = (unsigned int *)cairo_image_surface_get_data(surface);
 	const unsigned int width = be->width;
 	const unsigned int height = be->height;
-	unsigned short vline[be->width];
+	unsigned short hline[be->width];
 
 #define Red(x)   (((x) >> 0)  & 0xFF)
 #define Green(x) (((x) >> 8)  & 0xFF)
@@ -114,12 +114,12 @@ static void draw_16bpp(struct backend *be, cairo_surface_t *surface)
 		{
 			unsigned int val = *(data + width * y + x);
 
-			vline[x] = ((Scale(Red(val), 8, 5) << 11) |
+			hline[x] = ((Scale(Red(val), 8, 5) << 11) |
 				    (Scale(Green(val), 8, 6) << 5) |
 				    (Scale(Blue(val), 8, 5)));
 		}
 
-		memcpy(fb->mem + 2 * width * y, vline, 2 * width);
+		memcpy(fb->mem + 2 * width * y, hline, 2 * width);
 	}
 }
 
