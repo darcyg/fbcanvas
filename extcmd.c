@@ -1,4 +1,4 @@
-/* extcmd.c - 7.7.2008 - 7.7.2008 Ari & Tero Roponen */
+/* extcmd.c - 7.7.2008 - 13.7.2008 Ari & Tero Roponen */
 #include <glib.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,18 +33,50 @@ static void ecmd_goto (struct document *doc, int argc, char *argv[])
 {
 	if (argc != 2)
 	{
-		doc->set_message (doc, "Usage: goto pagenum");
+		doc->set_message (doc, "Usage: goto [pagenum|tag]");
 		return;
 	}
 
-	int page = atoi (argv[1]);
-	if ((page > 0) && (page <= doc->pagecount))
+	int page;
+	char *end;
+	page = strtol (argv[1], &end, 10);
+	if (*end == '\0')	/* Page number */
 	{
-		doc->pagenum = page - 1;
-		doc->update (doc);
+		if ((page > 0) && (page <= doc->pagecount))
+		{
+			doc->pagenum = page - 1;
+			doc->update (doc);
+		} else {
+			doc->set_message (doc, "Invalid pagenum: %s", argv[1]);
+		}
 	} else {
-		doc->set_message (doc, "Invalid pagenum: %s", argv[1]);
+		doc->set_message (doc, "Going to non-page tags not implemented");
 	}
+}
+
+static void list_tags (struct document *doc)
+{
+	doc->set_message (doc, "Page tags: %d-%d\nUser tags:", 1, doc->pagecount);
+}
+
+static void set_tag (struct document *doc, char *tag)
+{
+	char *end;
+	strtol (tag, &end, 10);
+	if (*end == '\0')
+		doc->set_message (doc, "Numeric tags are reserved");
+	else
+		doc->set_message (doc, "Setting tags not implemented", *end);
+}
+
+static void ecmd_tag (struct document *doc, int argc, char *argv[])
+{
+	if (argc == 1)
+		list_tags (doc);
+	else if (argc == 2)
+		set_tag (doc, argv[1]);
+	else
+		doc->set_message (doc, "Usage: tag [name]");
 }
 
 static void ecmd_help (struct document *doc, int argc, char *argv[])
@@ -68,6 +100,7 @@ void register_extended_commands (void)
 {
 	set_extcmd ("echo", ecmd_echo);
 	set_extcmd ("goto", ecmd_goto);
+	set_extcmd ("tag", ecmd_tag);
 	set_extcmd ("version", ecmd_version);
 	set_extcmd ("help", ecmd_help);
 }
