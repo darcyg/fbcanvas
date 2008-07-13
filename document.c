@@ -119,12 +119,30 @@ static void document_set_message(struct document *doc, char *fmt, ...)
 	va_list args;
 	char *buf;
 
+	if (! fmt)
+	{
+		free (doc->message);
+		doc->message = NULL;
+		return;
+	}
+
 	va_start (args, fmt);
 	vasprintf (&buf, fmt, args);
 	va_end (args);
 
-	free (doc->message);
-	doc->message = buf;
+	if (! doc->message)
+	{
+		doc->message = buf;
+	} else {
+		int a = strlen (doc->message);
+		int b = strlen (buf);
+		char *msg = malloc (a + b + 1);
+		memcpy (msg, doc->message, a);
+		memcpy (msg + a, buf, b);
+		msg[a + b] = '\0';
+		free (doc->message);
+		doc->message = msg;
+	}
 }
 
 static void document_scroll(struct document *doc, int dx, int dy)
