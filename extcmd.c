@@ -63,7 +63,7 @@ static void ecmd_goto (struct document *doc, int argc, char *argv[])
 			doc->pagenum = atoi(buf) - 1;
 			doc->update (doc);
 		} else {
-			doc->set_message (doc, "No such tag");
+			doc->set_message (doc, "No such tag: '%s'", argv[1]);
 		}
 	}
 }
