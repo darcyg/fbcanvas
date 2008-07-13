@@ -56,14 +56,13 @@ static void load_prefs(char *filename, struct prefs *prefs)
 	char buf[256];
 
 	/* First try extended attributes */
-	// FIXME: xattr code is not tested!
-	int err = lgetxattr(filename, "user.fbprefs.page", buf, sizeof(buf));
+	int err = getxattr(filename, "user.fbprefs.page", buf, sizeof(buf));
 	if (err > 0)
 	{
 		prefs->state_file = strdup(filename);
 		prefs->page = atoi(buf) - 1;
 
-		err = lgetxattr(filename, "user.fbprefs.scale", buf, sizeof(buf));
+		err = getxattr(filename, "user.fbprefs.scale", buf, sizeof(buf));
 		if (err > 0)
 			prefs->scale = strtod (buf, NULL);
 	} else if (errno == ENOATTR) {
@@ -111,13 +110,12 @@ static void save_prefs(struct prefs *prefs)
 	char buf[256];
 	int err;
 
-	// FIXME: xattr code is not tested!
 	sprintf(buf, "%d", prefs->page);
-	err = lsetxattr(prefs->state_file, "user.fbprefs.page", buf, strlen(buf)+1, 0);
+	err = setxattr(prefs->state_file, "user.fbprefs.page", buf, strlen(buf)+1, 0);
 	if (err == 0)
 	{
 		sprintf(buf, "%lf", prefs->scale);
-		lsetxattr(prefs->state_file, "user.fbprefs.scale", buf, strlen(buf)+1, 0);
+		setxattr(prefs->state_file, "user.fbprefs.scale", buf, strlen(buf)+1, 0);
 	} else {
 		FILE *fp = fopen(prefs->state_file, "w");
 		if (fp)
