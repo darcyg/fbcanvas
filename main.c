@@ -24,7 +24,7 @@
 
 struct prefs
 {
-	int page;
+	char *page;
 	signed int x;
 	signed int y;
 	double scale;
@@ -42,7 +42,7 @@ const char *argp_program_version = "fb version 20080713";
 static struct argp_option options[] = {
 	{"count", 'c', NULL, 0, "display page count"},
 	{"grep", 'g', "TEXT", 0, "search for text"},
-	{"page", 'p', "PAGE", 0, "goto given page"},
+	{"page", 'p', "PAGE", 0, "goto given page or tag"},
 	{"quiet", 'q', NULL, 0, "Don't display startup message"},
 	{"restore", 'r', NULL, 0, "Restore previous state"},
 	{"scale", 's', "SCALE", 0, "set scale factor"},
@@ -81,10 +81,7 @@ static void load_prefs(char *filename, struct prefs *prefs)
 	prefs->state_file = strdup(filename); //XXX
 
 	if (get_attribute(filename, "user.fbprefs.page", &value) == 0)
-	{
-		prefs->page = atoi (value) - 1;
-		free (value);
-	}
+		prefs->page = value;
 	if (get_attribute(filename, "user.fbprefs.scale", &value) == 0)
 	{
 		prefs->scale = strtod (value, NULL);
@@ -96,8 +93,7 @@ static void save_prefs(struct prefs *prefs)
 {
 	char buf[16];
 
-	sprintf(buf, "%d", prefs->page);
-	setxattr(prefs->state_file, "user.fbprefs.page", buf, strlen(buf)+1, 0);
+	setxattr(prefs->state_file, "user.fbprefs.page", prefs->page, strlen(prefs->page)+1, 0);
 
 	sprintf(buf, "%lf", prefs->scale);
 	setxattr(prefs->state_file, "user.fbprefs.scale", buf, strlen(buf)+1, 0);
@@ -118,7 +114,7 @@ error_t parse_arguments (int key, char *arg, struct argp_state *state)
 		prefs->grep_str = strdup (arg);
 		break;
 	case 'p':
-		prefs->page = atoi (arg) - 1;
+		prefs->page = arg;
 		break;
 	case 'q':
 		prefs->quiet = 1;
@@ -187,8 +183,9 @@ static void main_loop (struct document *doc)
 
 static int view_file (struct document *doc, struct prefs *prefs)
 {
-	if (prefs->page < doc->pagecount)
-		doc->pagenum = prefs->page;
+	int page = atoi (prefs->page) - 1;
+	if (page < doc->pagecount)
+		doc->pagenum = page;
 	doc->xoffset = prefs->x;
 	doc->yoffset = prefs->y;
 	doc->scale = prefs->scale;
@@ -262,7 +259,9 @@ int main(int argc, char *argv[])
 			ret = view_file (doc, &prefs);
 			if (prefs.state_file)
 			{
-				prefs.page = doc->pagenum + 1;
+				char buf[8];
+				sprintf (buf, "%d", doc->pagenum + 1);
+				prefs.page = buf;
 				prefs.scale = doc->scale;
 				save_prefs(&prefs);
 			}
