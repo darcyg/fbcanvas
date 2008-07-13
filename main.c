@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include "document.h"
 #include "commands.h"
+#include "extcmd.h"
 #include "keymap.h"
 #include "terminal.h"
 
@@ -42,7 +43,7 @@ const char *argp_program_version = "fb version 20080713";
 static struct argp_option options[] = {
 	{"count", 'c', NULL, 0, "display page count"},
 	{"grep", 'g', "TEXT", 0, "search for text"},
-	{"page", 'p', "PAGE", 0, "goto given page or tag"},
+	{"page", 'p', "PAGE", OPTION_ARG_OPTIONAL, "goto given page or tag"},
 	{"quiet", 'q', NULL, 0, "Don't display startup message"},
 	{"restore", 'r', NULL, 0, "Restore previous state"},
 	{"scale", 's', "SCALE", 0, "set scale factor"},
@@ -80,8 +81,6 @@ static void load_prefs(char *filename, struct prefs *prefs)
 
 	prefs->state_file = strdup(filename); //XXX
 
-	if (get_attribute(filename, "user.fbprefs.page", &value) == 0)
-		prefs->page = value;
 	if (get_attribute(filename, "user.fbprefs.scale", &value) == 0)
 	{
 		prefs->scale = strtod (value, NULL);
@@ -92,8 +91,6 @@ static void load_prefs(char *filename, struct prefs *prefs)
 static void save_prefs(struct prefs *prefs)
 {
 	char buf[16];
-
-	setxattr(prefs->state_file, "user.fbprefs.page", prefs->page, strlen(prefs->page)+1, 0);
 
 	sprintf(buf, "%lf", prefs->scale);
 	setxattr(prefs->state_file, "user.fbprefs.scale", buf, strlen(buf)+1, 0);
@@ -113,8 +110,11 @@ error_t parse_arguments (int key, char *arg, struct argp_state *state)
 	case 'g':
 		prefs->grep_str = strdup (arg);
 		break;
-	case 'p':
-		prefs->page = arg;
+	case 'p':		/* page */
+		if (arg)
+			prefs->page = arg;
+		else
+			prefs->page = "current_page";
 		break;
 	case 'q':
 		prefs->quiet = 1;
@@ -144,9 +144,7 @@ error_t parse_arguments (int key, char *arg, struct argp_state *state)
 
 static int view_file (struct document *doc, struct prefs *prefs)
 {
-	int page = atoi (prefs->page) - 1;
-	if (page < doc->pagecount)
-		doc->pagenum = page;
+	doc->pagenum = 0;	/* default */
 	doc->xoffset = prefs->x;
 	doc->yoffset = prefs->y;
 	doc->scale = prefs->scale;
@@ -156,7 +154,20 @@ static int view_file (struct document *doc, struct prefs *prefs)
 	if (! prefs->quiet)
 		doc->set_message (doc, "%s\n%s", argp_program_version, doc->filename);
 
+	if (prefs->page)
+	{
+		char buf[20];
+		sprintf (buf, "goto %s", prefs->page);
+		execute_extended_command (doc, buf);
+	}
+
 	doc->main_loop(doc);
+
+	if (prefs->page)
+	{
+		char cmd[] = "tag current_page";
+		execute_extended_command (doc, cmd);
+	}
 
 	fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n",
 		 program_invocation_short_name,
@@ -181,7 +192,7 @@ int main(int argc, char *argv[])
 	int ind;
 	int ret = 1;
 
-	struct prefs prefs = {0, 0, 0, 1.0, };
+	struct prefs prefs = {NULL, 0, 0, 1.0, };
 	struct argp argp = {options, parse_arguments, "FILE", };
 
 	struct document *doc;
