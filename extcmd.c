@@ -1,4 +1,6 @@
 /* extcmd.c - 7.7.2008 - 13.7.2008 Ari & Tero Roponen */
+#include <sys/types.h>
+#include <attr/xattr.h>
 #include <glib.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,13 +52,41 @@ static void ecmd_goto (struct document *doc, int argc, char *argv[])
 			doc->set_message (doc, "Invalid pagenum: %s", argv[1]);
 		}
 	} else {
-		doc->set_message (doc, "Going to non-page tags not implemented");
+		char tag[128];
+		char buf[128];
+		int err;
+
+		sprintf(tag, "user.fb.tags.%s", argv[1]);
+		err = getxattr(doc->filename, tag, buf, sizeof(buf));
+		if (err > 0)
+		{
+			doc->pagenum = atoi(buf) - 1;
+			doc->update (doc);
+		} else {
+			doc->set_message (doc, "No such tag");
+		}
 	}
 }
 
 static void list_tags (struct document *doc)
 {
-	doc->set_message (doc, "Page tags: %d-%d\nUser tags:", 1, doc->pagecount);
+	int len = listxattr(doc->filename, NULL, 0);
+	if (len < 0)
+	{
+		doc->set_message (doc, "No tags found");
+	} else {
+#if 0
+		char buf[len];
+		listxattr(doc->filename, buf, len);
+		for (int i = 0; i < len - 1; i++)
+			if (buf[i] == '\0')
+				buf[i] = '\n';
+
+		doc->set_message (doc, "Page tags: %d-%d\nUser tags:\n%s",
+			1, doc->pagecount, buf);
+#endif
+		doc->set_message (doc, "TODO: implement list_tags()");
+	}
 }
 
 static void set_tag (struct document *doc, char *tag)
@@ -64,9 +94,25 @@ static void set_tag (struct document *doc, char *tag)
 	char *end;
 	strtol (tag, &end, 10);
 	if (*end == '\0')
+	{
 		doc->set_message (doc, "Numeric tags are reserved");
-	else
-		doc->set_message (doc, "Setting tags not implemented", *end);
+	} else {
+		char tagname[128];
+		char buf[128];
+		int err;
+
+		sprintf(tagname, "user.fb.tags.%s", tag);
+		sprintf(buf, "%d", doc->pagenum + 1);
+
+		err = setxattr(doc->filename, tagname, buf, strlen(buf)+1, 0);
+		if (err == 0)
+		{
+			doc->set_message (doc, "Tagged page %d as %s",
+				doc->pagenum + 1, tag);
+		} else {
+			doc->set_message (doc, "Failed to set tag '%s'", tag);
+		}
+	}
 }
 
 static void ecmd_tag (struct document *doc, int argc, char *argv[])
