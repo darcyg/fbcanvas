@@ -75,17 +75,14 @@ static void list_tags (struct document *doc)
 	{
 		doc->set_message (doc, "No tags found");
 	} else {
-#if 0
-		char buf[len];
-		listxattr(doc->filename, buf, len);
-		for (int i = 0; i < len - 1; i++)
-			if (buf[i] == '\0')
-				buf[i] = '\n';
+		doc->set_message (doc, "Page tags: %d-%d\nUser tags:",
+				  1, doc->pagecount);
 
-		doc->set_message (doc, "Page tags: %d-%d\nUser tags:\n%s",
-			1, doc->pagecount, buf);
-#endif
-		doc->set_message (doc, "TODO: implement list_tags()");
+		char buf[len], *s;
+		listxattr(doc->filename, buf, len);
+		for (s = buf; s - buf < len; s += strlen (s) + 1)
+			if (strncmp (s, "user.fb.tags.", 13) == 0)
+				doc->set_message (doc,"%s\n", s + 13);
 	}
 }
 
