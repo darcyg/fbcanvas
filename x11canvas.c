@@ -5,11 +5,14 @@
 #include <cairo/cairo.h>
 #include <cairo/cairo-xlib.h>
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "commands.h"
 #include "util.h"
+
+extern bool active_console;
 
 struct x11_data
 {
@@ -93,6 +96,7 @@ static struct backend *open_x11(char *filename)
 		     | KeyPressMask	/* Needed to get the focus at the beginning */
 		     /* | ButtonPressMask */
 		     /* | StructureNotifyMask */
+		     | FocusChangeMask
 		);
 
 	data->gc = XCreateGC(data->display, data->win, 0, &values);
@@ -140,12 +144,23 @@ static void handle_events(struct document *doc)
 	{
 		XEvent report;
 		XNextEvent(data->display, &report);
-		if (report.type == Expose)
+
+		switch (report.type)
 		{
+		case Expose:
 			while (XCheckTypedEvent(data->display, Expose, &report))
 				;
 			if (doc->flags & DOCUMENT_IDLE)
 				doc->draw(doc);
+			break;
+		case FocusIn:
+		case FocusOut:
+			if (report.xfocus.window != data->win)
+				break;
+
+			fprintf(stderr, "Focus change\n");
+
+			break;
 		}
 	}
 }

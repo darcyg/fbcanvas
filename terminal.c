@@ -11,7 +11,7 @@
 #include "document.h"
 #include "keymap.h"
 
-static bool active_console = true;
+bool active_console = true;
 static bool need_repaint = false;
 
 static void handle_signal(int s)
