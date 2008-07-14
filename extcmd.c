@@ -222,27 +222,22 @@ void register_extended_commands (void)
 void execute_extended_command (struct document *doc, char *fmt, ...)
 {
 	va_list list;
-	char *cmd;
+	char *buf, *arg, *argv[10]; /* XXX */
+	int argc = 0;
 
 	va_start (list, fmt);
-	vasprintf (&cmd, fmt, list);
+	vasprintf (&buf, fmt, list);
 	va_end (list);
 
-	char *argv[10];		/* XXX */
-	int argc = 0;
-	char *arg;
-
-	for (arg = strtok (cmd, " "); arg && argc < 9; arg = strtok (NULL, " "))
+	for (arg = strtok (buf, " "); arg && argc < 9; arg = strtok (NULL, " "))
 		argv[argc++] = arg;
 	argv[argc] = NULL;
 
-	if (! commands)
+	if (commands)
 	{
-		free (cmd);
-		return;
+		extcmd_t command = g_hash_table_lookup (commands, argv[0]);
+		if (command)
+			command (doc, argc, argv);
 	}
-	extcmd_t command = g_hash_table_lookup (commands, argv[0]);
-	if (command)
-		command (doc, argc, argv);
-	free (cmd);
+	free (buf);
 }
