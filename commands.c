@@ -1,4 +1,4 @@
-/* commands.c - 13.6.2008 - 10.7.2008 Ari & Tero Roponen */
+/* commands.c - 13.6.2008 - 14.7.2008 Ari & Tero Roponen */
 #include <linux/input.h>
 #include <cairo/cairo.h>
 #include <ctype.h>
@@ -99,31 +99,18 @@ static void cmd_set_zoom (struct document *doc)
 {
 	double scale = 1.0;
 	if (this_command != KEY_0)
-		scale += 0.1 * (this_command - KEY_1);
-
-	doc->scale = scale;
-
-	if (doc->flags & NO_GENERIC_SCALE)
-		doc->update(doc);
+		scale += 0.1 * (this_command - KEY_1 + 1);
+	execute_extended_command (doc, "scale %2f", scale);
 }
 
 static void cmd_zoom_in (struct document *doc)
 {
-	doc->scale += 0.1;
-
-	if (doc->flags & NO_GENERIC_SCALE)
-		doc->update(doc);
+	execute_extended_command (doc, "scale more");
 }
 
 static void cmd_zoom_out (struct document *doc)
 {
-	if (doc->scale >= 0.2)
-	{
-		doc->scale -= 0.1;
-
-		if (doc->flags & NO_GENERIC_SCALE)
-			doc->update(doc);
-	}
+	execute_extended_command (doc, "scale less");
 }
 
 static void ecmd_save (struct document *doc, int argc, char *argv[])
@@ -267,55 +254,24 @@ static void cmd_display_info(struct document *doc)
 			  doc->pagecount);
 }
 
-static void scale_doc_full (struct document *doc, double xs, double ys)
-{
-	double w = doc->backend->width;
-	double h = doc->backend->height;
-	cairo_matrix_t scale;
-
-	cairo_matrix_init (&scale, w / xs, 0.0, 0.0, h / ys, 0.0, 0.0);
-	cairo_matrix_multiply (&doc->transform, &doc->transform, &scale);
-}
-
 static void cmd_reset (struct document *doc)
 {
-	reset_transformations (doc);
-
-	/* Update is needed to reset to the original image. */
-	if (doc->flags & NO_GENERIC_SCALE)
-		doc->update(doc);
+	execute_extended_command (doc, "scale reset");
 }
 
 static void cmd_full_screen (struct document *doc)
 {
-	cmd_reset (doc);
-	scale_doc_full (doc, doc->width, doc->height);
+	execute_extended_command (doc, "scale full");
 }
 
 static void cmd_full_width (struct document *doc)
 {
-	cmd_reset (doc);
-
-	if (doc->flags & NO_GENERIC_SCALE)
-	{
-		doc->scale = (double)doc->backend->width / (double)doc->width;
-		doc->update(doc);
-	} else {
-		scale_doc_full (doc, doc->width, doc->width);
-	}
+	execute_extended_command (doc, "scale width");
 }
 
 static void cmd_full_height (struct document *doc)
 {
-	cmd_reset (doc);
-
-	if (doc->flags & NO_GENERIC_SCALE)
-	{
-		doc->scale = (double)doc->backend->height / (double)doc->height;
-		doc->update(doc);
-	} else {
-		scale_doc_full (doc, doc->height, doc->height);
-	}
+	execute_extended_command (doc, "scale height");
 }
 
 void cmd_extended_command (struct document *doc)
