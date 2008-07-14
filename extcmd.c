@@ -1,7 +1,8 @@
-/* extcmd.c - 7.7.2008 - 13.7.2008 Ari & Tero Roponen */
+/* extcmd.c - 7.7.2008 - 14.7.2008 Ari & Tero Roponen */
 #include <sys/types.h>
 #include <attr/xattr.h>
 #include <glib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -148,8 +149,15 @@ void register_extended_commands (void)
 	set_extcmd ("help", ecmd_help);
 }
 
-void execute_extended_command (struct document *doc, char *cmd)
+void execute_extended_command (struct document *doc, char *fmt, ...)
 {
+	va_list list;
+	char *cmd;
+
+	va_start (list, fmt);
+	vasprintf (&cmd, fmt, list);
+	va_end (list);
+
 	char *argv[10];		/* XXX */
 	int argc = 0;
 	char *arg = cmd;
@@ -167,8 +175,12 @@ void execute_extended_command (struct document *doc, char *cmd)
 	argv[argc] = NULL;
 
 	if (! commands)
+	{
+		free (cmd);
 		return;
+	}
 	extcmd_t command = g_hash_table_lookup (commands, argv[0]);
 	if (command)
 		command (doc, argc, argv);
+	free (cmd);
 }
