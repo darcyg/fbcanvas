@@ -18,18 +18,22 @@ void set_extcmd (char *name, extcmd_t action)
 	g_hash_table_replace (commands, name, action);
 }
 
+static void reset_transformations (struct document *doc)
+{
+	doc->scale = 1.0;
+	doc->xoffset = 0;
+	doc->yoffset = 0;
+	cairo_matrix_init_identity (&doc->transform);
+
+	/* Update is needed to reset to the original image. */
+	if (doc->flags & NO_GENERIC_SCALE)
+		doc->update(doc);
+}
+
 static void ecmd_version (struct document *doc, int argc, char *argv[])
 {
 	extern const char *argp_program_version;
 	doc->set_message (doc, (char *)argp_program_version);
-}
-
-static void ecmd_echo (struct document *doc, int argc, char *argv[])
-{
-	if (argc == 2)
-		doc->set_message (doc, argv[1]);
-	else
-		doc->set_message (doc, "Usage: echo text");
 }
 
 static void ecmd_goto (struct document *doc, int argc, char *argv[])
@@ -208,7 +212,6 @@ do_scale:
 
 void register_extended_commands (void)
 {
-	set_extcmd ("echo", ecmd_echo);
 	set_extcmd ("goto", ecmd_goto);
 	set_extcmd ("scale", ecmd_scale);
 	set_extcmd ("tag", ecmd_tag);
@@ -219,35 +222,22 @@ void register_extended_commands (void)
 void execute_extended_command (struct document *doc, char *fmt, ...)
 {
 	va_list list;
-	char *cmd;
+	char *buf, *arg, *argv[10]; /* XXX */
+	int argc = 0;
 
 	va_start (list, fmt);
-	vasprintf (&cmd, fmt, list);
+	vasprintf (&buf, fmt, list);
 	va_end (list);
 
-	char *argv[10];		/* XXX */
-	int argc = 0;
-	char *arg = cmd;
-
-	do
-	{
+	for (arg = strtok (buf, " "); arg && argc < 9; arg = strtok (NULL, " "))
 		argv[argc++] = arg;
-		arg = strchr (arg, ' ');
-		if (arg)
-		{
-			*arg = '\0';
-			arg++;
-		} else break;
-	} while (argc < 9);
 	argv[argc] = NULL;
 
-	if (! commands)
+	if (commands)
 	{
-		free (cmd);
-		return;
+		extcmd_t command = g_hash_table_lookup (commands, argv[0]);
+		if (command)
+			command (doc, argc, argv);
 	}
-	extcmd_t command = g_hash_table_lookup (commands, argv[0]);
-	if (command)
-		command (doc, argc, argv);
-	free (cmd);
+	free (buf);
 }
