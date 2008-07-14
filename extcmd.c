@@ -230,18 +230,10 @@ void execute_extended_command (struct document *doc, char *fmt, ...)
 
 	char *argv[10];		/* XXX */
 	int argc = 0;
-	char *arg = cmd;
+	char *arg;
 
-	do
-	{
+	for (arg = strtok (cmd, " "); arg && argc < 9; arg = strtok (NULL, " "))
 		argv[argc++] = arg;
-		arg = strchr (arg, ' ');
-		if (arg)
-		{
-			*arg = '\0';
-			arg++;
-		} else break;
-	} while (argc < 9);
 	argv[argc] = NULL;
 
 	if (! commands)
