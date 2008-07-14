@@ -36,14 +36,6 @@ static void ecmd_version (struct document *doc, int argc, char *argv[])
 	doc->set_message (doc, (char *)argp_program_version);
 }
 
-static void ecmd_echo (struct document *doc, int argc, char *argv[])
-{
-	if (argc == 2)
-		doc->set_message (doc, argv[1]);
-	else
-		doc->set_message (doc, "Usage: echo text");
-}
-
 static void ecmd_goto (struct document *doc, int argc, char *argv[])
 {
 	if (argc != 2)
@@ -220,7 +212,6 @@ do_scale:
 
 void register_extended_commands (void)
 {
-	set_extcmd ("echo", ecmd_echo);
 	set_extcmd ("goto", ecmd_goto);
 	set_extcmd ("scale", ecmd_scale);
 	set_extcmd ("tag", ecmd_tag);
