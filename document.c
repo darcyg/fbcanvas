@@ -255,4 +255,8 @@ void reset_transformations (struct document *doc)
 	doc->xoffset = 0;
 	doc->yoffset = 0;
 	cairo_matrix_init_identity (&doc->transform);
+
+	/* Update is needed to reset to the original image. */
+	if (doc->flags & NO_GENERIC_SCALE)
+		doc->update(doc);
 }

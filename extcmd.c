@@ -136,10 +136,81 @@ static void ecmd_help (struct document *doc, int argc, char *argv[])
 	g_list_free (names);
 }
 
+static void scale_doc_full (struct document *doc, double xs, double ys)
+{
+	double w = doc->backend->width;
+	double h = doc->backend->height;
+	cairo_matrix_t scale;
+
+	cairo_matrix_init (&scale, w / xs, 0.0, 0.0, h / ys, 0.0, 0.0);
+	cairo_matrix_multiply (&doc->transform, &doc->transform, &scale);
+}
+
+static void ecmd_scale (struct document *doc, int argc, char *argv[])
+{
+	if (argc != 2)
+	{
+		doc->set_message (doc, "Usage: scale <num|more|less|full|width|height|reset>");
+		return;
+	}
+
+	char *tail;
+	double scale = strtod (argv[1], &tail);
+
+	if ((*tail == '\0') && scale > 0.05)
+	{
+		goto do_scale;
+	} else if (! strcmp (argv[1], "more")) {
+		scale = doc->scale + 0.1;
+		goto do_scale;
+	} else if (! strcmp (argv[1], "less")) {
+		scale = doc->scale;
+		if (scale >= 0.2)
+			scale -= 0.1;
+		goto do_scale;
+	} else if (! strcmp (argv[1], "full")) {
+		reset_transformations (doc);
+		scale_doc_full (doc, doc->width, doc->height);
+	} else if (! strcmp (argv[1], "width")) {
+		reset_transformations (doc);
+		if (doc->flags & NO_GENERIC_SCALE)
+		{
+			doc->scale = (double)doc->backend->width / (double)doc->width;
+			doc->update(doc);
+		} else {
+			scale_doc_full (doc, doc->width, doc->width);
+		}
+	} else if (! strcmp (argv[1], "height")) {
+		reset_transformations (doc);
+		if (doc->flags & NO_GENERIC_SCALE)
+		{
+			doc->scale = (double)doc->backend->height / (double)doc->height;
+			doc->update(doc);
+		} else {
+			scale_doc_full (doc, doc->height, doc->height);
+		}
+	} else if (! strcmp (argv[1], "reset")) {
+		reset_transformations (doc);
+	} else {
+		doc->set_message (doc, "Invalid scale: %s\n", argv[1]);
+	}
+
+	return;
+
+do_scale:
+	if (scale != doc->scale)
+	{
+		doc->scale = scale;
+		if (doc->flags & NO_GENERIC_SCALE)
+			doc->update(doc);
+	}
+}
+
 void register_extended_commands (void)
 {
 	set_extcmd ("echo", ecmd_echo);
 	set_extcmd ("goto", ecmd_goto);
+	set_extcmd ("scale", ecmd_scale);
 	set_extcmd ("tag", ecmd_tag);
 	set_extcmd ("version", ecmd_version);
 	set_extcmd ("help", ecmd_help);
