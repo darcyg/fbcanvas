@@ -26,46 +26,41 @@ static struct text_info
 	int xoffset;
 } text_info;
 
-static void cmd_text_key_down (struct document *doc)
+static void text_move (struct document *doc, int xdir, int ydir)
 {
 	struct text_info *ti = doc->data;
-	int line = doc->pagenum * LINE_COUNT + ti->base_line;
+	int line = doc->pagenum * LINE_COUNT + ti->base_line + ydir;
+	int xoff = ti->xoffset + xdir;
 
-	line++;
-	ti->base_line = line % LINE_COUNT;
-	doc->pagenum = line / LINE_COUNT;
+	if (line >= 0)
+	{
+		ti->base_line = line % LINE_COUNT;
+		doc->pagenum = line / LINE_COUNT;
+	}
+
+	if (xoff >= 0)
+		ti->xoffset = xoff;
 	doc->update (doc);
+}
+
+static void cmd_text_key_down (struct document *doc)
+{
+	text_move (doc, 0, 1);
 }
 
 static void cmd_text_key_up (struct document *doc)
 {
-	struct text_info *ti = doc->data;
-	int line = doc->pagenum * LINE_COUNT + ti->base_line;
-
-	if (line > 0)
-	{
-		line--;
-		ti->base_line = line % LINE_COUNT;
-		doc->pagenum = line / LINE_COUNT;
-		doc->update (doc);
-	}
+	text_move (doc, 0, -1);
 }
 
 static void cmd_text_key_right (struct document *doc)
 {
-	struct text_info *ti = doc->data;
-	ti->xoffset++;
-	doc->update (doc);
+	text_move (doc, 1, 0);
 }
 
 static void cmd_text_key_left (struct document *doc)
 {
-	struct text_info *ti = doc->data;
-	if (ti->xoffset > 0)
-	{
-		ti->xoffset--;
-		doc->update (doc);
-	}
+	text_move (doc, -1, 0);
 }
 
 static void cmd_text_revert (struct document *doc)
