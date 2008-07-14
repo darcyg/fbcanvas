@@ -125,19 +125,15 @@ static void ecmd_tag (struct document *doc, int argc, char *argv[])
 
 static void ecmd_help (struct document *doc, int argc, char *argv[])
 {
-	char buf[7 * 10]; /* about 10 commands à 7 chars or something... */
-	int pos = 0;
-
+	doc->set_message (doc, "Commands:");
 	GList *names = g_hash_table_get_keys (commands);
 	for (GList *it = names; it; it = it->next)
 	{
-		pos += sprintf (buf + pos, "%s\n", it->data);
+		doc->set_message (doc, "\n%s", it->data);
 		if (it->next == names)
 			break;
 	}
 	g_list_free (names);
-
-	doc->set_message (doc, "Commands:\n%s", buf);
 }
 
 void register_extended_commands (void)
