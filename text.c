@@ -1,4 +1,4 @@
-/* text.c - 6.7.2008 - 10.7.2008 Ari & Tero Roponen */
+/* text.c - 6.7.2008 - 14.7.2008 Ari & Tero Roponen */
 
 #include <linux/input.h>
 #include <stdio.h>
@@ -102,11 +102,8 @@ static void cmd_find (struct document *doc)
 	char *buf = fb_read_line (doc, "Find: ");
 	if (buf)
 	{
-		char *cmd;
-		asprintf (&cmd, "%s%s", "find ", buf);
+		execute_extended_command (doc, "find %s", buf);
 		free (buf);
-		execute_extended_command (doc, cmd);
-		free (cmd);
 	}
 }
 

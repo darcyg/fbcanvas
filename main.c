@@ -104,19 +104,12 @@ static int view_file (struct document *doc, struct prefs *prefs)
 		doc->set_message (doc, "%s\n%s", argp_program_version, doc->filename);
 
 	if (prefs->page)
-	{
-		char buf[20];
-		sprintf (buf, "goto %s", prefs->page);
-		execute_extended_command (doc, buf);
-	}
+		execute_extended_command (doc, "goto %s", prefs->page);
 
 	doc->main_loop(doc);
 
 	if (prefs->page)
-	{
-		char cmd[] = "tag current_page";
-		execute_extended_command (doc, cmd);
-	}
+		execute_extended_command (doc, "tag current_page");
 
 	fprintf (stderr, "%s %s -p%d -s%f -x%d -y%d\n",
 		 program_invocation_short_name,
