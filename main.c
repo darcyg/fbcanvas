@@ -1,5 +1,5 @@
 /*
- * main.c - 17.5.2008 - 13.7.2008 Ari & Tero Roponen
+ * main.c - 17.5.2008 - 14.7.2008 Ari & Tero Roponen
  */
 
 #include <linux/input.h>
@@ -7,7 +7,6 @@
 #include <linux/vt.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
-#include <attr/xattr.h>
 #include <argp.h>
 #include <fcntl.h>
 #include <poll.h>
@@ -33,8 +32,6 @@ struct prefs
 	int just_pagecount;
 	char *grep_str;
 	int quiet;
-
-	char *state_file;
 };
 
 /* Can't be static. */
@@ -45,56 +42,11 @@ static struct argp_option options[] = {
 	{"grep", 'g', "TEXT", 0, "search for text"},
 	{"page", 'p', "PAGE", OPTION_ARG_OPTIONAL, "goto given page or tag"},
 	{"quiet", 'q', NULL, 0, "Don't display startup message"},
-	{"restore", 'r', NULL, 0, "Restore previous state"},
 	{"scale", 's', "SCALE", 0, "set scale factor"},
 	{NULL, 'x', "X", 0, "set x-offset"},
 	{NULL, 'y', "Y", 0, "set y-offset"},
 	{NULL}
 };
-
-/*
- * returns 0 if successful, errno if fails.
- */
-static int get_attribute(const char *filename, const char *attr, char **value)
-{
-	/* Get attribute len */
-	char *buf;
-	int ret = getxattr(filename, attr, NULL, 0);
-	if (ret < 0)
-		return errno;
-
-	buf = malloc (ret);
-	ret = getxattr(filename, attr, buf, ret);
-	if (ret < 0)
-	{
-		free (buf);
-		return errno;
-	}
-
-	*value = buf;
-	return 0;
-}
-
-static void load_prefs(char *filename, struct prefs *prefs)
-{
-	char *value;
-
-	prefs->state_file = strdup(filename); //XXX
-
-	if (get_attribute(filename, "user.fbprefs.scale", &value) == 0)
-	{
-		prefs->scale = strtod (value, NULL);
-		free (value);
-	}
-}
-
-static void save_prefs(struct prefs *prefs)
-{
-	char buf[16];
-
-	sprintf(buf, "%lf", prefs->scale);
-	setxattr(prefs->state_file, "user.fbprefs.scale", buf, strlen(buf)+1, 0);
-}
 
 error_t parse_arguments (int key, char *arg, struct argp_state *state)
 {
@@ -118,9 +70,6 @@ error_t parse_arguments (int key, char *arg, struct argp_state *state)
 		break;
 	case 'q':
 		prefs->quiet = 1;
-		break;
-	case 'r':
-		prefs->state_file = (char *)1;
 		break;
 	case 's':
 		prefs->scale = strtod (arg, NULL);
@@ -265,17 +214,7 @@ int main(int argc, char *argv[])
 			ret = init_terminal();
 			if (ret < 0)
 				goto out;
-			if (prefs.state_file)
-				load_prefs(argv[i], &prefs);
 			ret = view_file (doc, &prefs);
-			if (prefs.state_file)
-			{
-				char buf[8];
-				sprintf (buf, "%d", doc->pagenum + 1);
-				prefs.page = buf;
-				prefs.scale = doc->scale;
-				save_prefs(&prefs);
-			}
 		}
 
 		doc->close (doc);
