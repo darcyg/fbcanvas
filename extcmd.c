@@ -18,6 +18,18 @@ void set_extcmd (char *name, extcmd_t action)
 	g_hash_table_replace (commands, name, action);
 }
 
+static void reset_transformations (struct document *doc)
+{
+	doc->scale = 1.0;
+	doc->xoffset = 0;
+	doc->yoffset = 0;
+	cairo_matrix_init_identity (&doc->transform);
+
+	/* Update is needed to reset to the original image. */
+	if (doc->flags & NO_GENERIC_SCALE)
+		doc->update(doc);
+}
+
 static void ecmd_version (struct document *doc, int argc, char *argv[])
 {
 	extern const char *argp_program_version;
