@@ -73,7 +73,8 @@ static void cmd_text_revert (struct document *doc)
 	close_text (doc);
 	open_text (doc);
 
-	reset_transformations (doc);
+	execute_extended_command (doc, "scale reset");
+	/* We use generic scale, so reset doesn't call update. */
 	doc->update (doc);
 }
 

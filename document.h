@@ -76,6 +76,5 @@ enum
 };
 
 struct document *open_document(char *filename);
-void reset_transformations (struct document *doc);
 
 #endif /* DOCUMENT_H */
