@@ -22,7 +22,7 @@ static void *open_postscript(struct document *doc)
 	{
 		"fb", /* argv[0] */
 		"-q",
-		"-sDEVICE=png48",
+		"-sDEVICE=pngalpha",
 		"-sOutputFile=/tmp/fb-%d.png",
 		"-dBATCH",
 		"-dNOPAUSE",
