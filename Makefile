@@ -5,7 +5,7 @@ H_FILES:=$(wildcard *.h)
 OBJ_FILES:=$(C_FILES:.c=.o)
 
 CFLAGS:=$(shell pkg-config --cflags poppler-glib ddjvuapi) -Os -D_GNU_SOURCE -std=gnu99
-LIBS:=$(shell pkg-config --libs poppler-glib ddjvuapi) -lmagic
+LIBS:=$(shell pkg-config --libs poppler-glib ddjvuapi) -lmagic -lgs
 
 oma: $(OBJ_FILES)
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
