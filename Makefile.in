@@ -3,7 +3,8 @@
 # TODO: file_types.c must be recompiled if configure-options are changed
 
 DEBUG=
-CFLAGS=$(shell pkg-config --cflags poppler-glib) -Os -D_GNU_SOURCE -std=gnu99 $(DEBUG)
+CFLAGS=$(shell pkg-config --cflags poppler-glib) -Os -D_GNU_SOURCE -std=gnu99 \
+	-DFB_VERSION=\"@PACKAGE_VERSION@\"  $(DEBUG)
 LIBS=$(shell pkg-config --libs poppler-glib) -lmagic
 
 all: oma
@@ -64,4 +65,4 @@ endif
 OBJ_FILES:=$(C_FILES:.c=.o)
 
 oma: $(OBJ_FILES)
-	$(CC) $(CFLAGS) -DVERSION="@PACKAGE_VERSION@" -o $@ $^ $(LIBS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
