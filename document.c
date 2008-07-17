@@ -169,12 +169,16 @@ static void document_scroll(struct document *doc, int dx, int dy)
 	}
 }
 
+#ifdef USE_X11
 extern struct backend x11_backend;
+#endif
 extern struct backend fb_backend;
 
 static struct backend *backends[] =
 {
+#ifdef USE_X11
 	&x11_backend,
+#endif
 	&fb_backend,
 	NULL
 };
