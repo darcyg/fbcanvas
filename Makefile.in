@@ -1,12 +1,6 @@
 # Makefile.in - 20.5.2008 - 17.7.2008 Ari & Tero Roponen
 
-# Comment out if not supported.
-support_djvu=1
-#support_ps=1
-support_pdf=1
-support_x11=1
-support_text=1
-# TODO: file_types.c must be recompiled if these are changed
+# TODO: file_types.c must be recompiled if configure-options are changed
 
 DEBUG=
 CFLAGS=$(shell pkg-config --cflags poppler-glib) -Os -D_GNU_SOURCE -std=gnu99 $(DEBUG)
@@ -35,33 +29,33 @@ readline.o: readline.c document.h keymap.h terminal.h
 terminal.o: terminal.c document.h keymap.h
 util.o: util.c util.h
 
-ifdef support_text
+ifneq ("@enable_text@", "no")
   C_FILES += text.c
   CFLAGS += -DUSE_TEXT
 text.o: text.c document.h extcmd.h file_info.h keymap.h util.h
 endif
 
-ifdef support_x11
+ifneq ("@enable_x11@", "no")
   C_FILES += x11canvas.c
   CFLAGS += -DUSE_X11
 x11canvas.o: x11canvas.c commands.h util.h
 endif
 
-ifdef support_djvu
+ifneq ("@enable_djvu@", "no")
   C_FILES += djvu.c
   CFLAGS += -DUSE_DJVU $(shell pkg-config --cflags ddjvuapi)
   LIBS += $(shell pkg-config --libs ddjvuapi)
 djvu.o: djvu.c document.h file_info.h
 endif
 
-ifdef support_ps
+ifneq ("@enable_ps@", "no")
   C_FILES += ps.c
   CFLAGS += -DUSE_PS
   LIBS += -lgs
 ps.o: ps.c document.h file_info.h
 endif
 
-ifdef support_pdf
+ifneq ("@enable_pdf@", "no")
   C_FILES += pdf.c
   CFLAGS += -DUSE_PDF
 pdf.o: pdf.c document.h file_info.h util.h
@@ -70,4 +64,4 @@ endif
 OBJ_FILES:=$(C_FILES:.c=.o)
 
 oma: $(OBJ_FILES)
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+	$(CC) $(CFLAGS) -DVERSION="@PACKAGE_VERSION@" -o $@ $^ $(LIBS)
