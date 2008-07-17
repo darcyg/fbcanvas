@@ -1,4 +1,4 @@
-# Makefile - 20.5.2008 - 17.7.2008 Ari & Tero Roponen
+# Makefile.in - 20.5.2008 - 17.7.2008 Ari & Tero Roponen
 
 # Comment out if not supported.
 support_djvu=1
