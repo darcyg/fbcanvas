@@ -1,3 +1,6 @@
+#include "config.h"
+#ifdef ENABLE_DJVU
+
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <libdjvu/ddjvuapi.h>
 #include "document.h"
@@ -165,4 +168,4 @@ static struct document_ops djvu_ops =
 
 struct file_info djvu_info = {"DjVu Image file", NULL, &djvu_ops};
 
-
+#endif /* ENABLE_DJVU */

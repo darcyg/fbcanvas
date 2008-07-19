@@ -1,3 +1,6 @@
+#include "config.h"
+#ifdef ENABLE_X11
+
 #include <linux/input.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -395,3 +398,5 @@ void TooSmall(Window win, GC gc, XFontStruct *font_info)
 	XDrawString(display, win, gc, x, y, string1, strlen(string1));
 }
 #endif
+
+#endif /* ENABLE_X11 */

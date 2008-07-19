@@ -1,3 +1,6 @@
+#include "config.h"
+#ifdef ENABLE_PS
+
 #include <ghostscript/gdevdsp.h>
 #include <ghostscript/iapi.h>
 #include <ghostscript/ierrors.h>
@@ -101,3 +104,5 @@ static struct document_ops postscript_ops =
 };
 
 struct file_info ps_info = {"PostScript", NULL, &postscript_ops};
+
+#endif /* ENABLE_PS */

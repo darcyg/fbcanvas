@@ -1,0 +1,31 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Enable DJVU-support */
+#undef ENABLE_DJVU
+
+/* Enable PDF-support */
+#undef ENABLE_PDF
+
+/* Enable postscript-support */
+#undef ENABLE_PS
+
+/* Enable text-support */
+#undef ENABLE_TEXT
+
+/* Enable X11-support */
+#undef ENABLE_X11
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
