@@ -1,11 +1,15 @@
-# Makefile.in - 20.5.2008 - 17.7.2008 Ari & Tero Roponen
+# Makefile.in - 20.5.2008 - 19.7.2008 Ari & Tero Roponen
 
 # TODO: file_types.c must be recompiled if configure-options are changed
 
 DEBUG=
-CFLAGS=$(shell pkg-config --cflags poppler-glib) -Os -D_GNU_SOURCE -std=gnu99 \
-	-DFB_VERSION=\"@PACKAGE_VERSION@\"  $(DEBUG)
+CFLAGS=$(shell pkg-config --cflags poppler-glib) -Os -D_GNU_SOURCE -std=gnu99 $(DEBUG)
 LIBS=$(shell pkg-config --libs poppler-glib) -lmagic
+
+EXTRA_INCLUDES=@EXTRA_INCLUDES@
+EXTRA_LIBS=@EXTRA_LIBS@
+CFLAGS += $(EXTRA_INCLUDES)
+LIBS += $(EXTRA_LIBS)
 
 all: oma
 
@@ -15,52 +19,26 @@ clean:
 
 # These are compiled always
 C_FILES=commands.c document.c extcmd.c fbcanvas.c file_info.c \
-	keymap.c main.c pixbuf.c readline.c terminal.c util.c
+	keymap.c main.c pixbuf.c readline.c terminal.c util.c \
+	text.c x11canvas.c djvu.c ps.c pdf.c
 
 # Keep these up-to-date
 commands.o: commands.c commands.h document.h extcmd.h keymap.h util.h
+djvu.o: djvu.c document.h file_info.h
 document.o: document.c document.h file_info.h
 extcmd.o: extcmd.c document.h extcmd.h
 fbcanvas.o: fbcanvas.c document.h file_info.h
 file_info.o: file_info.c file_info.h
 keymap.o: keymap.c keymap.h
 main.o: main.c document.h commands.h extcmd.h keymap.h terminal.h
+pdf.o: pdf.c document.h file_info.h util.h
 pixbuf.o: pixbuf.c document.h file_info.h
+ps.o: ps.c document.h file_info.h
 readline.o: readline.c document.h keymap.h terminal.h
 terminal.o: terminal.c document.h keymap.h
-util.o: util.c util.h
-
-ifneq ("@enable_text@", "no")
-  C_FILES += text.c
-  CFLAGS += -DUSE_TEXT
 text.o: text.c document.h extcmd.h file_info.h keymap.h util.h
-endif
-
-ifneq ("@enable_x11@", "no")
-  C_FILES += x11canvas.c
-  CFLAGS += -DUSE_X11
+util.o: util.c util.h
 x11canvas.o: x11canvas.c commands.h util.h
-endif
-
-ifneq ("@enable_djvu@", "no")
-  C_FILES += djvu.c
-  CFLAGS += -DUSE_DJVU $(shell pkg-config --cflags ddjvuapi)
-  LIBS += $(shell pkg-config --libs ddjvuapi)
-djvu.o: djvu.c document.h file_info.h
-endif
-
-ifneq ("@enable_ps@", "no")
-  C_FILES += ps.c
-  CFLAGS += -DUSE_PS
-  LIBS += -lgs
-ps.o: ps.c document.h file_info.h
-endif
-
-ifneq ("@enable_pdf@", "no")
-  C_FILES += pdf.c
-  CFLAGS += -DUSE_PDF
-pdf.o: pdf.c document.h file_info.h util.h
-endif
 
 OBJ_FILES:=$(C_FILES:.c=.o)
 

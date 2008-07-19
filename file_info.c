@@ -1,4 +1,5 @@
-/* file_info.c - 13.6.2008 - 17.7.2008 Ari & Tero Roponen */
+/* file_info.c - 13.6.2008 - 19.7.2008 Ari & Tero Roponen */
+#include "config.h"
 #include <glib.h>
 #include <magic.h>
 #include <stdio.h>
@@ -11,24 +12,24 @@ static GArray *file_infos;
 void register_plugins (void)
 {
 	extern struct file_info bmp_info;
-#ifdef USE_DJVU
+#ifdef ENABLE_DJVU
 	extern struct file_info djvu_info;
 #endif
 	extern struct file_info gif_info;
 	extern struct file_info jpg_info;
 	extern struct file_info pcx_info;
-#ifdef USE_PDF
+#ifdef ENABLE_PDF
 	extern struct file_info pdf_info;
 #endif
 	extern struct file_info png_info;
 	extern struct file_info ppm_info;
-#ifdef USE_PS
+#ifdef ENABLE_PS
 	extern struct file_info ps_info;
 #endif
 	extern struct file_info tiff_info;
 	extern struct file_info xbm_info;
 	extern struct file_info xpm_info;
-#ifdef USE_TEXT
+#ifdef ENABLE_TEXT
 	extern struct file_info utf8_text_info;
 	extern struct file_info ascii_text_info;
 	extern struct file_info txt_text_info;
@@ -37,24 +38,24 @@ void register_plugins (void)
 	struct file_info *fi[] =
 	{
 		&bmp_info,
-#ifdef USE_DJVU
+#ifdef ENABLE_DJVU
 		&djvu_info,
 #endif
 		&gif_info,
 		&jpg_info,
 		&pcx_info,
-#ifdef USE_PDF
+#ifdef ENABLE_PDF
 		&pdf_info,
 #endif
 		&png_info,
 		&ppm_info,
-#ifdef USE_PS
+#ifdef ENABLE_PS
 		&ps_info,
 #endif
 		&tiff_info,
 		&xbm_info,
 		&xpm_info,
-#ifdef USE_TEXT
+#ifdef ENABLE_TEXT
 		&utf8_text_info,
 		&ascii_text_info,
 		&txt_text_info,

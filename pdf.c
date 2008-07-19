@@ -1,3 +1,6 @@
+#include "config.h"
+#ifdef ENABLE_PDF
+
 #include <poppler/glib/poppler.h>
 #include <math.h>
 #include <stdlib.h>
@@ -148,3 +151,4 @@ static struct document_ops pdf_ops =
 
 struct file_info pdf_info = {"PDF", NULL, &pdf_ops};
 
+#endif /* ENABLE_PDF */

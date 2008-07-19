@@ -1,5 +1,5 @@
 /*
- * main.c - 17.5.2008 - 17.7.2008 Ari & Tero Roponen
+ * main.c - 17.5.2008 - 19.7.2008 Ari & Tero Roponen
  */
 
 #include <linux/input.h>
@@ -16,6 +16,7 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#include "config.h"
 #include "document.h"
 #include "commands.h"
 #include "extcmd.h"
@@ -35,7 +36,7 @@ struct prefs
 };
 
 /* Can't be static. */
-const char *argp_program_version = "fb version " FB_VERSION;
+const char *argp_program_version = "fb version " PACKAGE_VERSION;
 
 static struct argp_option options[] = {
 	{"count", 'c', NULL, 0, "display page count"},

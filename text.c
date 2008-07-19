@@ -1,4 +1,6 @@
-/* text.c - 6.7.2008 - 14.7.2008 Ari & Tero Roponen */
+/* text.c - 6.7.2008 - 19.7.2008 Ari & Tero Roponen */
+#include "config.h"
+#ifdef ENABLE_TEXT
 
 #include <linux/input.h>
 #include <stdio.h>
@@ -271,3 +273,5 @@ static struct document_ops text_ops =
 struct file_info utf8_text_info = {"UTF-8 ", NULL, &text_ops, setup_text_keys};
 struct file_info ascii_text_info = {"ASCII ", NULL, &text_ops, setup_text_keys};
 struct file_info txt_text_info = {NULL, ".txt", &text_ops, setup_text_keys};
+
+#endif /* ENABLE_TEXT */
