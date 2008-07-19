@@ -1,5 +1,6 @@
 dnl configure.ac - 17.7.2008 - 19.7.2008 Ari & Tero Roponen
-AC_INIT([fb],[20080717])
+AC_INIT([fb],[20080719])
+AM_INIT_AUTOMAKE
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_HEADERS(config.h)
 
@@ -13,9 +14,13 @@ FB_OPTIONAL_FEATURE([pdf])
 FB_OPTIONAL_FEATURE([text])
 FB_OPTIONAL_FEATURE([x11])
 
-# extra libraries and headers
-LIBS=""
-INCS=""
+# poppler-glib is required
+PKG_CHECK_MODULES([poppler_glib],[poppler-glib],
+  [LIBS="$LIBS $poppler_glib_LIBS"
+   CFLAGS="$CFLAGS $poppler_glib_CFLAGS"])
+
+# magic is also required
+AC_SEARCH_LIBS([magic_file],[magic])
 
 if test "$enable_djvu" = "yes"; then
   PKG_CHECK_MODULES([djvu],[ddjvuapi],
@@ -26,9 +31,8 @@ if test "$enable_djvu" = "yes"; then
 fi
 
 if test "$enable_ps" = "yes"; then
-  AC_CHECK_LIB([gs],[gsapi_init_with_args],
-    [AC_DEFINE([ENABLE_PS],1,[Enable postscript-support])
-     LIBS="$LIBS -lgs"],
+  AC_SEARCH_LIBS([gsapi_init_with_args],[gs],
+    [AC_DEFINE([ENABLE_PS],1,[Enable postscript-support])],
     [enable_ps="no"])
 fi
 
@@ -44,8 +48,6 @@ if test "$enable_x11" = "yes"; then
   AC_DEFINE([ENABLE_X11],1,[Enable X11-support])
 fi
 
-AC_SUBST([EXTRA_LIBS],[$LIBS])
-AC_SUBST([EXTRA_INCLUDES],[$INCS])
 AC_OUTPUT
 
 echo
