@@ -169,6 +169,12 @@ static void cleanup(void)
 	}
 }
 
+static void cleanup_sig(int s)
+{
+	cleanup();
+	_exit(0);
+}
+
 int main(int argc, char *argv[])
 {
 	int ind;
@@ -179,6 +185,7 @@ int main(int argc, char *argv[])
 
 	struct document *doc;
 
+	signal(SIGINT, cleanup_sig);
 	atexit(cleanup);
 
 	argp_parse (&argp, argc, argv, 0, &ind, &prefs);
