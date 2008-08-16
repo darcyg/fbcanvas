@@ -185,6 +185,7 @@ int main(int argc, char *argv[])
 
 	struct document *doc;
 
+	signal(SIGSEGV, cleanup_sig);
 	signal(SIGINT, cleanup_sig);
 	atexit(cleanup);
 
