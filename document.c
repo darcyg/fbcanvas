@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include "config.h"
 #include "document.h"
 #include "file_info.h"
 
