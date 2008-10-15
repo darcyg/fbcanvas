@@ -57,13 +57,17 @@ static void x11_main_loop(struct document *doc)
 					case 9:  /* ESC */
 					case 24: /* 'q' */
 						goto out;
+					case 25: key = KEY_W; break;
+					case 29: key = KEY_Y; break;
+					case 52: key = KEY_Z; break;
+					case 53: key = KEY_X; break;
 
-					case 20: key = '+'; break;
-					case 29: key = 'y'; break;
-					case 33: key = 'p'; break;
-					case 52: key = 'z'; break;
-					case 53: key = 'x'; break;
-					case 61: key = '-'; break;
+					case 61:
+					case 82: key = KEY_SLASH; break;
+					case 79: key = KEY_HOME; break;
+					case 87: key = KEY_END; break;
+					case 86:
+					case 20: key = KEY_MINUS; break;
 					case 65: key = KEY_SPACE; break;
 					case 81: key = KEY_PAGEUP; break;
 					case 89: key = KEY_PAGEDOWN; break;
