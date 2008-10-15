@@ -23,7 +23,7 @@ void register_plugins (void)
 	extern struct file_info png_info;
 	extern struct file_info ppm_info;
 #ifdef USE_PS
-	extern struct file_info ps_info;
+//	extern struct file_info ps_info;
 #endif
 	extern struct file_info tiff_info;
 	extern struct file_info xbm_info;
