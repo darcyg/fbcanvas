@@ -58,12 +58,13 @@ static void x11_main_loop(struct document *doc)
 					case 52: key = 'z'; break;
 					case 53: key = 'x'; break;
 					case 61: key = '-'; break;
-					case 98: key = KEY_UP; break;
-					case 99: key = KEY_PAGEUP; break;
-					case 100: key = KEY_LEFT; break;
-					case 102: key = KEY_RIGHT; break;
-					case 104: key = KEY_DOWN; break;
-					case 105: key = KEY_PAGEDOWN; break;
+					case 65: key = KEY_SPACE; break;
+					case 81: key = KEY_PAGEUP; break;
+					case 89: key = KEY_PAGEDOWN; break;
+					case 111: key = KEY_UP; break;
+					case 113: key = KEY_LEFT; break;
+					case 114: key = KEY_RIGHT; break;
+					case 116: key = KEY_DOWN; break;
 				}
 
 				if (key)

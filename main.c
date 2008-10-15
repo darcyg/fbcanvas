@@ -91,40 +91,6 @@ static void parse_line(char *cmdline)
 	fprintf(stderr, "Command: '%s'\n", cmdline);
 }
 
-void ncurses_main_loop (struct document *doc)
-{
-	struct termios term, saved_term;
-
-	/* Disable echo */
-	tcgetattr(0, &term);
-	saved_term = term;
-	term.c_lflag &= ~ECHO;
-	tcsetattr(0, TCSANOW, &term);
-
-	/* Go to graphics mode */
-	ioctl(0, KDSETMODE, KD_GRAPHICS);
-
-	if (setjmp (exit_loop) == 0)
-	{
-		int ch;
-		for (;;)	/* Main loop */
-		{
-			doc->draw(doc);
-
-			ch = read_key(doc);
-			command_t command = lookup_command (ch);
-			command (doc);
-		}
-	}
-
-	/* Return to text mode */
-	ioctl(0, KDSETMODE, KD_TEXT);
-
-	/* Flush i/o and return terminal settings */
-	tcflush(0, TCIOFLUSH);
-	tcsetattr(0, TCSANOW, &saved_term);
-}
-
 static int view_file (struct document *doc, struct prefs *prefs)
 {
 	if (prefs->page < doc->pagecount)
@@ -193,9 +159,6 @@ int main(int argc, char *argv[])
 			if (!r)
 				ret = 0;
 		} else {
-			ret = init_terminal();
-			if (ret < 0)
-				goto out;
 			ret = view_file (doc, &prefs);
 		}
 		doc->close (doc);

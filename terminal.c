@@ -35,74 +35,11 @@ static void handle_signal(int s)
 	}
 }
 
-static int init_vt_switch(void)
-{
-	/* Asetetaan konsolinvaihto lähettämään signaaleja */
-	int fd = open("/dev/tty", O_RDWR);
-	if (fd >= 0)
-	{
-		struct vt_mode vt_mode;
-		ioctl(fd, VT_GETMODE, &vt_mode);
-
-		vt_mode.mode = VT_PROCESS; /* Tämä prosessi hoitaa vaihdot. */
-		vt_mode.waitv = 0;
-		vt_mode.relsig = SIGUSR1;
-		vt_mode.acqsig = SIGUSR2;
-		ioctl(fd, VT_SETMODE, &vt_mode);
-		close(fd);
-
-		signal(SIGUSR1, handle_signal);
-		signal(SIGUSR2, handle_signal);
-
-		return 0;
-	}
-
-	return -1;
-}
-
 static int keyboard_fd = -1;
 static int mouse_fd = -1;
 static struct pollfd pfd[2];
 static sigset_t sigs;
 static int modifiers = 0;
-
-static int init_input(void)
-{
-	static const char kbd_dev[] = "/dev/input/by-path/platform-i8042-serio-0-event-kbd";
-	static const char mouse_dev[] = "/dev/input/by-path/platform-i8042-serio-1-event-mouse";
-	sigfillset(&sigs);
-	sigdelset(&sigs, SIGUSR1);
-	sigdelset(&sigs, SIGUSR2);
-
-	keyboard_fd = open(kbd_dev, O_RDONLY);
-	if (keyboard_fd < 0)
-	{
-		perror(kbd_dev);
-		return -1;
-	}
-
-	mouse_fd = open(mouse_dev, O_RDONLY);
-	if (mouse_fd < 0)
-		perror(mouse_dev);
-
-	pfd[0].fd = mouse_fd;
-	pfd[0].events = POLLIN;
-	pfd[1].fd = keyboard_fd;
-	pfd[1].events = POLLIN;
-	return 0;
-}
-
-int init_terminal(void)
-{
-	int ret;
-
-	ret = init_vt_switch();
-	if (ret < 0)
-		goto out;
-	ret = init_input();
-out:
-	return ret;
-}
 
 int read_key(struct document *doc)
 {
