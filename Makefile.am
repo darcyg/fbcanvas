@@ -2,7 +2,7 @@
 
 bin_PROGRAMS = oma
 
-oma_SOURCES = commands.c document.c extcmd.c fbcanvas.c file_info.c \
+oma_SOURCES = commands.c document.c extcmd.c file_info.c \
 	keymap.c main.c pixbuf.c readline.c terminal.c util.c \
 	text.c x11canvas.c djvu.c ps.c pdf.c
 
