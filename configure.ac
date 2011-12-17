@@ -22,6 +22,16 @@ PKG_CHECK_MODULES([poppler_glib],[poppler-glib],
 # magic is also required
 AC_SEARCH_LIBS([magic_file],[magic])
 
+# so is pango
+PKG_CHECK_MODULES([pango],[pangocairo],
+  [LIBS="$LIBS $pango_LIBS"
+   CFLAGS="$CFLAGS $pango_CFLAGS"])
+
+# and gdk-pixbuf
+PKG_CHECK_MODULES([gdk_pixbuf],[gdk-pixbuf-2.0],
+  [LIBS="$LIBS $gdk_pixbuf_LIBS"
+   CFLAGS="$CFLAGS $gdk_pixbuf_CFLAGS"])
+
 if test "$enable_djvu" = "yes"; then
   PKG_CHECK_MODULES([djvu],[ddjvuapi],
     [AC_DEFINE([ENABLE_DJVU],1,[Enable DJVU-support])

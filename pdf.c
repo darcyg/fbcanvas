@@ -1,8 +1,10 @@
 #include "config.h"
 #ifdef ENABLE_PDF
 
+#include <gdk-pixbuf/gdk-pixbuf.h>
 #include <poppler/glib/poppler.h>
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "document.h"
@@ -69,9 +71,8 @@ static int grep_pdf(struct document *doc, char *regexp)
 
 	for (i = 0; i < doc->pagecount; i++)
 	{
-		PopplerRectangle rec = {0, 0, doc->width, doc->height};
 		data->page = poppler_document_get_page (data->document, i);
-		str = poppler_page_get_text (data->page, POPPLER_SELECTION_LINE, &rec);
+		str = poppler_page_get_text(data->page);
 
 		if (grep_from_str (regexp, str, doc->filename, i + 1) == 0)
 			ret = 0;
@@ -101,7 +102,7 @@ static cairo_surface_t *update_pdf(struct document *doc)
 	poppler_page_get_size(data->page, &width, &height);
 	//fprintf(stderr, "Size: %lfx%lf\n", width, height);
 
-#if 1
+#if 0
 	doc->flags |= NO_GENERIC_SCALE;
 
 	data->pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,
@@ -127,8 +128,7 @@ static cairo_surface_t *update_pdf(struct document *doc)
 static void dump_text_pdf(struct document *doc, char *filename)
 {
 	struct pdf_data *data = doc->data;
-	PopplerRectangle rec = {0, 0, doc->width, doc->height};
-	char *str = poppler_page_get_text(data->page, POPPLER_SELECTION_LINE, &rec);
+	char *str = poppler_page_get_text(data->page);
 	if (str)
 	{
 		FILE *fp = fopen(filename, "w+");

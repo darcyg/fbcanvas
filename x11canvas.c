@@ -59,6 +59,7 @@ static void x11_main_loop(struct document *doc)
 						goto out;
 					case 25: key = KEY_W; break;
 					case 29: key = KEY_Y; break;
+					case 43: key = KEY_H; break;
 					case 52: key = KEY_Z; break;
 					case 53: key = KEY_X; break;
 

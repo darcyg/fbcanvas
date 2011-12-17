@@ -10,3 +10,4 @@ oma_SOURCES = commands.c document.c extcmd.c file_info.c \
 
 DEBUG =
 AM_CPPFLAGS = -Os -D_GNU_SOURCE -std=gnu99 $(DEBUG)
+AM_LDFLAGS = -lm -lX11
