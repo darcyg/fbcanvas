@@ -116,8 +116,11 @@ static cairo_surface_t *update_pdf(struct document *doc)
 			gdk_pixbuf_get_height(data->pixbuf),
 			gdk_pixbuf_get_rowstride(data->pixbuf));
 #else
-	ret = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, ceil(width), ceil(height));
+	doc->flags |= NO_GENERIC_SCALE;
+	ret = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
+		ceil(width*doc->scale), ceil(height*doc->scale));
 	cairo_t *cr = cairo_create(ret);
+	cairo_scale(cr, doc->scale, doc->scale);
 	poppler_page_render(data->page, cr);
 	cairo_destroy(cr);
 #endif
